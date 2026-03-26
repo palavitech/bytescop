@@ -4,6 +4,11 @@ All notable changes to BytesCop will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-03-26
+
+### Fixed
+- Health check tests now pass in CI environments without Redis or media storage
+
 ## [1.0.0] - 2026-03-26
 
 ### Added
