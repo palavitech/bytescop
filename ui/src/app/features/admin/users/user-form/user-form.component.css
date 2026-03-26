@@ -1,0 +1,86 @@
+/* ── Form sections ── */
+.bc-formSection {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bc-formSection:first-of-type {
+  padding-top: 0;
+}
+
+.bc-formSection:last-of-type {
+  border-bottom: none;
+}
+
+.bc-formSectionHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bc-accent, #00ffb3);
+}
+
+.bc-formSectionHead .bi {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+/* ── Field hint ── */
+.bc-fieldHint {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--bc-muted, #71808e);
+}
+
+/* ── Group chips ── */
+.bc-groupChip {
+  border: 1px solid rgba(0, 255, 179, 0.18);
+  background: rgba(0, 255, 179, 0.04);
+  color: var(--bc-text);
+  font-size: 0.82rem;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.bc-groupChip:hover {
+  border-color: var(--bc-accent);
+  background: rgba(0, 255, 179, 0.08);
+  color: var(--bc-accent);
+}
+
+.bc-groupChip.active {
+  border-color: var(--bc-accent);
+  background: rgba(0, 255, 179, 0.14);
+  color: var(--bc-accent);
+}
+
+/* ── Password policy checklist ── */
+.bc-policyChecklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bc-policyItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--bc-muted, #71808e);
+  transition: color 0.2s;
+}
+
+.bc-policyItem .bi {
+  font-size: 0.9rem;
+}
+
+.bc-policyItem.is-met {
+  color: var(--bc-accent, #00ffb3);
+}

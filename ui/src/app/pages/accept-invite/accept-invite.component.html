@@ -1,0 +1,127 @@
+<div class="bc-authWrap">
+  <div class="bc-authCard">
+    <div class="bc-authInner">
+
+      <!-- Loading -->
+      <ng-container *ngIf="step === 'loading'">
+        <div class="bc-authBrand">
+          <div class="bc-logoMark"></div>
+          <div class="bc-brandText">
+            <strong>BytesCop</strong>
+            <span>security findings vault</span>
+          </div>
+        </div>
+        <h1 class="bc-authTitle">Verifying Invitation</h1>
+        <p class="bc-authSub">Please wait while we verify your invitation link...</p>
+        <div class="bc-loadingBar"></div>
+      </ng-container>
+
+      <!-- Error -->
+      <ng-container *ngIf="step === 'error'">
+        <div class="bc-authBrand">
+          <div class="bc-logoMark"></div>
+          <div class="bc-brandText">
+            <strong>BytesCop</strong>
+            <span>security findings vault</span>
+          </div>
+        </div>
+        <h1 class="bc-authTitle">Invalid Invitation</h1>
+        <div class="bc-authError">{{ errorMessage }}</div>
+        <p class="bc-authSub">Please contact your administrator to request a new invitation.</p>
+        <button type="button" class="bc-authSubmit" (click)="goToLogin()">
+          Go to Login
+        </button>
+      </ng-container>
+
+      <!-- Welcome + Set Password -->
+      <ng-container *ngIf="step === 'welcome' || step === 'submitting'">
+
+        <!-- Tenant branding -->
+        <div class="bc-inviteBranding">
+          <img *ngIf="logoUrl" [src]="logoUrl" alt="{{ tenantName }} logo" class="bc-inviteLogo">
+          <div *ngIf="!logoUrl" class="bc-inviteLogoFallback">
+            {{ tenantName.charAt(0).toUpperCase() }}
+          </div>
+          <div class="bc-inviteTenantName">{{ tenantName }}</div>
+        </div>
+
+        <h1 class="bc-authTitle">Welcome</h1>
+        <p class="bc-authSub">
+          You've been invited to join <strong>{{ tenantName }}</strong> as <strong>{{ email }}</strong>.
+          Set your password to get started.
+        </p>
+
+        <div class="bc-authError" *ngIf="apiError">{{ apiError }}</div>
+
+        <form (ngSubmit)="onSubmit()" autocomplete="off">
+          <div class="bc-authField">
+            <label for="password">Password <span class="bc-required">*</span></label>
+            <input id="password" type="password" class="form-control"
+              placeholder="Create a strong password"
+              [(ngModel)]="password" name="password" required>
+          </div>
+
+          <!-- Policy checklist -->
+          <div *ngIf="policy" class="bc-policyChecklist">
+            <div class="bc-policyItem" [class.is-met]="meetsMinLength">
+              <i class="bi" [class.bi-check-circle-fill]="meetsMinLength" [class.bi-circle]="!meetsMinLength"></i>
+              <span>At least {{ policy.min_length }} characters</span>
+            </div>
+            <div *ngIf="policy.require_uppercase" class="bc-policyItem" [class.is-met]="hasUppercase">
+              <i class="bi" [class.bi-check-circle-fill]="hasUppercase" [class.bi-circle]="!hasUppercase"></i>
+              <span>One uppercase letter</span>
+            </div>
+            <div *ngIf="policy.require_number" class="bc-policyItem" [class.is-met]="hasNumber">
+              <i class="bi" [class.bi-check-circle-fill]="hasNumber" [class.bi-circle]="!hasNumber"></i>
+              <span>One number</span>
+            </div>
+            <div *ngIf="policy.require_special" class="bc-policyItem" [class.is-met]="hasSpecial">
+              <i class="bi" [class.bi-check-circle-fill]="hasSpecial" [class.bi-circle]="!hasSpecial"></i>
+              <span>One special character</span>
+            </div>
+            <div class="bc-policyItem" [class.is-met]="passwordsMatch">
+              <i class="bi" [class.bi-check-circle-fill]="passwordsMatch" [class.bi-circle]="!passwordsMatch"></i>
+              <span>Passwords match</span>
+            </div>
+          </div>
+
+          <div class="bc-authField mt-3">
+            <label for="passwordConfirm">Confirm Password <span class="bc-required">*</span></label>
+            <input id="passwordConfirm" type="password" class="form-control"
+              placeholder="Confirm your password"
+              [(ngModel)]="passwordConfirm" name="passwordConfirm" required>
+          </div>
+
+          <button type="submit" class="bc-authSubmit" [disabled]="!canSubmit || step === 'submitting'">
+            {{ step === 'submitting' ? 'Setting password...' : 'Set Password' }}
+          </button>
+        </form>
+      </ng-container>
+
+      <!-- Success -->
+      <ng-container *ngIf="step === 'success'">
+        <div class="bc-inviteBranding">
+          <img *ngIf="logoUrl" [src]="logoUrl" alt="{{ tenantName }} logo" class="bc-inviteLogo">
+          <div *ngIf="!logoUrl" class="bc-inviteLogoFallback">
+            {{ tenantName.charAt(0).toUpperCase() }}
+          </div>
+          <div class="bc-inviteTenantName">{{ tenantName }}</div>
+        </div>
+
+        <h1 class="bc-authTitle">You're All Set</h1>
+        <p class="bc-authSub">
+          Your password has been created. You can now log in with <strong>{{ email }}</strong>.
+        </p>
+
+        <div class="bc-successIcon">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+
+        <button type="button" class="bc-authSubmit" (click)="goToLogin()">
+          Log In
+        </button>
+      </ng-container>
+
+    </div>
+  </div>
+</div>

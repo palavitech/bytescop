@@ -1,0 +1,273 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+          <div class="bc-pageCard mb-3">
+            <div class="bc-pageCardHead">
+              <div class="bc-pageCardTitle">
+                <div class="bc-h1">Engagements</div>
+                <div class="bc-sub">Track active work, scope, ownership, and delivery status.</div>
+              </div>
+              <div class="bc-pageCardTools">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+                  <i class="bi bi-arrow-left"></i>
+                  <span>Back</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleFilters()">
+                  <i class="bi bi-funnel"></i>
+                  <span>Filter</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+                  <i class="bi bi-arrow-repeat"></i>
+                  <span>Refresh</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+                  <i class="bi bi-question-circle"></i>
+                  <span>Help</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="bc-pageCardFoot">
+              <div class="bc-pageCardFootLeft">
+                <div class="bc-badge" *ngIf="vm.state === 'ready'">
+                  <span class="bc-dot"></span>
+                  <span>Total: {{ vm.total }}</span>
+                </div>
+
+                <!-- Active filter pills -->
+                <ng-container *ngIf="vm.state === 'ready' && (vm.filterLabels.clientName || vm.filterLabels.statusLabel)">
+                  <div class="bc-activeFilters mt-2">
+                    <div class="bc-activeLabel">Filtered by:</div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                      <span class="bc-pillBadge" *ngIf="vm.filterLabels.clientName">
+                        <span class="bc-pillText">Client: {{ vm.filterLabels.clientName }}</span>
+                        <button type="button" class="bc-pillX" (click)="clearClientFilter()"
+                          aria-label="Remove organization filter">
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </span>
+                      <span class="bc-pillBadge" *ngIf="vm.filterLabels.statusLabel">
+                        <span class="bc-pillText">Status: {{ vm.filterLabels.statusLabel }}</span>
+                        <button type="button" class="bc-pillX" (click)="clearStatusFilter()"
+                          aria-label="Remove status filter">
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </span>
+                      <button class="btn btn-outline-light bc-btnSoft bc-btnSm" type="button"
+                        (click)="clearAllFilters()" title="Clear all filters">
+                        <i class="bi bi-eraser"></i>
+                        <span class="ms-2">Clear</span>
+                      </button>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+
+              <div class="bc-pageCardFootRight">
+                <div class="dropdown bc-footDropdown">
+                  <button class="btn btn-outline-light bc-iconBtn dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical"></i>
+                    <span>Actions</span>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <button class="dropdown-item" type="button" (click)="exportCsv(vm.engagements)">
+                        <i class="bi bi-filetype-csv"></i> Export CSV
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+                <button class="btn btn-success bc-btn bc-btnCtaFoot" type="button"
+                  (click)="createEngagement()" *bcHasPermission="'engagement.create'">
+                  <i class="bi bi-plus-circle"></i>
+                  <span class="ms-2">New Engagement</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp || showFilters">
+
+        <main>
+
+          <!-- Table -->
+          <div class="bc-card">
+            <div class="bc-cardInner p-0">
+              <div class="table-responsive">
+                <table class="table table-dark mb-0 align-middle bc-table">
+                  <thead>
+                    <tr>
+                      <th style="min-width:220px">Name</th>
+                      <th style="min-width:180px">Client</th>
+                      <th style="min-width:120px">Status</th>
+                      <th style="min-width:140px" class="text-center">Summary</th>
+                      <th style="min-width:120px">Start</th>
+                      <th style="min-width:120px">End</th>
+                      <th class="text-end" style="min-width:160px">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+
+                    <!-- Loading -->
+                    <tr *ngIf="vm.state === 'init'">
+                      <td colspan="7" class="p-4">
+                        <div class="bc-sub">Fetching engagements...</div>
+                      </td>
+                    </tr>
+
+                    <!-- Error -->
+                    <tr *ngIf="vm.state === 'error'">
+                      <td colspan="7" class="p-4">
+                        <div class="alert alert-danger mb-0">Could not load engagements.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Empty -->
+                    <tr *ngIf="vm.state === 'ready' && vm.engagements.length === 0">
+                      <td colspan="7" class="p-4">
+                        <div class="bc-sub">No engagements yet. Create your first engagement to begin tracking work.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Data rows -->
+                    <ng-container *ngIf="vm.state === 'ready'">
+                      <tr *ngFor="let eng of vm.engagements">
+                        <td>
+                          <a class="bc-rowLink" [routerLink]="['/engagements', eng.id]">
+                            {{ eng.name }}
+                          </a>
+                        </td>
+                        <td>
+                          <span *ngIf="eng.client_name" class="bc-sub">{{ eng.client_name }}</span>
+                          <span *ngIf="!eng.client_name" class="bc-sub">—</span>
+                        </td>
+                        <td>
+                          <span class="bc-pillStatus" [ngClass]="statusClass(eng.status)">
+                            <span class="bc-pillDot"></span>
+                            <span>{{ prettyStatus(eng.status) }}</span>
+                          </span>
+                        </td>
+                        <td class="text-center">
+                          <span class="d-inline-flex flex-wrap gap-1 justify-content-center">
+                            <span class="bc-severityPill bc-severityPill--critical" *ngIf="eng.findings_summary?.critical">{{ eng.findings_summary.critical }}</span>
+                            <span class="bc-severityPill bc-severityPill--high" *ngIf="eng.findings_summary?.high">{{ eng.findings_summary.high }}</span>
+                            <span class="bc-severityPill bc-severityPill--medium" *ngIf="eng.findings_summary?.medium">{{ eng.findings_summary.medium }}</span>
+                            <span class="bc-severityPill bc-severityPill--low" *ngIf="eng.findings_summary?.low">{{ eng.findings_summary.low }}</span>
+                            <span class="bc-severityPill bc-severityPill--info" *ngIf="eng.findings_summary?.info">{{ eng.findings_summary.info }}</span>
+                          </span>
+                        </td>
+                        <td class="bc-sub">{{ eng.start_date | bcDate }}</td>
+                        <td class="bc-sub">{{ eng.end_date | bcDate }}</td>
+                        <td class="text-end">
+                          <a class="btn btn-sm btn-outline-light bc-btnSoft bc-tableActionBtn"
+                            [routerLink]="['/engagements', eng.id, 'findings']"
+                            *bcHasPermission="'finding.view'">
+                            <i class="bi bi-bug"></i>
+                            <span class="ms-1">Findings</span>
+                          </a>
+                        </td>
+                      </tr>
+                    </ng-container>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- Right pane: Filters + Help -->
+        <aside class="bc-helpPane" *ngIf="showHelp || showFilters">
+
+          <!-- Filters -->
+          <ng-container *ngIf="showFilters">
+            <div class="bc-helpHead">
+              <div>
+                <div class="bc-helpKicker">Filters</div>
+                <div class="bc-helpTitle">Engagements</div>
+              </div>
+              <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleFilters()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <div class="bc-helpBody">
+              <div class="d-grid gap-3" aria-label="Engagement filters">
+
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">Client</span>
+                  <select class="form-select form-select-sm bc-filterSelect"
+                    [value]="vm.filters.client || ''"
+                    (change)="onClientFilterChange($event)">
+                    <option value="">All clients</option>
+                    <option *ngFor="let org of vm.organizations" [value]="org.id">
+                      {{ org.name }}
+                    </option>
+                  </select>
+                </label>
+
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">Status</span>
+                  <select class="form-select form-select-sm bc-filterSelect"
+                    [value]="vm.filters.status || ''"
+                    (change)="onStatusFilterChange($event)">
+                    <option value="">Any status</option>
+                    <option value="planned">Planned</option>
+                    <option value="active">Active</option>
+                    <option value="on_hold">On hold</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </label>
+
+                <button class="btn btn-outline-light bc-btnSm" type="button"
+                  (click)="clearAllFilters()"
+                  [disabled]="!(vm.filters.client || vm.filters.status)">
+                  <i class="bi bi-eraser"></i>
+                  <span class="ms-2">Clear</span>
+                </button>
+
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Help -->
+          <ng-container *ngIf="showHelp">
+            <div class="bc-helpHead" [class.mt-3]="showFilters">
+              <div>
+                <div class="bc-helpKicker">Help</div>
+                <div class="bc-helpTitle">Engagements</div>
+              </div>
+              <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div class="bc-helpBody">
+              <div class="bc-sub mb-2">
+                Engagements represent security assessment projects. Track delivery timelines, scope, and status. Click a row name to open the detail view.
+              </div>
+              <ul class="bc-helpList">
+                <li><strong>Name:</strong> The engagement title — click to view details.</li>
+                <li><strong>Client:</strong> The client for this engagement.</li>
+                <li><strong>Status:</strong> Planned, Active, On Hold, or Completed.</li>
+                <li><strong>Summary:</strong> Severity pills showing the count of Critical, High, Medium, Low, and Info findings.</li>
+                <li><strong>Dates:</strong> Start and end dates for the engagement timeline.</li>
+                <li><strong>Findings:</strong> Click the Findings button to jump directly to an engagement's findings list.</li>
+                <li><strong>Filters:</strong> Narrow results by client or status using the Filter panel.</li>
+                <li><strong>Export:</strong> Use the Actions menu to export the list as CSV.</li>
+              </ul>
+            </div>
+          </ng-container>
+
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

@@ -1,0 +1,40 @@
+<div class="bc-card">
+  <div class="bc-sectionHead">
+    <h6 class="bc-sectionLabel mb-0">{{ widget.title }}</h6>
+  </div>
+  <div class="bc-cardInner p-0">
+    @if (hasRows) {
+      <div class="table-responsive">
+        <table class="table table-dark mb-0 align-middle bc-table">
+          <thead>
+            <tr>
+              @for (col of tableData.columns; track col) {
+                <th>{{ col }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of tableData.rows; track $index) {
+              <tr>
+                @for (cell of row; track $index; let i = $index) {
+                  <td>
+                    @if (isPill(tableData.columns[i])) {
+                      <span [ngClass]="pillClass(tableData.columns[i], cell)">{{ cell }}</span>
+                    } @else {
+                      {{ cell }}
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="bc-tableEmpty text-center py-4">
+        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+        <span class="bc-sub">No entries</span>
+      </div>
+    }
+  </div>
+</div>

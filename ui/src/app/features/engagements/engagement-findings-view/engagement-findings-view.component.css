@@ -1,0 +1,71 @@
+/* ===== Draft Badge ===== */
+
+.bc-draftBadge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(201, 212, 255, .12);
+  color: rgba(201, 212, 255, .7);
+  border: 1px solid rgba(201, 212, 255, .18);
+  vertical-align: middle;
+}
+
+/* ===== Status Pills ===== */
+
+.bc-statusPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  white-space: nowrap;
+  border: 1px solid rgba(201, 212, 255, .20);
+  color: rgba(201, 212, 255, .70);
+  background: rgba(201, 212, 255, .06);
+}
+
+.bc-statusPill--open {
+  border-color: rgba(0, 255, 179, .35);
+  color: #00ffb3;
+  background: rgba(0, 255, 179, .10);
+}
+
+.bc-statusPill--triage {
+  border-color: rgba(0, 183, 255, .35);
+  color: #55ccff;
+  background: rgba(0, 183, 255, .10);
+}
+
+.bc-statusPill--accepted {
+  border-color: rgba(255, 220, 50, .35);
+  color: #ffe066;
+  background: rgba(255, 220, 50, .10);
+}
+
+.bc-statusPill--fixed {
+  border-color: rgba(160, 170, 200, .28);
+  color: rgba(201, 212, 255, .55);
+  background: rgba(201, 212, 255, .06);
+}
+
+.bc-statusPill--false_positive {
+  border-color: rgba(160, 170, 200, .20);
+  color: rgba(201, 212, 255, .40);
+  background: rgba(201, 212, 255, .04);
+}
+
+/* ===== Finding ID ===== */
+
+.bc-findingId {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  color: rgba(201, 212, 255, .45);
+  word-break: break-all;
+}

@@ -1,0 +1,33 @@
+{% extends "shells/base.html" %}
+{% block title %}Backup codes regenerated — BytesCop{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                Your MFA backup codes have been <strong style="color:#00b7ff;">regenerated</strong>. All previous backup codes are now invalid.
+              </p>
+
+              <!-- Info box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(0,183,255,0.06); border:1px solid rgba(0,183,255,0.12); border-radius:6px;">
+                    <p style="margin:0; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      Make sure you have saved your new backup codes in a safe place. They are the only way to access your account if you lose your authenticator device.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Warning box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(255,59,122,0.06); border:1px solid rgba(255,59,122,0.12); border-radius:6px;">
+                    <p style="margin:0; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      If you did not regenerate your backup codes, your account may be compromised. Contact your organization administrator immediately.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+{% endblock %}
+{% block sub_footer %}You received this email because MFA backup codes were regenerated on your BytesCop account.{% endblock %}

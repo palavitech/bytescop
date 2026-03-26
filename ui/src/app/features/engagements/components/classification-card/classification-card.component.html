@@ -1,0 +1,31 @@
+<ng-container *ngIf="hasAny">
+  <div [class.bc-classCard]="!bare">
+    <div class="bc-classCardTitle" *ngIf="!bare">
+      <i class="bi bi-shield-check"></i>
+      <span>Classification</span>
+    </div>
+
+    <div class="bc-classItem" *ngIf="areaEntry as entry">
+      <div class="bc-classItemLabel">Assessment Area</div>
+      <div class="bc-classItemName">{{ entry.name }}</div>
+      <div class="bc-classItemDesc">{{ entry.description }}</div>
+    </div>
+
+    <div class="bc-classItem" *ngIf="owaspEntry as entry">
+      <div class="bc-classItemLabel">OWASP Top 10</div>
+      <div class="bc-classItemName">{{ entry.code }} — {{ entry.name }}</div>
+      <div class="bc-classItemDesc">{{ entry.description }}</div>
+    </div>
+
+    <div class="bc-classItem" *ngIf="cweId && cweEntry as entry">
+      <div class="bc-classItemLabel">CWE</div>
+      <div class="bc-classItemName">{{ entry.code }} — {{ entry.name }}</div>
+      <div class="bc-classItemDesc">{{ entry.description }}</div>
+    </div>
+    <div class="bc-classItem" *ngIf="cweId && !cweEntry">
+      <div class="bc-classItemLabel">CWE</div>
+      <div class="bc-classItemName">{{ cweId }}</div>
+      <div class="bc-classItemDesc bc-sub">Loading description...</div>
+    </div>
+  </div>
+</ng-container>

@@ -1,0 +1,49 @@
+<div class="bc-commentsSection">
+  <div class="bc-sectionHead">
+    <div class="d-flex align-items-center gap-2">
+      <h3 class="bc-sectionLabel mb-0">Discussion</h3>
+      <span class="badge bg-secondary" *ngIf="state === 'ready'">{{ total }}</span>
+    </div>
+    <button class="btn btn-sm btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+      <i class="bi bi-arrow-repeat"></i>
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="bc-cardInner p-4" *ngIf="state === 'init'">
+    <div class="bc-sub">Loading discussion...</div>
+  </div>
+
+  <!-- Error -->
+  <div class="bc-cardInner p-4" *ngIf="state === 'error'">
+    <div class="bc-sub text-danger">Could not load comments.</div>
+  </div>
+
+  <!-- Ready -->
+  <ng-container *ngIf="state === 'ready'">
+    <!-- New comment input -->
+    <div class="bc-cardInner p-4" *bcHasPermission="'comment.create'">
+      <bc-comment-input
+        #newCommentInput
+        [submitting]="submitting"
+        (submitted)="onCommentSubmit($event, newCommentInput)"
+      ></bc-comment-input>
+    </div>
+
+    <!-- Comments list -->
+    <div class="bc-commentsList" *ngIf="comments.length > 0">
+      <bc-comment-item
+        *ngFor="let comment of comments"
+        [comment]="comment"
+        (replied)="onReply($event)"
+        (edited)="onEdit($event)"
+        (deleted)="onDelete($event)"
+      ></bc-comment-item>
+    </div>
+
+    <!-- Empty state -->
+    <div class="bc-cardInner p-4 text-center" *ngIf="comments.length === 0">
+      <div class="bc-sub">No comments yet. Start the discussion.</div>
+    </div>
+  </ng-container>
+</div>

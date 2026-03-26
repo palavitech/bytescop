@@ -1,0 +1,80 @@
+.bc-scopeHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgba(0, 255, 179, 0.1);
+  border-bottom: 1px solid rgba(0, 255, 179, 0.06);
+  position: relative;
+}
+
+.bc-typeBadge {
+  font-size: 0.78rem;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.5px;
+  color: var(--bc-blue);
+}
+
+:host ::ng-deep .bc-iconBtnActive.btn-outline-light {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.bc-timelineChart {
+  position: relative;
+  height: 280px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 0.75rem 0.75rem 1.5rem;
+}
+
+.bc-timelineChart canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.bc-summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 992px) {
+  .bc-summaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bc-widgetTitle {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 400;
+}
+
+.bc-chartWrap {
+  position: relative;
+  height: 240px;
+}
+
+.bc-chartWrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.bc-chartEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: rgba(201, 212, 255, 0.4);
+  padding: 3rem 1rem;
+}
+
+.bc-chartEmpty .bi {
+  font-size: 1.5rem;
+}

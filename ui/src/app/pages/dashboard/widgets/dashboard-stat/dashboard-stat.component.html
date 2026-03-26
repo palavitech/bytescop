@@ -1,0 +1,9 @@
+<div class="bc-miniCard bc-card">
+  <div class="bc-cardInner d-flex align-items-center gap-3 p-3">
+    <i class="bi bc-kpiIcon" [ngClass]="iconClass" [style.color]="iconColor"></i>
+    <div>
+      <div class="bc-kpiValue">{{ statData.value }}{{ statData.suffix ?? '' }}</div>
+      <div class="bc-kpiLabel">{{ widget.title }}</div>
+    </div>
+  </div>
+</div>

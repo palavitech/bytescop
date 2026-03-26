@@ -1,0 +1,92 @@
+<div class="bc-authWrap">
+  <div class="bc-authCard">
+    <div class="bc-authInner">
+
+      <div class="bc-authBrand">
+        <div class="bc-logoMark"></div>
+        <div class="bc-brandText">
+          <strong>BytesCop</strong>
+          <span>security findings vault</span>
+        </div>
+      </div>
+
+      <!-- Setup complete -->
+      <ng-container *ngIf="setupComplete; else setupForm">
+        <div class="bc-emailSentIcon bc-emailSentIcon--success">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <h1 class="bc-authTitle">Setup Complete</h1>
+        <p class="bc-authSub" style="margin-bottom: 16px;">
+          Your workspace <strong style="color: var(--bc-text);">{{ form.workspace_name }}</strong> is ready.
+        </p>
+        <p class="bc-authSub">
+          Log in with your admin email to get started. You can add team members from the Admin panel.
+        </p>
+        <button class="bc-authSubmit" (click)="goToLogin()">Go to Login</button>
+      </ng-container>
+
+      <!-- Setup form -->
+      <ng-template #setupForm>
+        <h1 class="bc-authTitle">Welcome to BytesCop</h1>
+        <p class="bc-authSub">Set up your workspace and admin account to get started.</p>
+
+        <div class="bc-authError" *ngIf="apiError">{{ apiError }}</div>
+
+        <form (ngSubmit)="onSubmit()" autocomplete="off">
+
+          <div class="bc-authField">
+            <label for="workspaceName">Workspace Name <span class="bc-required">*</span></label>
+            <input #workspaceInput id="workspaceName" type="text" class="form-control" placeholder="My Company"
+              [(ngModel)]="form.workspace_name" name="workspace_name" required>
+          </div>
+
+          <div class="bc-authRow">
+            <div class="bc-authField">
+              <label for="firstName">Admin First Name <span class="bc-required">*</span></label>
+              <input id="firstName" type="text" class="form-control" placeholder="Jane"
+                [(ngModel)]="form.admin_first_name" name="admin_first_name" required>
+            </div>
+            <div class="bc-authField">
+              <label for="lastName">Admin Last Name</label>
+              <input id="lastName" type="text" class="form-control" placeholder="Doe"
+                [(ngModel)]="form.admin_last_name" name="admin_last_name">
+            </div>
+          </div>
+
+          <div class="bc-authField">
+            <label for="email">Admin Email <span class="bc-required">*</span></label>
+            <input id="email" type="email" class="form-control" placeholder="admin@yourcompany.com"
+              [(ngModel)]="form.admin_email" name="admin_email" required>
+          </div>
+
+          <div class="bc-authField">
+            <label for="password">Password <span class="bc-required">*</span></label>
+            <input id="password" type="password" class="form-control" placeholder="At least 12 characters"
+              [(ngModel)]="form.admin_password" name="admin_password" required minlength="12">
+            <div class="bc-policyChecklist" *ngIf="form.admin_password">
+              <div class="bc-policyItem" [class.is-met]="form.admin_password.length >= 12">
+                <i class="bi" [class.bi-check-circle-fill]="form.admin_password.length >= 12"
+                   [class.bi-circle]="form.admin_password.length < 12"></i>
+                At least 12 characters
+              </div>
+            </div>
+          </div>
+
+          <div class="bc-authField">
+            <label for="passwordConfirm">Confirm Password <span class="bc-required">*</span></label>
+            <input id="passwordConfirm" type="password" class="form-control" placeholder="Repeat password"
+              [(ngModel)]="form.password_confirm" name="password_confirm" required
+              [class.is-invalid]="passwordMismatch">
+            <div class="invalid-feedback" *ngIf="passwordMismatch">Passwords do not match.</div>
+          </div>
+
+          <button type="submit" class="bc-authSubmit" [disabled]="!canSubmit">
+            {{ submitting ? 'Setting up...' : 'Complete Setup' }}
+          </button>
+
+        </form>
+      </ng-template>
+
+    </div>
+  </div>
+</div>

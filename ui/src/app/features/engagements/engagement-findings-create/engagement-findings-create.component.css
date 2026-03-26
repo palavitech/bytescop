@@ -1,0 +1,541 @@
+/* Scope all rules under the component's host selector to prevent leaking
+   into other components (ViewEncapsulation.None is used so we can reach
+   into Milkdown's internal DOM). */
+
+app-engagement-findings-create .editorHost {
+  width: 100%;
+  height: 36lh;
+  min-height: 24lh;
+  max-height: 48lh;
+}
+
+app-engagement-findings-create #recEditor.editorHost {
+  height: 22lh;
+  min-height: 14lh;
+  max-height: 30lh;
+  overflow: auto;
+  position: relative;
+  border: none;
+  border-radius: 14px;
+  padding: 0;
+  background: transparent !important;
+}
+
+/* Force dark background on all Milkdown internal layers */
+app-engagement-findings-create .editorHost,
+app-engagement-findings-create .editorHost .milkdown,
+app-engagement-findings-create .editorHost .editor,
+app-engagement-findings-create .editorHost .milkdown-root,
+app-engagement-findings-create .editorHost .ProseMirror {
+  background: rgba(8, 12, 18, .85) !important;
+}
+
+/* Override any surface/container white backgrounds from Crepe theme */
+app-engagement-findings-create .editorHost [class*="surface"],
+app-engagement-findings-create .editorHost [class*="container"],
+app-engagement-findings-create .editorHost [data-milkdown-root] {
+  background: transparent !important;
+}
+
+/* ProseMirror contenteditable */
+app-engagement-findings-create .editorHost .ProseMirror {
+  min-height: 400px;
+  padding: 16px 18px;
+  padding-left: 84px;
+  outline: none;
+  color: rgba(235, 245, 255, .92) !important;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace !important;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: .1px;
+  caret-color: rgba(64, 255, 204, .95);
+}
+
+app-engagement-findings-create .editorHost .ProseMirror ::selection {
+  background: rgba(64, 255, 204, .22);
+}
+
+/* Headings */
+app-engagement-findings-create .editorHost .ProseMirror h1,
+app-engagement-findings-create .editorHost .ProseMirror h2,
+app-engagement-findings-create .editorHost .ProseMirror h3 {
+  color: rgba(235, 245, 255, .96);
+  margin: 14px 0 10px;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace !important;
+  font-weight: 700;
+}
+
+app-engagement-findings-create .editorHost .ProseMirror h1 { font-size: 22px; }
+app-engagement-findings-create .editorHost .ProseMirror h2 { font-size: 18px; }
+app-engagement-findings-create .editorHost .ProseMirror h3 { font-size: 16px; }
+
+/* Links */
+app-engagement-findings-create .editorHost .ProseMirror a {
+  color: rgba(120, 180, 255, .95);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(120, 180, 255, .45);
+}
+
+/* Blockquote */
+app-engagement-findings-create .editorHost .ProseMirror blockquote {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-left: 3px solid rgba(64, 255, 204, .55);
+  background: rgba(255, 255, 255, .04);
+  border-radius: 10px;
+  color: rgba(220, 235, 255, .88);
+}
+
+/* Inline code */
+app-engagement-findings-create .editorHost .ProseMirror code {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace !important;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .08);
+  color: rgba(255, 255, 255, .92);
+}
+
+/* Code blocks */
+app-engagement-findings-create .editorHost .ProseMirror pre {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid rgba(64, 255, 204, .16);
+  overflow: auto;
+}
+
+app-engagement-findings-create .editorHost .ProseMirror pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* Lists */
+app-engagement-findings-create .editorHost .ProseMirror ul,
+app-engagement-findings-create .editorHost .ProseMirror ol {
+  padding-left: 22px;
+  margin: 10px 0;
+}
+
+/* HR */
+app-engagement-findings-create .editorHost .ProseMirror hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(64, 255, 204, .35), transparent);
+  margin: 14px 0;
+}
+
+/* Images */
+app-engagement-findings-create .editorHost .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .10);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .35);
+}
+
+/* Tables */
+app-engagement-findings-create .editorHost .ProseMirror table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  margin: 12px 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .10);
+  background: rgba(255, 255, 255, .03);
+}
+
+app-engagement-findings-create .editorHost .ProseMirror th,
+app-engagement-findings-create .editorHost .ProseMirror td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  border-right: 1px solid rgba(255, 255, 255, .06);
+}
+
+app-engagement-findings-create .editorHost .ProseMirror th {
+  color: rgba(235, 245, 255, .96);
+  background: rgba(0, 0, 0, .22);
+  font-weight: 700;
+}
+
+/* Scrollbar */
+app-engagement-findings-create .editorHost::-webkit-scrollbar { width: 10px; height: 10px; }
+
+app-engagement-findings-create .editorHost::-webkit-scrollbar-thumb {
+  background: rgba(120, 180, 255, .18);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 999px;
+}
+
+app-engagement-findings-create .editorHost::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, .15);
+}
+
+/* Toolbar */
+app-engagement-findings-create .editorHost .milkdown-menu,
+app-engagement-findings-create .editorHost .crepe-toolbar,
+app-engagement-findings-create .editorHost .toolbar {
+  background: rgba(8, 12, 18, .92);
+  border-bottom: 1px solid rgba(255, 255, 255, .10);
+}
+
+app-engagement-findings-create .editorHost .milkdown-menu button,
+app-engagement-findings-create .editorHost .crepe-toolbar button,
+app-engagement-findings-create .editorHost .toolbar button {
+  color: rgba(235, 245, 255, .85);
+  border-radius: 10px;
+}
+
+app-engagement-findings-create .editorHost .milkdown-menu button:hover,
+app-engagement-findings-create .editorHost .crepe-toolbar button:hover,
+app-engagement-findings-create .editorHost .toolbar button:hover {
+  background: rgba(64, 255, 204, .10);
+  color: rgba(235, 245, 255, .96);
+}
+
+/* Placeholder text */
+app-engagement-findings-create .editorHost .ProseMirror p.is-empty:first-child::before,
+app-engagement-findings-create .editorHost .ProseMirror .is-empty::before,
+app-engagement-findings-create .editorHost .ProseMirror p[data-placeholder]::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: rgba(180, 200, 220, .45);
+}
+
+/* Milkdown fill host */
+app-engagement-findings-create .editorHost .milkdown,
+app-engagement-findings-create .editorHost .editor,
+app-engagement-findings-create .editorHost .milkdown-root {
+  min-height: 400px;
+}
+
+/* Crepe font overrides */
+app-engagement-findings-create .editorHost {
+  --crepe-font-default: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --crepe-font-title: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --crepe-font-code: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* =========================================================
+   Focus / selection / hover — replace Crepe's flat greys
+   with green-tinted equivalents for the dark theme.
+   ========================================================= */
+
+/* Override the Crepe colour tokens at the .milkdown scope so every
+   internal rule that references them picks up our palette. */
+app-engagement-findings-create .editorHost .milkdown {
+  --crepe-color-selected: rgba(64, 255, 204, .12);
+  --crepe-color-hover: rgba(64, 255, 204, .07);
+  --crepe-color-surface: rgba(8, 12, 18, .85);
+  --crepe-color-surface-low: rgba(6, 10, 16, .90);
+  --crepe-color-background: rgba(8, 12, 18, .85);
+  --crepe-color-outline: rgba(64, 255, 204, .20);
+  --crepe-color-primary: rgba(64, 255, 204, .85);
+  --crepe-color-secondary: rgba(64, 255, 204, .12);
+  --crepe-color-on-background: rgba(235, 245, 255, .90);
+  --crepe-color-on-surface: rgba(235, 245, 255, .90);
+  --crepe-color-on-secondary: rgba(64, 255, 204, .95);
+}
+
+/* Text selection highlight — green tint instead of grey wash */
+app-engagement-findings-create .editorHost .ProseMirror *::selection {
+  background: rgba(64, 255, 204, .18) !important;
+}
+
+/* Selected node overlay (images, code blocks, etc.) */
+app-engagement-findings-create .editorHost .ProseMirror .ProseMirror-selectednode {
+  background: rgba(64, 255, 204, .06) !important;
+  outline: 1px solid rgba(64, 255, 204, .25) !important;
+  border-radius: 6px;
+}
+
+/* Kill the Crepe color-mix pseudo-element overlay on selected image blocks */
+app-engagement-findings-create .editorHost .milkdown-image-block.selected > .image-edit::before,
+app-engagement-findings-create .editorHost .milkdown-image-block.ProseMirror-selectednode > .image-edit::before {
+  background: rgba(64, 255, 204, .04) !important;
+}
+
+/* Block-edit operation items */
+app-engagement-findings-create .editorHost .operation-item:hover {
+  background: rgba(64, 255, 204, .08) !important;
+}
+app-engagement-findings-create .editorHost .operation-item.active {
+  background: rgba(64, 255, 204, .12) !important;
+}
+
+/* Toolbar button active/pressed state */
+app-engagement-findings-create .editorHost .toolbar-item:active {
+  background: rgba(64, 255, 204, .12) !important;
+}
+app-engagement-findings-create .editorHost .toolbar-item:hover {
+  background: rgba(64, 255, 204, .08) !important;
+}
+
+/* Blockquote left accent bar */
+app-engagement-findings-create .editorHost .ProseMirror blockquote::before {
+  background: rgba(64, 255, 204, .40) !important;
+}
+
+/* Code block selected outline */
+app-engagement-findings-create .editorHost .milkdown-code-block.selected {
+  outline: 1px solid rgba(64, 255, 204, .25) !important;
+}
+
+/* =========================================================
+   Image block — /image upload strip
+   Override Crepe CSS variables + targeted rules.
+   ========================================================= */
+
+/* Override Crepe theme variables for image block context */
+app-engagement-findings-create .editorHost .milkdown-image-block {
+  --crepe-color-surface: transparent;
+  --crepe-color-outline: rgba(64, 255, 204, .45);
+  --crepe-color-primary: rgba(64, 255, 204, .90);
+  --crepe-color-secondary: rgba(64, 255, 204, .12);
+  --crepe-color-on-secondary: rgba(64, 255, 204, .95);
+  --crepe-color-on-background: rgba(235, 245, 255, .90);
+  --crepe-color-hover: rgba(64, 255, 204, .08);
+  margin: 6px 0;
+}
+
+/* Strip container */
+app-engagement-findings-create .editorHost .milkdown-image-block > .image-edit {
+  background: rgba(255, 255, 255, .03) !important;
+  border: 1px dashed rgba(64, 255, 204, .18) !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  gap: 12px !important;
+  height: auto !important;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+app-engagement-findings-create .editorHost .milkdown-image-block > .image-edit:hover {
+  border-color: rgba(64, 255, 204, .30) !important;
+  background: rgba(255, 255, 255, .04) !important;
+}
+
+/* Image icon — green tinted */
+app-engagement-findings-create .editorHost .milkdown-image-block .image-icon {
+  color: rgba(64, 255, 204, .40) !important;
+}
+
+app-engagement-findings-create .editorHost .milkdown-image-block .image-icon svg {
+  fill: rgba(64, 255, 204, .40) !important;
+}
+
+/* Upload button */
+app-engagement-findings-create .editorHost .milkdown-image-block .placeholder .uploader {
+  background: rgba(64, 255, 204, .08) !important;
+  border: 1px solid rgba(64, 255, 204, .25) !important;
+  color: rgba(64, 255, 204, .92) !important;
+  padding: 4px 14px !important;
+  border-radius: 6px !important;
+  font-family: "IBM Plex Mono", monospace !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: .2px !important;
+  cursor: pointer !important;
+  transition: all .15s ease !important;
+}
+
+app-engagement-findings-create .editorHost .milkdown-image-block .placeholder .uploader:hover {
+  background: rgba(64, 255, 204, .15) !important;
+  border-color: rgba(64, 255, 204, .45) !important;
+  box-shadow: 0 0 10px rgba(64, 255, 204, .08) !important;
+  color: rgba(64, 255, 204, 1) !important;
+}
+
+/* Upload button icon */
+app-engagement-findings-create .editorHost .milkdown-image-block .placeholder .uploader .milkdown-icon {
+  color: rgba(64, 255, 204, .80) !important;
+}
+
+/* "or paste link" hint */
+app-engagement-findings-create .editorHost .milkdown-image-block .placeholder .text {
+  color: rgba(180, 200, 220, .75) !important;
+  font-family: "IBM Plex Mono", monospace !important;
+  font-size: 12px !important;
+}
+
+/* Link input */
+app-engagement-findings-create .editorHost .milkdown-image-block .link-input-area {
+  color: rgba(235, 245, 255, .90) !important;
+  caret-color: rgba(64, 255, 204, .95) !important;
+  background: transparent !important;
+  border: 0 !important;
+  font-family: "IBM Plex Mono", monospace !important;
+  font-size: 13px !important;
+  outline: none !important;
+}
+
+app-engagement-findings-create .editorHost .milkdown-image-block .link-input-area::placeholder {
+  color: rgba(180, 200, 220, .25) !important;
+}
+
+/* Confirm button (appears when link is typed) */
+app-engagement-findings-create .editorHost .milkdown-image-block .confirm {
+  background: rgba(64, 255, 204, .12) !important;
+  color: rgba(64, 255, 204, .95) !important;
+  border-radius: 6px !important;
+  font-family: "IBM Plex Mono", monospace !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background .15s ease !important;
+}
+
+app-engagement-findings-create .editorHost .milkdown-image-block .confirm:hover {
+  background: rgba(64, 255, 204, .22) !important;
+}
+
+/* Caption input below image */
+app-engagement-findings-create .editorHost .milkdown-image-block .caption-input {
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, .05) !important;
+  color: rgba(235, 245, 255, .70) !important;
+  caret-color: rgba(64, 255, 204, .95) !important;
+  font-family: "IBM Plex Mono", monospace !important;
+  font-size: 11px !important;
+  text-align: center !important;
+  padding: 5px 10px !important;
+  outline: none !important;
+}
+
+app-engagement-findings-create .editorHost .milkdown-image-block .caption-input::placeholder {
+  color: rgba(180, 200, 220, .25) !important;
+}
+
+/* Selected state */
+app-engagement-findings-create .editorHost .milkdown-image-block.selected,
+app-engagement-findings-create .editorHost .milkdown-image-block.ProseMirror-selectednode {
+  background: transparent !important;
+}
+
+app-engagement-findings-create .editorHost .milkdown-image-block.selected > .image-edit,
+app-engagement-findings-create .editorHost .milkdown-image-block.ProseMirror-selectednode > .image-edit {
+  border-color: rgba(64, 255, 204, .35) !important;
+  background: rgba(64, 255, 204, .03) !important;
+}
+
+/* List bullets, numbers, and checkboxes — off-white to match legacy */
+app-engagement-findings-create .editorHost .milkdown-list-item-block .label-wrapper {
+  color: rgba(220, 230, 245, .70) !important;
+}
+app-engagement-findings-create .editorHost .milkdown-list-item-block .label-wrapper svg {
+  fill: rgba(220, 230, 245, .70) !important;
+}
+
+/* Slash menu border */
+app-engagement-findings-create .editorHost .milkdown-slash-menu {
+  border: 1px solid rgba(64, 255, 204, .22);
+}
+
+/* Kill any stray Crepe backgrounds inside image block */
+app-engagement-findings-create .editorHost .milkdown-image-block *:not(img):not(.uploader):not(.confirm) {
+  background-color: transparent !important;
+}
+
+/* Image upload spinner overlay */
+app-engagement-findings-create .bc-editorShellWrap {
+  position: relative;
+}
+
+app-engagement-findings-create .bc-editorUploadOverlay {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(0, 255, 179, 0.25);
+  z-index: 10;
+  pointer-events: none;
+}
+
+app-engagement-findings-create .bc-editorSpinnerRing {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 255, 179, 0.15);
+  border-top-color: var(--bc-accent, #00ffb3);
+  border-radius: 50%;
+  animation: editorSpin 0.8s linear infinite;
+}
+
+app-engagement-findings-create .bc-editorSpinnerText {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--bc-accent, #00ffb3);
+  opacity: 0.9;
+}
+
+@keyframes editorSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== CWE Typeahead Dropdown ===== */
+
+app-engagement-findings-create .bc-tzDropdown {
+  position: relative;
+}
+
+app-engagement-findings-create .bc-tzList {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bc-card, #0d1117);
+  border: 1px solid rgba(0, 255, 179, 0.18);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+}
+
+app-engagement-findings-create .bc-tzList::-webkit-scrollbar {
+  width: 6px;
+}
+
+app-engagement-findings-create .bc-tzList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+app-engagement-findings-create .bc-tzList::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 179, 0.18);
+  border-radius: 3px;
+}
+
+app-engagement-findings-create .bc-tzItem {
+  padding: 0.4rem 0.75rem;
+  color: var(--bc-text, #c9d1d9);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+app-engagement-findings-create .bc-tzItem:hover {
+  background: rgba(0, 255, 179, 0.08);
+  color: var(--bc-accent, #00ffb3);
+}
+
+app-engagement-findings-create .bc-tzItem.is-selected {
+  background: rgba(0, 255, 179, 0.14);
+  color: var(--bc-accent, #00ffb3);
+}
+
+app-engagement-findings-create .bc-tzItem.is-highlighted {
+  background: rgba(0, 255, 179, 0.08);
+  color: var(--bc-accent, #00ffb3);
+}

@@ -1,0 +1,392 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+      <div class="bc-pageCard mb-3">
+        <div class="bc-pageCardHead">
+          <div class="bc-pageCardTitle">
+            <div class="bc-h1">Audit Log</div>
+            <div class="bc-sub">Track all actions performed across the platform.</div>
+          </div>
+          <div class="bc-pageCardTools">
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+              <i class="bi bi-arrow-left"></i>
+              <span>Back</span>
+            </button>
+            <button class="btn btn-outline-light bc-iconBtn" type="button"
+              [class.bc-iconBtnActive]="showFilters" (click)="toggleFilters()">
+              <i class="bi bi-funnel"></i>
+              <span>Filter</span>
+            </button>
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+              <i class="bi bi-arrow-repeat"></i>
+              <span>Refresh</span>
+            </button>
+            <button class="btn btn-outline-light bc-iconBtn" type="button"
+              [class.bc-iconBtnActive]="showSummary" (click)="toggleSummary()">
+              <i class="bi bi-bar-chart"></i>
+              <span>Visualize</span>
+            </button>
+            <button class="btn btn-outline-light bc-iconBtn" type="button"
+              [class.bc-iconBtnActive]="showHelp" (click)="toggleHelp()">
+              <i class="bi bi-question-circle"></i>
+              <span>Help</span>
+            </button>
+          </div>
+        </div>
+        <div class="bc-pageCardFoot">
+          <div class="bc-pageCardFootLeft">
+            <div class="bc-badge" *ngIf="vm.state === 'ready'">
+              <span class="bc-dot"></span>
+              <span>Total: {{ vm.count }}</span>
+            </div>
+
+            <!-- Active filter pills -->
+            <ng-container *ngIf="vm.state === 'ready' && hasActiveFilters">
+              <div class="bc-activeFilters mt-2">
+                <div class="bc-activeLabel">Filtered by:</div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="bc-pillBadge" *ngIf="filterActor">
+                    <span class="bc-pillText">User: {{ actorEmail }}</span>
+                    <button type="button" class="bc-pillX" (click)="clearFilter('actor')" aria-label="Remove user filter">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </span>
+                  <span class="bc-pillBadge" *ngIf="filterAction">
+                    <span class="bc-pillText">Action: {{ actionLabels[filterAction] }}</span>
+                    <button type="button" class="bc-pillX" (click)="clearFilter('action')" aria-label="Remove action filter">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </span>
+                  <span class="bc-pillBadge" *ngIf="filterResourceType">
+                    <span class="bc-pillText">Resource: {{ filterResourceType }}</span>
+                    <button type="button" class="bc-pillX" (click)="clearFilter('resourceType')" aria-label="Remove resource type filter">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </span>
+                  <span class="bc-pillBadge" *ngIf="filterDateFrom">
+                    <span class="bc-pillText">From: {{ filterDateFrom }}</span>
+                    <button type="button" class="bc-pillX" (click)="clearFilter('dateFrom')" aria-label="Remove date from filter">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </span>
+                  <span class="bc-pillBadge" *ngIf="filterDateTo">
+                    <span class="bc-pillText">To: {{ filterDateTo }}</span>
+                    <button type="button" class="bc-pillX" (click)="clearFilter('dateTo')" aria-label="Remove date to filter">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </span>
+                  <span class="bc-pillBadge" *ngIf="filterResourceId">
+                    <span class="bc-pillText">ID: {{ filterResourceId }}</span>
+                    <button type="button" class="bc-pillX" (click)="clearFilter('resourceId')" aria-label="Remove resource ID filter">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </span>
+                  <span class="bc-pillBadge" *ngIf="filterEngagement">
+                    <span class="bc-pillText">Engagement: {{ filterEngagementName || filterEngagement }}</span>
+                    <button type="button" class="bc-pillX" (click)="clearFilter('engagement')" aria-label="Remove engagement filter">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </span>
+                  <span class="bc-pillBadge" *ngIf="filterIpAddress">
+                    <span class="bc-pillText">IP: {{ filterIpAddress }}</span>
+                    <button type="button" class="bc-pillX" (click)="clearFilter('ipAddress')" aria-label="Remove IP filter">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </span>
+                  <button class="btn btn-outline-light bc-btnSoft bc-btnSm" type="button"
+                    (click)="clearFilters()" title="Clear all filters">
+                    <i class="bi bi-eraser"></i>
+                    <span class="ms-2">Clear</span>
+                  </button>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+          <div class="bc-pageCardFootRight">
+            <label class="bc-pageSizeLabel" *ngIf="vm.state === 'ready'">
+              <span>Per page:</span>
+              <select class="bc-pageSizeSelect"
+                [ngModel]="vm.pageSize"
+                (ngModelChange)="onPageSizeChange($event)">
+                <option *ngFor="let opt of pageSizeOptions" [ngValue]="opt">{{ opt }}</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp || showFilters">
+
+        <main>
+
+          <!-- Visualization panel -->
+          <div class="bc-card mb-3" *ngIf="showSummary">
+            <div class="bc-sectionHead">
+              <div class="d-flex align-items-center gap-2">
+                <h3 class="bc-sectionLabel mb-0">Visualization</h3>
+              </div>
+              <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleSummary()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div class="bc-cardInner p-3">
+              <div *ngIf="summaryLoading" class="bc-sub p-3 text-center">Loading charts...</div>
+              <div class="bc-summaryGrid" *ngIf="!summaryLoading">
+                <div class="bc-summaryChart">
+                  <div class="bc-chartLabel">Actions on Engagements by Users <span class="bc-chartHint" *ngIf="chartHasData['engActions']">(click to filter)</span></div>
+                  <canvas #engActionsChart *ngIf="chartHasData['engActions']"></canvas>
+                  <div class="bc-chartEmpty" *ngIf="!chartHasData['engActions']">
+                    <i class="bi bi-bar-chart"></i>
+                    <span>No engagement actions recorded</span>
+                  </div>
+                </div>
+                <div class="bc-summaryChart">
+                  <div class="bc-chartLabel">Actions on Findings by Users <span class="bc-chartHint" *ngIf="chartHasData['findingActions']">(click to filter)</span></div>
+                  <canvas #findingActionsChart *ngIf="chartHasData['findingActions']"></canvas>
+                  <div class="bc-chartEmpty" *ngIf="!chartHasData['findingActions']">
+                    <i class="bi bi-bar-chart"></i>
+                    <span>No finding actions recorded</span>
+                  </div>
+                </div>
+                <div class="bc-summaryChart">
+                  <div class="bc-chartLabel">Actions by IP Address <span class="bc-chartHint" *ngIf="chartHasData['actionsByIp']">(click to filter)</span></div>
+                  <canvas #actionsByIpChart *ngIf="chartHasData['actionsByIp']"></canvas>
+                  <div class="bc-chartEmpty" *ngIf="!chartHasData['actionsByIp']">
+                    <i class="bi bi-bar-chart"></i>
+                    <span>No IP address data available</span>
+                  </div>
+                </div>
+                <div class="bc-summaryChart">
+                  <div class="bc-chartLabel">Top Actors <span class="bc-chartHint" *ngIf="chartHasData['topActors']">(click to filter)</span></div>
+                  <canvas #actorChart *ngIf="chartHasData['topActors']"></canvas>
+                  <div class="bc-chartEmpty" *ngIf="!chartHasData['topActors']">
+                    <i class="bi bi-bar-chart"></i>
+                    <span>No actor activity recorded</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="bc-card">
+            <div class="bc-cardInner p-0">
+              <div class="table-responsive">
+                <table class="table table-dark mb-0 align-middle bc-table">
+                  <thead>
+                    <tr>
+                      <th style="min-width:170px">Timestamp</th>
+                      <th style="min-width:110px">Action</th>
+                      <th style="min-width:100px">Resource</th>
+                      <th style="min-width:200px">Description</th>
+                      <th style="min-width:180px">User</th>
+                      <th style="min-width:120px">IP Address</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+
+                    <!-- Loading -->
+                    <tr *ngIf="vm.state === 'init'">
+                      <td colspan="6" class="p-4">
+                        <div class="bc-sub">Fetching audit logs...</div>
+                      </td>
+                    </tr>
+
+                    <!-- Error -->
+                    <tr *ngIf="vm.state === 'error'">
+                      <td colspan="6" class="p-4">
+                        <div class="alert alert-danger mb-0">Could not load audit logs.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Empty -->
+                    <tr *ngIf="vm.state === 'ready' && vm.entries.length === 0">
+                      <td colspan="6" class="p-4">
+                        <div class="bc-sub">No audit log entries found.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Data rows -->
+                    <ng-container *ngIf="vm.state === 'ready'">
+                      <tr *ngFor="let entry of vm.entries">
+                        <td>
+                          <a class="bc-rowLink" [routerLink]="['/admin/audit', entry.id]">
+                            {{ entry.timestamp | bcDate:'datetime' }}
+                          </a>
+                        </td>
+                        <td>
+                          <span class="badge bc-actionBadge"
+                            [class.bg-success]="getActionColor(entry.action) === 'success'"
+                            [class.bg-info]="getActionColor(entry.action) === 'info'"
+                            [class.bg-danger]="getActionColor(entry.action) === 'danger'"
+                            [class.bg-warning]="getActionColor(entry.action) === 'warning'"
+                            [class.bg-orange]="getActionColor(entry.action) === 'orange'"
+                            [class.bg-secondary]="getActionColor(entry.action) === 'secondary'"
+                            [class.bg-primary]="getActionColor(entry.action) === 'primary'">
+                            {{ getActionLabel(entry.action) }}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="bc-resourceType">{{ entry.resource_type }}</span>
+                        </td>
+                        <td>
+                          <span class="bc-sub bc-reprText">{{ entry.resource_repr || '\u2014' }}</span>
+                        </td>
+                        <td>{{ entry.actor_email || '\u2014' }}</td>
+                        <td>
+                          <span class="bc-sub">{{ entry.ip_address || '\u2014' }}</span>
+                        </td>
+                      </tr>
+                    </ng-container>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div class="bc-pagination" *ngIf="vm.state === 'ready' && vm.numPages > 1">
+            <div class="bc-paginationInner">
+              <button class="bc-pageBtn" (click)="prevPage(vm)" [disabled]="vm.page <= 1"
+                aria-label="Previous page">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+
+              <ng-container *ngFor="let p of getPageRange(vm.page, vm.numPages)">
+                <span class="bc-pageEllipsis" *ngIf="p === null">&hellip;</span>
+                <button class="bc-pageBtn" *ngIf="p !== null"
+                  [class.bc-pageBtnActive]="p === vm.page"
+                  (click)="goToPage(p)">
+                  {{ p }}
+                </button>
+              </ng-container>
+
+              <button class="bc-pageBtn" (click)="nextPage(vm)" [disabled]="vm.page >= vm.numPages"
+                aria-label="Next page">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+            <div class="bc-pageInfo">Page {{ vm.page }} of {{ vm.numPages }}</div>
+          </div>
+
+        </main>
+
+        <!-- Right pane: Filters + Help -->
+        <aside class="bc-helpPane" *ngIf="showHelp || showFilters">
+
+          <!-- Filters -->
+          <ng-container *ngIf="showFilters">
+            <div class="bc-helpHead">
+              <div>
+                <div class="bc-helpKicker">Filters</div>
+                <div class="bc-helpTitle">Audit Log</div>
+              </div>
+              <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleFilters()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <div class="bc-helpBody">
+              <div class="d-grid gap-3" aria-label="Audit log filters">
+
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">User</span>
+                  <select class="form-select form-select-sm bc-filterSelect"
+                    [(ngModel)]="filterActor" (ngModelChange)="applyFilters()">
+                    <option value="">All users</option>
+                    <option *ngFor="let m of members" [value]="m.user.id">{{ m.user.email }}</option>
+                  </select>
+                </label>
+
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">Action</span>
+                  <select class="form-select form-select-sm bc-filterSelect"
+                    [(ngModel)]="filterAction" (ngModelChange)="applyFilters()">
+                    <option value="">Any action</option>
+                    <option *ngFor="let a of actions" [value]="a">{{ actionLabels[a] }}</option>
+                  </select>
+                </label>
+
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">Resource Type</span>
+                  <select class="form-select form-select-sm bc-filterSelect"
+                    [(ngModel)]="filterResourceType" (ngModelChange)="applyFilters()">
+                    <option value="">Any type</option>
+                    <option *ngFor="let r of resourceTypes" [value]="r">{{ r }}</option>
+                  </select>
+                </label>
+
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">Date From</span>
+                  <input type="date" class="form-control form-control-sm bc-filterSelect"
+                    [(ngModel)]="filterDateFrom" (ngModelChange)="applyFilters()">
+                </label>
+
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">Date To</span>
+                  <input type="date" class="form-control form-control-sm bc-filterSelect"
+                    [(ngModel)]="filterDateTo" (ngModelChange)="applyFilters()">
+                </label>
+
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">Resource ID</span>
+                  <input type="text" class="form-control form-control-sm bc-filterSelect"
+                    placeholder="UUID..."
+                    [(ngModel)]="filterResourceId" (blur)="applyFilters()">
+                </label>
+
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">IP Address</span>
+                  <input type="text" class="form-control form-control-sm bc-filterSelect"
+                    placeholder="e.g. 10.0.0.1"
+                    [(ngModel)]="filterIpAddress" (blur)="applyFilters()">
+                </label>
+
+                <button class="btn btn-outline-light bc-btnSm" type="button"
+                  (click)="clearFilters()" [disabled]="!hasActiveFilters">
+                  <i class="bi bi-eraser"></i>
+                  <span class="ms-2">Clear</span>
+                </button>
+
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Help -->
+          <ng-container *ngIf="showHelp">
+            <div class="bc-helpHead">
+              <div>
+                <div class="bc-helpKicker">Help</div>
+                <div class="bc-helpTitle">Audit Log</div>
+              </div>
+              <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div class="bc-helpBody">
+              <div class="bc-sub mb-2">
+                The audit log tracks all actions performed in this tenant,
+                including resource changes, authentication events, and admin operations.
+              </div>
+              <ul class="bc-helpList">
+                <li><strong>Visualize:</strong> Click Visualize to view interactive charts showing activity trends, action distribution, resource breakdowns, and top actors. Click any bar to filter. Charts react to active filters.</li>
+                <li><strong>Filters:</strong> Use the filter panel to narrow results by user, action type, resource type, date range, resource ID, or IP address.</li>
+                <li><strong>Detail View:</strong> Click a timestamp to see full details including before/after snapshots and field-level diffs.</li>
+                <li><strong>Pagination:</strong> Navigate between pages using the controls below the table. Change page size in the header bar.</li>
+                <li><strong>Read-only:</strong> Audit logs cannot be modified or deleted.</li>
+              </ul>
+            </div>
+          </ng-container>
+
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

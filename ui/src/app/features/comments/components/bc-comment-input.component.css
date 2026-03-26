@@ -1,0 +1,98 @@
+/* --- Comment input area --- */
+.bc-commentInput {
+  position: relative;
+}
+
+.bc-commentInputWrap {
+  position: relative;
+}
+
+.bc-inputDark {
+  background: rgba(7, 10, 15, 0.8);
+  border: 1px solid rgba(201, 212, 255, 0.1);
+  color: rgba(201, 212, 255, 0.85);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.bc-inputDark::placeholder {
+  color: rgba(201, 212, 255, 0.3);
+}
+
+.bc-inputDark:focus {
+  background: rgba(7, 10, 15, 0.9);
+  border-color: rgba(0, 255, 179, 0.3);
+  box-shadow: 0 0 0 2px rgba(0, 255, 179, 0.06);
+  color: rgba(201, 212, 255, 0.9);
+}
+
+.bc-commentInputActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* --- Mention dropdown --- */
+.bc-mentionDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #0d1117;
+  border: 1px solid rgba(0, 255, 179, 0.15);
+  border-radius: 6px;
+  z-index: 100;
+  margin-top: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.bc-mentionItem {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.bc-mentionItem:hover,
+.bc-mentionItem.active {
+  background: rgba(0, 255, 179, 0.08);
+}
+
+.bc-mentionName {
+  color: rgba(201, 212, 255, 0.9);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.bc-mentionEmail {
+  color: rgba(201, 212, 255, 0.4);
+  font-size: 11px;
+}
+
+/* --- Green submit button --- */
+.bc-btnGreen {
+  background: var(--bc-accent, #00ffb3);
+  color: #070a0f;
+  font-weight: 600;
+  border: none;
+}
+
+.bc-btnGreen:hover:not(:disabled) {
+  background: #00e6a1;
+  color: #070a0f;
+}
+
+.bc-btnGreen:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

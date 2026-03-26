@@ -1,0 +1,58 @@
+.bc-groupPill {
+  font-size: 0.72rem;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(0, 183, 255, 0.1);
+  border: 1px solid rgba(0, 183, 255, 0.2);
+  color: var(--bc-accent2);
+  white-space: nowrap;
+}
+
+.bc-promoteConfirm {
+  flex-wrap: wrap;
+}
+
+.bc-mfaInput {
+  width: 120px;
+  background: var(--bc-cardBg, #0d1117);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.15em;
+  text-align: center;
+}
+
+.bc-mfaInput::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: normal;
+}
+
+.bc-mfaInput:focus {
+  border-color: var(--bc-accent2);
+  box-shadow: 0 0 0 0.15rem rgba(0, 183, 255, 0.15);
+}
+
+.bc-policyChecklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bc-policyItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--bc-muted, #71808e);
+  transition: color 0.2s;
+}
+
+.bc-policyItem .bi {
+  font-size: 0.9rem;
+}
+
+.bc-policyItem.is-met {
+  color: var(--bc-accent, #00ffb3);
+}

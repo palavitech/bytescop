@@ -1,0 +1,40 @@
+{% extends "shells/branded.html" %}
+{% block title %}New reply to a comment{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                <strong style="color:#e6edf3;">{{ reply_by_name }}</strong> replied to a comment you're part of on <strong style="color:#e6edf3;">{{ target_label }}</strong>.
+              </p>
+
+              <!-- Reply preview -->
+              {% if comment_preview %}
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 28px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(0,183,255,0.04); border:1px solid rgba(0,183,255,0.12); border-radius:6px; border-left:3px solid #00b7ff;">
+                    <p style="margin:0; font-size:14px; color:#c9d1d9; line-height:1.7; font-family:'Courier New', Courier, monospace;">
+                      {{ comment_preview }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              {% endif %}
+
+              <!-- CTA Button -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                <tr>
+                  <td align="center" style="border-radius:6px; background-color:#00ffb3;">
+                    <a href="{{ comment_url }}" target="_blank"
+                       style="display:inline-block; padding:14px 36px; font-size:16px; font-weight:700; color:#070a0f; text-decoration:none; border-radius:6px;">
+                      View Comment
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:28px 0 0; font-size:14px; color:#8b949e; line-height:1.6;">
+                If the button doesn't work, copy and paste this link into your browser:<br>
+                <a href="{{ comment_url }}" style="color:#00b7ff; word-break:break-all;">{{ comment_url }}</a>
+              </p>
+{% endblock %}
+{% block sub_footer %}You received this email because someone replied to a comment thread you're part of on {{ tenant_name | default('BytesCop', true) }}.{% endblock %}

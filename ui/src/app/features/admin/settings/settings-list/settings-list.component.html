@@ -1,0 +1,576 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+      <div class="bc-pageCard mb-3">
+        <div class="bc-pageCardHead">
+          <div class="bc-pageCardTitle">
+            <div class="bc-h1">Settings</div>
+            <div class="bc-sub">Manage tenant-scoped configuration options.</div>
+          </div>
+          <div class="bc-pageCardTools">
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+              <i class="bi bi-arrow-left"></i>
+              <span>Back</span>
+            </button>
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+              <i class="bi bi-arrow-repeat"></i>
+              <span>Refresh</span>
+            </button>
+            <button class="btn btn-outline-light bc-iconBtn" type="button"
+              [class.bc-iconBtnActive]="showHelp" (click)="toggleHelp()">
+              <i class="bi bi-question-circle"></i>
+              <span>Help</span>
+            </button>
+          </div>
+        </div>
+        <div class="bc-pageCardFoot">
+          <div class="bc-pageCardFootLeft">
+            <div class="bc-badge" *ngIf="vm.state === 'ready'">
+              <span class="bc-dot"></span>
+              <span>Total: {{ vm.totalCount }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+        <main>
+
+          <!-- Loading -->
+          <div *ngIf="vm.state === 'init'" class="bc-card">
+            <div class="bc-cardInner p-4">
+              <div class="bc-sub">Fetching settings...</div>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div *ngIf="vm.state === 'error'" class="bc-card">
+            <div class="bc-cardInner p-4">
+              <div class="alert alert-danger mb-0">Could not load settings.</div>
+            </div>
+          </div>
+
+          <!-- Setting groups -->
+          <ng-container *ngIf="vm.state === 'ready'">
+            <div *ngFor="let group of vm.groups" class="bc-card mb-3">
+              <div class="bc-sectionHead">
+                <h3 class="bc-sectionLabel mb-0">{{ group.name }}</h3>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-dark mb-0 align-middle bc-table bc-settingsTable">
+                  <thead>
+                    <tr>
+                      <th class="bc-colSetting">Setting</th>
+                      <th class="bc-colValue">Value</th>
+                      <th class="bc-colAction text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let row of group.settings">
+                      <!-- Setting label + description -->
+                      <td>
+                        <div class="bc-settingLabel">{{ row.label }}</div>
+                        <div class="bc-sub bc-settingDesc">{{ row.description }}</div>
+                      </td>
+
+                      <!-- Value control -->
+                      <td>
+                        <ng-container [ngSwitch]="row.setting_type">
+
+                          <!-- Text input -->
+                          <ng-container *ngSwitchCase="'text'">
+                            <input type="text"
+                              class="form-control form-control-sm bc-settingInput"
+                              [(ngModel)]="row.editValue"
+                              (ngModelChange)="onEditValueChange(row)"
+                              [disabled]="row.saving"
+                              placeholder="{{ row.default || 'Not set' }}">
+                          </ng-container>
+
+                          <!-- Boolean toggle -->
+                          <ng-container *ngSwitchCase="'boolean'">
+                            <div class="form-check form-switch bc-settingSwitch">
+                              <input class="form-check-input" type="checkbox"
+                                [checked]="row.editValue === 'true'"
+                                (change)="row.editValue = $any($event.target).checked ? 'true' : 'false'; onToggleChange(row)"
+                                [disabled]="row.saving">
+                              <label class="form-check-label bc-sub">
+                                {{ row.editValue === 'true' ? 'Enabled' : 'Disabled' }}
+                              </label>
+                            </div>
+                          </ng-container>
+
+                          <!-- Choice select -->
+                          <ng-container *ngSwitchCase="'choice'">
+                            <select class="form-select form-select-sm bc-settingSelect"
+                              [(ngModel)]="row.editValue"
+                              (ngModelChange)="onEditValueChange(row)"
+                              [disabled]="row.saving">
+                              <option *ngFor="let c of row.choices" [value]="c">{{ c }}</option>
+                            </select>
+                          </ng-container>
+
+                        </ng-container>
+                      </td>
+
+                      <!-- Actions -->
+                      <td class="text-end">
+                        <ng-container *bcHasPermission="'tenant_settings.manage'">
+                          <!-- Save (text & choice only — booleans auto-save) -->
+                          <button *ngIf="row.setting_type !== 'boolean'"
+                            class="btn btn-sm btn-outline-light bc-btnSoft bc-tableActionBtn me-1"
+                            type="button"
+                            [disabled]="!row.dirty || row.saving"
+                            (click)="save(row)"
+                            title="Save">
+                            <i class="bi bi-check-lg"></i>
+                          </button>
+                          <!-- Reset -->
+                          <button class="btn btn-sm btn-outline-danger bc-btnSoft bc-tableActionBtn"
+                            type="button"
+                            [disabled]="!row.has_value || row.saving"
+                            (click)="resetSetting(row)"
+                            title="Reset to default">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                          </button>
+                        </ng-container>
+                      </td>
+                    </tr>
+
+                    <!-- Logo row (General group only) -->
+                    <tr *ngIf="group.name === 'General'">
+                      <td>
+                        <div class="bc-settingLabel">Logo</div>
+                        <div class="bc-sub bc-settingDesc">Displayed in reports and branding. JPEG, PNG, WebP, or GIF up to 1 MB.</div>
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                          <!-- Logo spinner (loading or uploading) -->
+                          <div *ngIf="logoLoading() || logoUploading()" class="bc-logoSpinner">
+                            <div class="bc-logoSpinnerRing"></div>
+                            <span class="bc-logoSpinnerText">{{ logoUploading() ? 'Uploading' : 'Loading' }}</span>
+                          </div>
+                          <img *ngIf="logoObjectUrl() && !logoLoading() && !logoUploading()" [src]="logoObjectUrl()"
+                            class="bc-logoThumb" alt="Tenant logo" />
+                          <ng-container *bcHasPermission="'tenant_settings.manage'">
+                            <label *ngIf="!logoLoading() && !logoUploading()"
+                              class="btn btn-sm btn-outline-light bc-btnSoft mb-0">
+                              <i class="bi bi-upload"></i>
+                              <span class="ms-1">{{ logoObjectUrl() ? 'Change' : 'Upload' }}</span>
+                              <input type="file"
+                                accept="image/jpeg,image/png,image/webp,image/gif"
+                                class="d-none"
+                                (change)="onLogoFileChange($event)"
+                                [disabled]="logoUploading()" />
+                            </label>
+                          </ng-container>
+                        </div>
+                      </td>
+                      <td class="text-end">
+                        <ng-container *bcHasPermission="'tenant_settings.manage'">
+                          <button *ngIf="logoObjectUrl()"
+                            class="btn btn-sm btn-outline-danger bc-btnSoft bc-tableActionBtn"
+                            type="button"
+                            (click)="removeLogo()"
+                            title="Remove logo">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </ng-container>
+                      </td>
+                    </tr>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Subscription Plan section -->
+            <div class="bc-card mb-3">
+              <div class="bc-sectionHead">
+                <h3 class="bc-sectionLabel mb-0">Subscription Plan</h3>
+              </div>
+              <ng-container *ngIf="subscriptionSnapshot as sub">
+                <div class="table-responsive">
+                  <table class="table table-dark mb-0 align-middle bc-table bc-settingsTable">
+                    <thead>
+                      <tr>
+                        <th class="bc-colSetting">Setting</th>
+                        <th class="bc-colValue">Value</th>
+                        <th class="bc-colAction text-end"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Current Plan row -->
+                      <tr>
+                        <td>
+                          <div class="bc-settingLabel">Current Plan</div>
+                          <div class="bc-sub bc-settingDesc">Your active subscription plan.</div>
+                        </td>
+                        <td>
+                          <span class="bc-planBadgeLg">{{ sub.plan_name }}</span>
+                        </td>
+                        <td></td>
+                      </tr>
+                      <!-- Limit rows -->
+                      <tr *ngFor="let lim of subscriptionLimits">
+                        <td>
+                          <div class="bc-settingLabel">{{ lim.label }}</div>
+                          <div class="bc-sub bc-settingDesc">{{ lim.description }}</div>
+                        </td>
+                        <td>
+                          <span class="bc-settingLabel">{{ lim.value === 0 ? 'Unlimited' : lim.value }}</span>
+                        </td>
+                        <td></td>
+                      </tr>
+                      <!-- Upgrade row -->
+                      <tr>
+                        <td>
+                          <div class="bc-settingLabel">Upgrade Plan</div>
+                          <div class="bc-sub bc-settingDesc">Increase your limits by upgrading to a higher plan.</div>
+                        </td>
+                        <td>
+                          <button class="btn btn-sm bc-btnPrimary" type="button" disabled>
+                            <i class="bi bi-arrow-up-circle me-1"></i>Upgrade
+                          </button>
+                          <span class="bc-sub ms-2" style="font-size:0.72rem">Coming soon</span>
+                        </td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </ng-container>
+              <div *ngIf="!subscriptionSnapshot" class="bc-cardInner p-4">
+                <div class="bc-sub">No subscription data available. Please log out and log back in.</div>
+              </div>
+            </div>
+
+            <!-- License section -->
+            <div class="bc-card mb-3">
+              <div class="bc-sectionHead">
+                <h3 class="bc-sectionLabel mb-0">License</h3>
+              </div>
+              <div class="bc-cardInner p-4">
+
+                <!-- Loading -->
+                <div *ngIf="licenseLoading()" class="bc-sub">Loading license status...</div>
+
+                <!-- Loaded -->
+                <ng-container *ngIf="!licenseLoading() && licenseStatus() as lic">
+
+                  <!-- Active enterprise/pro license -->
+                  <ng-container *ngIf="lic.has_key && !lic.expired">
+                    <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+                      <span class="bc-licenseBadge bc-licenseBadgeActive">
+                        <i class="bi bi-shield-fill-check me-1"></i>{{ lic.plan | titlecase }}
+                      </span>
+                      <span class="bc-sub" style="font-size:0.82rem" *ngIf="lic.customer">
+                        {{ lic.customer }}
+                      </span>
+                    </div>
+                    <div class="bc-licenseDetails mb-3">
+                      <div class="bc-licenseDetail" *ngIf="lic.expires_at">
+                        <span class="bc-licenseDetailLabel">Expires</span>
+                        <span class="bc-licenseDetailValue">{{ lic.expires_at }}</span>
+                      </div>
+                      <div class="bc-licenseDetail" *ngIf="lic.max_users">
+                        <span class="bc-licenseDetailLabel">Max Users</span>
+                        <span class="bc-licenseDetailValue">{{ lic.max_users === 0 ? 'Unlimited' : lic.max_users }}</span>
+                      </div>
+                      <div class="bc-licenseDetail" *ngIf="lic.max_workspaces !== undefined">
+                        <span class="bc-licenseDetailLabel">Max Workspaces</span>
+                        <span class="bc-licenseDetailValue">{{ lic.max_workspaces === 0 ? 'Unlimited' : lic.max_workspaces }}</span>
+                      </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-1 mb-3" *ngIf="lic.features.length">
+                      <span class="bc-featureTag bc-featureTagActive" *ngFor="let f of lic.features">
+                        <i class="bi bi-check-circle-fill" style="font-size:0.7rem"></i>
+                        {{ f }}
+                      </span>
+                    </div>
+                    <ng-container *bcHasPermission="'tenant_settings.manage'">
+                      <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button"
+                          (click)="showLicenseInput()" [disabled]="licenseRemoving()">
+                          <i class="bi bi-arrow-repeat me-1"></i>Change Key
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger bc-btnSoft" type="button"
+                          (click)="removeLicenseKey()" [disabled]="licenseRemoving()">
+                          <i class="bi bi-x-lg me-1"></i>{{ licenseRemoving() ? 'Removing...' : 'Remove Key' }}
+                        </button>
+                      </div>
+                    </ng-container>
+                  </ng-container>
+
+                  <!-- Expired license -->
+                  <ng-container *ngIf="lic.has_key && lic.expired">
+                    <div class="alert alert-warning py-2 mb-3" style="font-size:0.82rem">
+                      <i class="bi bi-exclamation-triangle me-1"></i>
+                      License expired on <strong>{{ lic.expires_at }}</strong> — features downgraded to Community Edition.
+                    </div>
+                    <p class="bc-sub mb-3" style="font-size:0.82rem;line-height:1.5">
+                      Enter a new license key to restore enterprise features, or remove the expired key.
+                    </p>
+                  </ng-container>
+
+                  <!-- Community Edition (no key) -->
+                  <ng-container *ngIf="!lic.has_key">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                      <span class="bc-licenseBadge">
+                        <i class="bi bi-shield me-1"></i>Community Edition
+                      </span>
+                    </div>
+                    <p class="bc-sub mb-3" style="font-size:0.82rem;line-height:1.5">
+                      No license key required for Community Edition.
+                      Enter a license key to unlock enterprise features.
+                    </p>
+                  </ng-container>
+
+                  <!-- License key input (shown for CE, expired, or when changing key) -->
+                  <ng-container *bcHasPermission="'tenant_settings.manage'">
+                    <div *ngIf="!lic.has_key || lic.expired || licenseShowInput()">
+                      <div class="mb-2">
+                        <label class="form-label bc-sub mb-1" style="font-size:0.78rem">License Key</label>
+                        <textarea class="form-control form-control-sm bc-settingInput bc-licenseInput"
+                          rows="3"
+                          [(ngModel)]="licenseKey"
+                          placeholder="Paste your license key here (eyJ...)"
+                          [disabled]="licenseActivating()"
+                          (keydown.ctrl.enter)="activateLicense()"></textarea>
+                      </div>
+                      <div *ngIf="licenseError()" class="alert alert-danger py-2 mb-2" style="font-size:0.82rem">
+                        {{ licenseError() }}
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button class="btn btn-sm bc-btnPrimary" type="button"
+                          [disabled]="!licenseKey.trim() || licenseActivating()"
+                          (click)="activateLicense()">
+                          <i class="bi bi-key me-1"></i>{{ licenseActivating() ? 'Validating...' : 'Activate' }}
+                        </button>
+                        <button *ngIf="licenseShowInput()" class="btn btn-sm btn-outline-light bc-btnSoft"
+                          type="button" (click)="cancelLicenseInput()">
+                          Cancel
+                        </button>
+                        <button *ngIf="lic.has_key && lic.expired" class="btn btn-sm btn-outline-danger bc-btnSoft"
+                          type="button" (click)="removeLicenseKey()" [disabled]="licenseRemoving()">
+                          <i class="bi bi-x-lg me-1"></i>{{ licenseRemoving() ? 'Removing...' : 'Remove Expired Key' }}
+                        </button>
+                      </div>
+                    </div>
+                  </ng-container>
+
+                </ng-container>
+
+              </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="bc-card bc-dangerCard mb-3" *bcHasPermission="'tenant.close'">
+              <div class="bc-sectionHead bc-dangerHead">
+                <h3 class="bc-sectionLabel mb-0 bc-dangerLabel">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>Danger Zone
+                </h3>
+              </div>
+              <div class="bc-cardInner p-4">
+
+                <!-- Closure wizard overlay -->
+                <div *ngIf="showClosureWizard()" class="bc-closureWizard mb-3">
+                  <div class="bc-closureWizardInner">
+
+                    <!-- Progress indicator -->
+                    <div class="bc-closureProgress mb-3">
+                      <div class="bc-closureProgressStep"
+                        [class.bc-closureProgressActive]="closureStep() === 'warn'"
+                        [class.bc-closureProgressDone]="['acknowledge','mfa','confirm'].includes(closureStep())">1</div>
+                      <div class="bc-closureProgressLine"
+                        [class.bc-closureProgressLineDone]="['acknowledge','mfa','confirm'].includes(closureStep())"></div>
+                      <div class="bc-closureProgressStep"
+                        [class.bc-closureProgressActive]="closureStep() === 'acknowledge'"
+                        [class.bc-closureProgressDone]="['mfa','confirm'].includes(closureStep())">2</div>
+                      <div class="bc-closureProgressLine"
+                        [class.bc-closureProgressLineDone]="['mfa','confirm'].includes(closureStep())"></div>
+                      <div class="bc-closureProgressStep"
+                        [class.bc-closureProgressActive]="closureStep() === 'mfa'"
+                        [class.bc-closureProgressDone]="['confirm'].includes(closureStep())">3</div>
+                      <div class="bc-closureProgressLine"
+                        [class.bc-closureProgressLineDone]="['confirm'].includes(closureStep())"></div>
+                      <div class="bc-closureProgressStep"
+                        [class.bc-closureProgressActive]="closureStep() === 'confirm'">4</div>
+                    </div>
+
+                    <!-- Error display -->
+                    <div *ngIf="closureError()" class="alert alert-danger py-2 mb-3" style="font-size:0.82rem">
+                      {{ closureError() }}
+                    </div>
+
+                    <!-- Step 1: Warning -->
+                    <ng-container *ngIf="closureStep() === 'warn'">
+                      <h4 class="bc-closureTitle">Delete Workspace</h4>
+                      <div class="bc-closureWarnBox mb-3">
+                        <p class="mb-2"><strong>This action is permanent and cannot be undone.</strong></p>
+                        <p class="mb-2">Closing your tenant will permanently delete:</p>
+                        <ul class="bc-closureList mb-0">
+                          <li>All clients and assets</li>
+                          <li>All engagements, findings, and evidence</li>
+                          <li>All member accounts and group assignments</li>
+                          <li>All settings, logos, and audit logs</li>
+                          <li>All stored files (attachments, media)</li>
+                        </ul>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-danger" type="button" (click)="closureNextStep()">
+                          I understand, continue
+                        </button>
+                        <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="cancelClosure()">
+                          Cancel
+                        </button>
+                      </div>
+                    </ng-container>
+
+                    <!-- Step 2: Acknowledge -->
+                    <ng-container *ngIf="closureStep() === 'acknowledge'">
+                      <h4 class="bc-closureTitle">Final Acknowledgement</h4>
+                      <p class="bc-sub mb-3" style="font-size:0.82rem;line-height:1.5">
+                        Please confirm that you understand the consequences.
+                      </p>
+                      <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="closureAck"
+                          [checked]="closureAcknowledge()"
+                          (change)="closureAcknowledge.set($any($event.target).checked)">
+                        <label class="form-check-label bc-sub" for="closureAck" style="font-size:0.82rem">
+                          I understand that closing this tenant will <strong>permanently delete all data</strong>
+                          and this action <strong>cannot be reversed</strong>.
+                        </label>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-danger" type="button"
+                          [disabled]="!closureAcknowledge()"
+                          (click)="closureNextStep()">
+                          Continue
+                        </button>
+                        <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="closurePrevStep()">
+                          Back
+                        </button>
+                      </div>
+                    </ng-container>
+
+                    <!-- Step 3: MFA verification -->
+                    <!-- Step 3: MFA verification -->
+                    <ng-container *ngIf="closureStep() === 'mfa'">
+                      <h4 class="bc-closureTitle">MFA Verification</h4>
+                      <p class="bc-sub mb-3" style="font-size:0.82rem;line-height:1.5">
+                        Enter the 6-digit code from your <strong>authenticator app</strong> or a backup code
+                        to verify your identity.
+                      </p>
+                      <div class="mb-3">
+                        <input type="text" class="form-control form-control-sm bc-settingInput bc-mfaInput"
+                          [(ngModel)]="closureMfaCode"
+                          placeholder="******"
+                          maxlength="6"
+                          autocomplete="one-time-code"
+                          (keydown.enter)="submitClosureVerifyMfa()">
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-danger" type="button"
+                          [disabled]="closureMfaCode.trim().length < 6 || closureSubmitting()"
+                          (click)="submitClosureVerifyMfa()">
+                          {{ closureSubmitting() ? 'Verifying...' : 'Verify & Continue' }}
+                        </button>
+                        <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button"
+                          [disabled]="closureSubmitting()"
+                          (click)="closurePrevStep()">
+                          Back
+                        </button>
+                      </div>
+                    </ng-container>
+
+                    <!-- Step 4: Type workspace name to confirm -->
+                    <ng-container *ngIf="closureStep() === 'confirm'">
+                      <h4 class="bc-closureTitle">Confirm Deletion</h4>
+                      <p class="bc-sub mb-3" style="font-size:0.82rem;line-height:1.5">
+                        To confirm, type the workspace name
+                        <strong style="color:var(--bc-text)">{{ tenantName }}</strong> below.
+                      </p>
+                      <div class="mb-3">
+                        <input type="text" class="form-control form-control-sm bc-settingInput"
+                          style="max-width:320px"
+                          [(ngModel)]="closureWorkspaceName"
+                          [placeholder]="tenantName"
+                          autocomplete="off"
+                          (keydown.enter)="submitClosureExecute()">
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-danger" type="button"
+                          [disabled]="closureWorkspaceName.trim() !== tenantName || closureSubmitting()"
+                          (click)="submitClosureExecute()">
+                          {{ closureSubmitting() ? 'Deleting...' : 'Permanently Delete' }}
+                        </button>
+                        <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button"
+                          [disabled]="closureSubmitting()"
+                          (click)="closurePrevStep()">
+                          Back
+                        </button>
+                      </div>
+                    </ng-container>
+
+                  </div>
+                </div>
+
+                <!-- Default state -->
+                <div *ngIf="!showClosureWizard()">
+                  <p class="bc-sub mb-3" style="font-size:0.82rem;line-height:1.5">
+                    Permanently delete this workspace and all associated data.
+                    This action is <strong style="color:var(--bc-danger)">irreversible</strong>.
+                    All clients, engagements, findings, members, and files will be permanently removed.
+                  </p>
+                  <button class="btn btn-sm btn-outline-danger" type="button" (click)="openClosureWizard()">
+                    <i class="bi bi-trash3 me-1"></i>Delete Workspace
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+          </ng-container>
+
+        </main>
+
+        <!-- Help aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp">
+          <div class="bc-helpHead">
+            <div>
+              <div class="bc-helpKicker">Help</div>
+              <div class="bc-helpTitle">Settings</div>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="bc-helpBody">
+            <div class="bc-sub mb-2">
+              Settings control tenant-wide configuration for your organization.
+              Changes take effect immediately.
+            </div>
+            <ul class="bc-helpList">
+              <li><strong>Text settings:</strong> Type a value and click the save button to apply.</li>
+              <li><strong>Boolean toggles:</strong> Click the toggle to enable or disable. Changes save automatically.</li>
+              <li><strong>Choice dropdowns:</strong> Select an option and click save to apply.</li>
+              <li><strong>Logo:</strong> Upload a JPEG, PNG, WebP, or GIF up to 1 MB. Shown in reports and branding.</li>
+              <li><strong>Reset:</strong> Click the reset button to revert a setting to its default value.</li>
+              <li><strong>License:</strong> Enter a license key to unlock enterprise features. Keys are validated offline — no internet required. Purchase at bytescop.com.</li>
+              <li><strong>Danger Zone:</strong> Permanently close and delete this tenant. This is irreversible and requires MFA verification plus an email confirmation code. Back up your database first using <code>./backup.sh</code>.</li>
+              <li><strong>Audit:</strong> All changes are recorded in the Audit Log.</li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

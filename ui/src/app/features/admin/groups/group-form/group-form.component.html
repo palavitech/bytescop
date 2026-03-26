@@ -1,0 +1,86 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <label for="groupName" class="form-label bc-label">Name <span class="bc-required">*</span></label>
+      <input id="groupName" type="text" class="form-control bc-input" formControlName="name"
+        placeholder="Group name">
+      <div class="bc-fieldError"
+        *ngIf="form.get('name')?.touched && form.get('name')?.hasError('required')">
+        Group name is required.
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <label for="groupDesc" class="form-label bc-label">Description</label>
+      <textarea id="groupDesc" class="form-control bc-input" formControlName="description" rows="1"
+        placeholder="Optional description"></textarea>
+    </div>
+  </div>
+
+  <!-- Permissions -->
+  <div class="mb-3">
+    <label class="form-label bc-label">Permissions</label>
+
+    <div class="bc-permLayout" *ngIf="allPermissions.length > 0">
+      <!-- Left: Preset listbox -->
+      <div class="bc-presetList">
+        <div class="bc-presetList-header">Quick Presets</div>
+        <button type="button"
+          *ngFor="let preset of presets"
+          class="bc-presetItem"
+          [class.is-full]="getPresetState(preset) === 'full'"
+          [class.is-partial]="getPresetState(preset) === 'partial'"
+          [disabled]="disabled"
+          (click)="togglePreset(preset)">
+          <i class="bi"
+            [ngClass]="{
+              'bi-check-circle-fill': getPresetState(preset) === 'full',
+              'bi-dash-circle': getPresetState(preset) === 'partial',
+              'bi-circle': getPresetState(preset) === 'none'
+            }"></i>
+          <div class="bc-presetItem-text">
+            <span class="bc-presetItem-label">{{ preset.label }}</span>
+            <span class="bc-presetItem-desc">{{ preset.description }}</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Right: Permission grid -->
+      <div class="bc-permGrid">
+        <div class="bc-permRow" *ngFor="let resource of permissionsByResource">
+          <div class="bc-permResource">
+            <button type="button" class="btn btn-sm bc-permToggleAll"
+              [class.active]="isAllResourceSelected(resource)"
+              (click)="toggleAllForResource(resource)"
+              [disabled]="disabled">
+              {{ resource.resource | uppercase }}
+            </button>
+          </div>
+          <div class="bc-permActions">
+            <label class="bc-permCheck" *ngFor="let perm of resource.permissions">
+              <input type="checkbox"
+                [checked]="isPermSelected(perm.id)"
+                (change)="togglePermission(perm.id)"
+                [disabled]="disabled">
+              <span>{{ prettyAction(perm.codename) }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bc-formFoot" *ngIf="!disabled">
+    <button type="button" class="btn btn-outline-light bc-iconBtn" (click)="onCancel()">
+      <i class="bi bi-x-lg"></i>
+      <span>Cancel</span>
+    </button>
+    <button type="submit" class="btn btn-success bc-btn" [disabled]="saving">
+      <span *ngIf="saving" class="spinner-border spinner-border-sm me-1" role="status"></span>
+      <i class="bi me-1" *ngIf="!saving" [ngClass]="mode === 'create' ? 'bi-plus-circle' : 'bi-check-lg'"></i>
+      {{ mode === 'create' ? 'Create Group' : 'Save Changes' }}
+    </button>
+  </div>
+
+</form>

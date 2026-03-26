@@ -1,0 +1,95 @@
+<!-- Trigger button — always visible at sidebar bottom -->
+<button
+  #triggerBtn
+  class="bc-tenantTrigger"
+  [ngClass]="{ 'is-open': menuOpen, 'is-collapsed': collapsed }"
+  (click)="toggleMenu($event)"
+  type="button"
+  aria-haspopup="true"
+  [attr.aria-expanded]="menuOpen">
+  <span class="bc-tenantIco"><i class="bi bi-building"></i></span>
+  <span class="bc-tenantInfo" *ngIf="!collapsed">
+    <span class="bc-tenantName">{{ tenantName$ | async }}</span>
+    <span class="bc-tenantRole" [ngClass]="{ 'is-owner': (tenantRole$ | async) === 'owner' }">
+      {{ tenantRole$ | async }}
+    </span>
+  </span>
+  <span class="bc-tenantChevron" *ngIf="!collapsed">
+    <i class="bi" [ngClass]="menuOpen ? 'bi-chevron-down' : 'bi-chevron-up'"></i>
+  </span>
+</button>
+
+<!-- Upward-expanding menu panel -->
+<div
+  #menuPanel
+  class="bc-tenantMenu"
+  [ngClass]="{ 'is-open': menuOpen }"
+  role="menu"
+  aria-label="Workspace menu">
+
+  <!-- Header -->
+  <div class="bc-tenantMenuHead">
+    <span class="bc-tenantIco"><i class="bi bi-building"></i></span>
+    <div class="bc-tenantMenuHeadInfo">
+      <div class="bc-tenantMenuName">{{ (tenantName$ | async) | uppercase }}</div>
+      <div class="bc-tenantMenuRole" [ngClass]="{ 'is-owner': (tenantRole$ | async) === 'owner' }">
+        {{ tenantRole$ | async }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu items -->
+  <div class="bc-tenantMenuBody">
+    <a
+      class="bc-tenantMenuItem"
+      routerLink="/admin/settings"
+      role="menuitem"
+      (click)="menuOpen = false"
+      *bcHasPermission="'tenant_settings.view'">
+      <span class="bc-tenantMenuItemIco"><i class="bi bi-gear"></i></span>
+      <span>Workspace Settings</span>
+    </a>
+
+    <div class="bc-tenantMenuItem bc-tenantMenuItemStatic" role="menuitem">
+      <span class="bc-tenantMenuItemIco"><i class="bi bi-credit-card"></i></span>
+      <span>Plan</span>
+      <span class="bc-tenantPlanBadge">{{ planName$ | async }}</span>
+    </div>
+
+    <button
+      class="bc-tenantMenuItem"
+      role="menuitem"
+      (click)="onSwitchTenantClick()"
+      [disabled]="switching">
+      <span class="bc-tenantMenuItemIco"><i class="bi bi-arrow-left-right"></i></span>
+      <span>Switch Workspace</span>
+      <span class="bc-tenantChevronSmall">
+        <i class="bi" [ngClass]="showTenantPicker ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      </span>
+    </button>
+
+    @if (showTenantPicker) {
+      <div class="bc-tenantPicker">
+        @if (loadingTenants) {
+          <div class="bc-tenantPickerLoading">
+            <span class="bc-spin"><i class="bi bi-arrow-repeat"></i></span>
+            <span>Loading tenants...</span>
+          </div>
+        } @else if (otherTenants.length === 0) {
+          <div class="bc-tenantPickerEmpty">No other tenants available</div>
+        } @else {
+          @for (t of otherTenants; track t.id) {
+            <button
+              class="bc-tenantPickerItem"
+              (click)="doSwitch(t)"
+              [disabled]="switching">
+              <span class="bc-tenantPickerIco">{{ t.name[0] | uppercase }}</span>
+              <span class="bc-tenantPickerName">{{ t.name }}</span>
+              <span class="bc-tenantPickerRole">{{ t.role }}</span>
+            </button>
+          }
+        }
+      </div>
+    }
+  </div>
+</div>

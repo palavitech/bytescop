@@ -1,0 +1,51 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <label for="orgName" class="form-label bc-label">Name <span class="bc-required">*</span></label>
+      <input id="orgName" type="text" class="form-control bc-input" formControlName="name"
+        placeholder="Client name">
+      <div class="bc-fieldError"
+        *ngIf="form.get('name')?.touched && form.get('name')?.hasError('required')">
+        Name is required.
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <label for="orgWebsite" class="form-label bc-label">Website</label>
+      <input id="orgWebsite" type="url" class="form-control bc-input" formControlName="website"
+        placeholder="https://example.com">
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <label for="orgStatus" class="form-label bc-label">Status</label>
+      <select id="orgStatus" class="form-select bc-input" formControlName="status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-12">
+      <label for="orgNotes" class="form-label bc-label">Notes</label>
+      <textarea id="orgNotes" class="form-control bc-input" formControlName="notes" rows="3"
+        placeholder="Optional notes about this client"></textarea>
+    </div>
+  </div>
+
+  <div class="bc-formFoot">
+    <button type="button" class="btn btn-outline-light bc-iconBtn" (click)="onCancel()">
+      <i class="bi bi-x-lg"></i>
+      <span>Cancel</span>
+    </button>
+    <button type="submit" class="btn btn-success bc-btn" [disabled]="saving">
+      <span *ngIf="saving" class="spinner-border spinner-border-sm me-1" role="status"></span>
+      <i class="bi me-1" *ngIf="!saving" [ngClass]="mode === 'create' ? 'bi-plus-circle' : 'bi-check-lg'"></i>
+      {{ mode === 'create' ? 'Create Client' : 'Save Changes' }}
+    </button>
+  </div>
+
+</form>

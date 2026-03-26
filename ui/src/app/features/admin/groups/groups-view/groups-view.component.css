@@ -1,0 +1,38 @@
+.bc-typeBadge {
+  font-size: 0.76rem;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bc-permGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.bc-permResource {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bc-permResourceName {
+  font-size: 0.78rem;
+  font-family: 'Orbitron', system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+
+.bc-permPill {
+  font-size: 0.72rem;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(0, 255, 179, 0.06);
+  border: 1px solid rgba(0, 255, 179, 0.15);
+  color: var(--bc-accent);
+  white-space: nowrap;
+}

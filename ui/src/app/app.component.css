@@ -1,0 +1,119 @@
+/* Scrollable nav area — fills available space between header and tenant menu */
+.bc-sidebarNav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 2px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 183, 255, .18) transparent;
+}
+
+.bc-sidebarNav::-webkit-scrollbar {
+    width: 4px;
+}
+
+.bc-sidebarNav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.bc-sidebarNav::-webkit-scrollbar-thumb {
+    background: rgba(0, 183, 255, .22);
+    border-radius: 4px;
+}
+
+.bc-navSectionTitle {
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    opacity: .75;
+    padding: 8px 10px 4px;
+}
+
+.bc-navGroupBtn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    padding: 10px 10px;
+    border-radius: 12px;
+    color: inherit;
+}
+
+.bc-navGroupBtn:hover {
+    box-shadow: 0 0 0 1px rgba(64, 255, 204, .18), 0 0 18px rgba(64, 255, 204, .10);
+}
+
+.bc-navChevron {
+    margin-left: auto;
+    opacity: .75;
+}
+
+.bc-navGroupBody {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 6px 0 10px 14px;
+}
+
+.bc-navLinkSub {
+    padding-left: 8px;
+    border-left: 1px solid rgba(64, 255, 204, .18);
+}
+
+/* remove the extra space that shows up after the icon when the side bar is collapsed */
+body.bc-sidebar-collapsed .bc-navLabel {
+   display: none;
+}
+
+body.bc-sidebar-collapsed .bc-navLink {
+   gap: 0;
+   justify-content: center;
+}
+
+/* Bootstrap dropdown skin for Apps/User */
+.dropdown-menu.bc-dropMenu {
+   background: linear-gradient(180deg, rgba(11, 18, 32, .92), rgba(10, 15, 26, .92));
+   border: 1px solid rgba(0, 255, 179, .22);
+   border-radius: 16px;
+   box-shadow: 0 0 0 1px rgba(0, 255, 179, .14), 0 26px 70px rgba(0, 0, 0, .65);
+   overflow: hidden;
+   min-width: 0;
+}
+
+.dropdown-menu.bc-dropMenu:before {
+   content: "";
+   position: absolute;
+   inset: 0;
+   background:
+      linear-gradient(to right, rgba(0, 255, 179, .12) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 183, 255, .10) 1px, transparent 1px);
+   opacity: .18;
+   pointer-events: none;
+}
+
+.dropdown-menu.bc-dropMenu>* {
+   position: relative;
+   z-index: 1
+}
+
+/* Responsive: smaller menus on phones */
+@media (max-width:720px) {
+   #bcAppsMenu {
+      width: 360px;
+      right: 12px
+   }
+
+   #bcUserMenu {
+      right: 12px
+   }
+
+   .bc-brandTitle span {
+      display: none
+   }
+}

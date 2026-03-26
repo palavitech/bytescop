@@ -1,0 +1,58 @@
+{% extends "shells/base.html" %}
+{% block title %}Tenant Closure in Progress{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                Your request to close the tenant <strong style="color:#e6edf3;">{{ tenant_name }}</strong> has been confirmed. The closure process is now underway.
+              </p>
+
+              <!-- Status box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:16px 20px; background-color:rgba(255,59,122,0.06); border:1px solid rgba(255,59,122,0.2); border-radius:6px;">
+                    <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#8b949e; letter-spacing:1px; text-transform:uppercase;">
+                      Closure status
+                    </p>
+                    <p style="margin:0; font-size:15px; color:#ff3b7a; font-weight:700; line-height:1.6;">
+                      In Progress
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 20px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                The following actions are being performed:
+              </p>
+              <ul style="margin:0 0 24px; padding-left:20px; font-size:15px; color:#c9d1d9; line-height:2;">
+                <li>All user sessions have been terminated</li>
+                <li>All tenant data is being permanently deleted</li>
+                <li>All uploaded files and attachments are being removed</li>
+              </ul>
+
+              <!-- Summary box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:16px 20px; background-color:rgba(139,148,158,0.06); border:1px solid rgba(139,148,158,0.15); border-radius:6px;">
+                    <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#8b949e; letter-spacing:1px; text-transform:uppercase;">
+                      Your data export selection
+                    </p>
+                    <p style="margin:0 0 12px; font-size:15px; color:#e6edf3; line-height:1.6;">
+                      {{ data_export_choice }}
+                    </p>
+                    <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#8b949e; letter-spacing:1px; text-transform:uppercase;">
+                      Confirmation code used
+                    </p>
+                    <p style="margin:0; font-size:15px; color:#e6edf3; line-height:1.6; font-family:'Courier New', Courier, monospace;">
+                      {{ confirmation_code }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0; font-size:14px; color:#8b949e; line-height:1.6;">
+                You will receive a final confirmation email once all data has been permanently deleted. Please retain this email for your records.
+              </p>
+{% endblock %}
+{% block sub_footer %}You received this email because you initiated the closure of your organization on BytesCop.{% endblock %}

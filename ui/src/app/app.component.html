@@ -1,0 +1,239 @@
+<div class="bc-cyber-grid"></div>
+<div class="bc-scanlines"></div>
+<app-toast-container></app-toast-container>
+
+<!-- Auth pages: no navbar/sidebar, just the router outlet -->
+<ng-container *ngIf="isAuthPage">
+    <router-outlet></router-outlet>
+</ng-container>
+
+<!-- App shell: navbar + sidebar + main content -->
+<ng-container *ngIf="!isAuthPage">
+
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top bc-navbar" [class.bc-loading]="(isLoading$ | async) === true">
+    <div class="container-fluid">
+        <a class="bc-brand" routerLink="/">
+            <div class="bc-logoMark" aria-hidden="true"></div>
+            <div class="bc-brandTitle">
+                <strong>BytesCop</strong>
+                <span>security findings vault</span>
+            </div>
+        </a>
+
+        <button class="navbar-toggler bc-btn" type="button" data-bs-toggle="collapse" data-bs-target="#bcTopNav"
+            aria-controls="bcTopNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="bcTopNav">
+            <!-- No unauthenticated nav on on-prem — users go straight to login -->
+
+            <!-- Findings menu (authenticated only) -->
+            <ul *ngIf="(isAuthenticated$ | async) === true" class="navbar-nav mb-2 mb-lg-0 nav nav-pills bc-topNav"
+              style="margin-left:12px">
+                <li class="nav-item dropdown" *bcHasPermission="'finding.view'">
+                    <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false" title="Select an active engagement to manage findings"
+                        (click)="refreshFindingsMenu()">
+                        Findings
+                    </button>
+
+                    <div class="dropdown-menu dropdown-menu-start p-0 bc-dropMenu bc-findingsMenu" role="menu"
+                        aria-label="Engagement findings">
+                        <div class="bc-dropHeader">
+                            <div class="bc-dropTitle">SELECT AN ACTIVE ENGAGEMENT</div>
+                            <div class="bc-sub" style="padding:0 0 10px 0">Pick an engagement to manage findings.</div>
+                        </div>
+
+                        <ng-container *ngIf="activeEngagements$ | async as engs">
+                            <div *ngIf="engs.length === 0" class="px-3 py-2">
+                                <div class="bc-sub">No active engagements found.</div>
+                                <div class="text-muted small">Mark an engagement as Active to start capturing findings.</div>
+                            </div>
+
+                            <button *ngFor="let e of engs" class="dropdown-item"
+                                [routerLink]="['/engagements', e.id, 'findings']">
+                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                    <span>{{ e.name }}</span>
+                                    <span class="text-muted small" *ngIf="e.client_name">{{ e.client_name }}</span>
+                                </div>
+                            </button>
+                        </ng-container>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2 ms-auto">
+
+                <!-- Authenticated: User menu -->
+                <ng-container *ngIf="isAuthenticated$ | async">
+
+                <!-- Apps menu hidden — may be restored later -->
+
+                <div class="dropdown">
+                    <button class="btn bc-btn bc-pill d-flex align-items-center gap-2 dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false" title="User menu">
+                        <ng-container *ngIf="(avatarUrl$ | async) as url; else initialsSmall">
+                            <img [src]="url" class="bc-avatar bc-avatarImg" alt="Avatar">
+                        </ng-container>
+                        <ng-template #initialsSmall>
+                            <span class="bc-avatar" aria-hidden="true">{{ (profile$ | async)?.initials || 'BC' }}</span>
+                        </ng-template>
+                    </button>
+
+                    <div class="dropdown-menu dropdown-menu-start dropdown-menu-lg-end p-0 bc-dropMenu"
+                        id="bcUserMenu" role="menu" aria-label="User options">
+                        <div class="bc-userHead">
+                            <ng-container *ngIf="(avatarUrl$ | async) as url; else initialsLg">
+                                <img [src]="url" class="bc-avatar bc-avatarLg bc-avatarImg" alt="Avatar">
+                            </ng-container>
+                            <ng-template #initialsLg>
+                                <div class="bc-avatar bc-avatarLg" aria-hidden="true">{{ (profile$ | async)?.initials || 'BC' }}</div>
+                            </ng-template>
+                            <div class="bc-userEmail">
+                                <strong>{{ (profile$ | async)?.user?.email || 'user@bytescop.com' }}</strong><br>
+                                <span>{{ (profile$ | async)?.displayName || 'BytesCop User' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="p-3 position-relative" style="z-index:1">
+                            <div class="list-group bc-listGroup">
+                                <button routerLink="/profile" class="list-group-item list-group-item-action">
+                                    <span class="text-uppercase"
+                                        style="font-family:Orbitron,system-ui,sans-serif;letter-spacing:1px;font-size:12px">Profile</span>
+                                    <span class="bc-miniIco"><i class="bi bi-person"></i></span>
+                                </button>
+                                <div class="my-2" style="height:1px;background:rgba(0,255,179,.14)"></div>
+                                <button (click)="onLogout()" class="list-group-item list-group-item-action">
+                                    <span class="text-uppercase"
+                                        style="font-family:Orbitron,system-ui,sans-serif;letter-spacing:1px;font-size:12px">Logout</span>
+                                    <span class="bc-miniIco"><i class="bi bi-power"></i></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                </ng-container>
+
+                <!-- Unauthenticated: Login + Sign Up links -->
+                <ng-container *ngIf="(isAuthenticated$ | async) === false">
+                    <a class="btn bc-btn bc-pill d-flex align-items-center gap-1" style="border-radius:10px" routerLink="/login"><span class="bc-navIco"><i class="bi bi-box-arrow-in-right"></i></span> <span>Log In</span></a>
+                </ng-container>
+
+            </div>
+
+        </div>
+    </div>
+</nav>
+
+<div class="bc-page">
+    <aside *ngIf="showSidebar" class="bc-sidebar" [ngClass]="{'bc-sidebar-collapsed': sidebarCollapsed}" aria-label="Sidebar">
+        <div class="bc-sidebarTop">
+            <div class="bc-sidebarTopTitle">Navigation</div>
+            <button class="btn bc-btn bc-pill" type="button" (click)="toggleSidebar()"
+                [attr.aria-expanded]="!sidebarCollapsed" aria-label="Toggle sidebar" title="Collapse or expand sidebar">
+                <i class="bi" [ngClass]="sidebarCollapsed ? 'bi-chevron-bar-right' : 'bi-chevron-bar-left'"></i>
+            </button>
+        </div>
+
+        <nav class="bc-sidebarNav" aria-label="Primary">
+
+            <ng-container *ngIf="isAuthenticated$ | async">
+              <a class="bc-navLink" routerLink="/dashboard" routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }">
+                <span class="bc-navIco"><i class="bi bi-speedometer2"></i></span>
+                <span class="bc-navLabel">Dashboard</span>
+              </a>
+
+              <ng-container *bcHasPermission="['client.view', 'engagement.view']">
+                <button class="bc-navGroupBtn" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#bcNavOps" aria-expanded="true" aria-controls="bcNavOps">
+                    <span class="bc-navIco"><i class="bi bi-briefcase"></i></span>
+                    <span class="bc-navLabel">Operations</span>
+                    <span class="bc-navChevron"><i class="bi bi-chevron-down"></i></span>
+                </button>
+
+                <div class="collapse show" id="bcNavOps">
+                    <div class="bc-navGroupBody">
+                        <a class="bc-navLink bc-navLinkSub" routerLink="/organizations" routerLinkActive="active"
+                          *bcHasPermission="'client.view'">
+                          <span class="bc-navIco"><i class="bi bi-building"></i></span>
+                          <span class="bc-navLabel">Clients</span>
+                        </a>
+                        <a class="bc-navLink bc-navLinkSub" routerLink="/engagements" routerLinkActive="active"
+                          *bcHasPermission="'engagement.view'">
+                          <span class="bc-navIco"><i class="bi bi-clipboard-check"></i></span>
+                          <span class="bc-navLabel">Engagements</span>
+                        </a>
+                    </div>
+                </div>
+              </ng-container>
+
+              <ng-container *bcHasPermission="['user.view', 'group.view', 'audit.view', 'tenant_settings.view']">
+                <button class="bc-navGroupBtn" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#bcNavAdmin" aria-expanded="true" aria-controls="bcNavAdmin">
+                    <span class="bc-navIco"><i class="bi bi-gear"></i></span>
+                    <span class="bc-navLabel">Admin</span>
+                    <span class="bc-navChevron"><i class="bi bi-chevron-down"></i></span>
+                </button>
+
+                <div class="collapse show" id="bcNavAdmin">
+                    <div class="bc-navGroupBody">
+                        <a class="bc-navLink bc-navLinkSub" routerLink="/admin/users" routerLinkActive="active"
+                          *bcHasPermission="'user.view'">
+                          <span class="bc-navIco"><i class="bi bi-person-circle"></i></span>
+                          <span class="bc-navLabel">Users</span>
+                        </a>
+                        <a class="bc-navLink bc-navLinkSub" routerLink="/admin/groups" routerLinkActive="active"
+                          *bcHasPermission="'group.view'">
+                          <span class="bc-navIco"><i class="bi bi-people-fill"></i></span>
+                          <span class="bc-navLabel">Groups</span>
+                        </a>
+                        <a class="bc-navLink bc-navLinkSub" routerLink="/admin/audit" routerLinkActive="active"
+                          *bcHasPermission="'audit.view'">
+                          <span class="bc-navIco"><i class="bi bi-clock-history"></i></span>
+                          <span class="bc-navLabel">Audit Log</span>
+                        </a>
+                    </div>
+                </div>
+              </ng-container>
+
+            </ng-container>
+
+        </nav>
+
+        <app-tenant-menu *ngIf="isAuthenticated$ | async" [collapsed]="sidebarCollapsed"></app-tenant-menu>
+
+    </aside>
+
+
+    <main class="bc-main" [ngClass]="{'bc-main-collapsed': sidebarCollapsed, 'bc-main-no-sidebar': !showSidebar}" aria-label="Main content">
+
+        <!-- Breadcrumb disabled — may be restored later -->
+        <div class="bc-crumbWrap" *ngIf="false && showBreadcrumb">
+            <app-breadcrumb></app-breadcrumb>
+            <hr>
+        </div>
+
+        <router-outlet></router-outlet>
+
+        <footer *ngIf="(isAuthenticated$ | async) === false" class="bc-footer mt-auto">
+            <div class="container py-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div>&copy; {{year}} <a href="https://palavi.tech" target="_blank" rel="noopener">PalaviTech</a>. All rights reserved.
+                    <small class="opacity-50" *ngIf="uiVersion$ | async as uiV">
+                        [v{{uiV}}<ng-container *ngIf="(apiVersion$ | async) as apiV"><ng-container *ngIf="apiV !== uiV"> · API v{{apiV}}</ng-container></ng-container>]
+                    </small>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="px-2 py-1 rounded-3" routerLink="/privacy">Privacy</a>
+                    <a class="px-2 py-1 rounded-3" routerLink="/terms">Terms</a>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+
+</div>
+
+</ng-container>

@@ -1,0 +1,57 @@
+.bc-crumbBar {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    width: 100%;
+    display: block;
+    text-align: left;
+}
+
+.bc-crumbList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+}
+
+.bc-crumbItem::after {
+    content: "/";
+    margin-left: 8px;
+    color: rgba(142, 160, 215, .55);
+}
+
+.bc-crumbItem:last-child::after {
+    content: "";
+}
+
+.bc-crumbLink {
+    color: rgba(201, 212, 255, .78);
+    text-decoration: none;
+}
+
+.bc-crumbLink:hover {
+    color: var(--bc-accent);
+}
+
+.bc-crumbCurrent {
+    color: rgba(201, 212, 255, .92);
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    letter-spacing: .2px;
+    font-size: 13px;
+}
+
+.bc-crumbBar,
+.bc-crumbList,
+.bc-crumbItem,
+.bc-crumbLink,
+.bc-crumbCurrent {
+    text-transform: none;
+}

@@ -1,0 +1,36 @@
+{% extends "shells/base.html" %}
+{% block title %}MFA disabled — BytesCop{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                Multi-factor authentication (MFA) has been <strong style="color:#ff3b7a;">disabled</strong> on your BytesCop account.
+              </p>
+
+              <!-- Warning box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(255,59,122,0.06); border:1px solid rgba(255,59,122,0.12); border-radius:6px;">
+                    <p style="margin:0 0 8px; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      <strong style="color:#ff3b7a;">Your account is less secure.</strong>
+                    </p>
+                    <p style="margin:0; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      Anyone with your password can now sign in without a second factor. We strongly recommend re-enabling MFA as soon as possible.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Didn't do this -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(139,148,158,0.06); border:1px solid rgba(139,148,158,0.12); border-radius:6px;">
+                    <p style="margin:0; font-size:14px; color:#8b949e; line-height:1.7;">
+                      If you did not disable MFA, your account may be compromised. Change your password immediately and contact your organization administrator.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+{% endblock %}
+{% block sub_footer %}You received this email because MFA was disabled on your BytesCop account.{% endblock %}

@@ -1,0 +1,15 @@
+<div class="bc-card">
+  <div class="bc-cardInner p-3">
+    <h6 class="bc-widgetTitle mb-3">{{ widget.title }}</h6>
+    @if (hasData) {
+      <div class="bc-chartWrap bc-chartWrap--sm">
+        <canvas #canvas></canvas>
+      </div>
+    } @else {
+      <div class="bc-chartEmpty text-center py-5">
+        <i class="bi bi-pie-chart fs-3 d-block mb-2"></i>
+        <span class="bc-sub">No data</span>
+      </div>
+    }
+  </div>
+</div>

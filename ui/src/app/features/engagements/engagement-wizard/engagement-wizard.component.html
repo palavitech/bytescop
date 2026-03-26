@@ -1,0 +1,659 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <!-- Header -->
+    <div class="bc-pageCard mb-3">
+      <div class="bc-pageCardHead">
+        <div class="bc-pageCardTitle">
+          <div class="bc-h1">New Engagement</div>
+          <div class="bc-sub">Create a new security assessment engagement step by step.</div>
+        </div>
+        <div class="bc-pageCardTools">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+            <i class="bi bi-question-circle"></i>
+            <span>Help</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+      <main>
+
+        <!-- Progress bar -->
+        <div class="bc-wizardProgress mb-3">
+          @for (step of stepOrder; track step; let i = $index) {
+            @if (i > 0) {
+              <div class="bc-wizardProgressLine"
+                [class.bc-wizardProgressLineDone]="isStepDone(step)"></div>
+            }
+            <div class="bc-wizardProgressNode"
+              [class.bc-wizardProgressNodeActive]="isStepActive(step)"
+              [class.bc-wizardProgressNodeDone]="isStepDone(step)">
+              <div class="bc-wizardProgressStep"
+                [class.bc-wizardProgressActive]="isStepActive(step)"
+                [class.bc-wizardProgressDone]="isStepDone(step)">
+                @if (isStepDone(step)) {
+                  <i class="bi bi-check"></i>
+                } @else {
+                  {{ i + 1 }}
+                }
+              </div>
+              <span class="bc-wizardProgressNodeLabel">{{ stepLabels[step] }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Error -->
+        @if (error()) {
+          <div class="alert alert-danger py-2 mb-3" style="font-size:0.82rem">{{ error() }}</div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- STEP 1: Organization                                       -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        @if (currentStep() === 'org') {
+          <div class="bc-card">
+            <div class="bc-wizardStepHead">
+              <h3 class="bc-wizardStepTitle">
+                <i class="bi bi-building me-2"></i>Choose Client
+              </h3>
+              <span class="bc-sub" style="font-size:0.8rem">
+                Select an existing client or create a new one.
+              </span>
+            </div>
+            <div class="bc-cardInner p-4">
+
+              <!-- Org list -->
+              <div class="mb-3">
+                <label class="form-label bc-label">Client <span class="bc-required">*</span></label>
+                <select class="form-select bc-input"
+                  [ngModel]="selectedOrgId()"
+                  (ngModelChange)="onOrgDropdownChange($event)">
+                  <option [ngValue]="null" disabled>Select client...</option>
+                  @for (org of organizations(); track org.id) {
+                    <option [ngValue]="org.id">{{ org.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Create new org toggle -->
+              <div class="mb-3">
+                <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleOrgForm()">
+                  <i class="bi me-1" [ngClass]="showOrgForm() ? 'bi-x-lg' : 'bi-plus-circle'"></i>
+                  {{ showOrgForm() ? 'Cancel' : 'Create New Client' }}
+                </button>
+              </div>
+
+              <!-- Inline org form -->
+              @if (showOrgForm()) {
+                <div class="bc-wizardInlineForm">
+                  <form [formGroup]="orgForm" (ngSubmit)="submitNewOrg()" autocomplete="off">
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label bc-label">Name <span class="bc-required">*</span></label>
+                        <input type="text" class="form-control bc-input" formControlName="name"
+                          placeholder="Client name">
+                        @if (orgForm.get('name')?.touched && orgForm.get('name')?.hasError('required')) {
+                          <div class="bc-fieldError">Name is required.</div>
+                        }
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label bc-label">Website</label>
+                        <input type="url" class="form-control bc-input" formControlName="website"
+                          placeholder="https://example.com">
+                      </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-12">
+                        <label class="form-label bc-label">Notes</label>
+                        <textarea class="form-control bc-input" formControlName="notes" rows="2"
+                          placeholder="Optional notes"></textarea>
+                      </div>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-success bc-btn" [disabled]="orgSaving()">
+                      @if (orgSaving()) {
+                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                      }
+                      <i class="bi bi-plus-circle me-1" *ngIf="!orgSaving()"></i>
+                      Create Client
+                    </button>
+                  </form>
+                </div>
+              }
+
+              <!-- Selected org badge -->
+              @if (selectedOrgId()) {
+                <div class="bc-wizardSelection mt-3">
+                  <i class="bi bi-check-circle-fill me-2" style="color:var(--bc-accent)"></i>
+                  <strong>{{ selectedOrgName() }}</strong> selected
+                </div>
+              }
+
+              <!-- Navigation -->
+              <div class="bc-wizardNav mt-4">
+                <div></div>
+                <button class="btn btn-success bc-btn" type="button"
+                  [disabled]="!canProceedFromOrg()"
+                  (click)="proceedFromOrg()">
+                  Next: Assets
+                  <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- STEP 2: Assets                                             -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        @if (currentStep() === 'assets') {
+          <div class="bc-card">
+            <div class="bc-wizardStepHead">
+              <h3 class="bc-wizardStepTitle">
+                <i class="bi bi-hdd-network me-2"></i>Select Assets
+              </h3>
+              <span class="bc-sub" style="font-size:0.8rem">
+                Choose assets for <strong>{{ selectedOrgName() }}</strong> to include in scope, or create new ones.
+              </span>
+            </div>
+            <div class="bc-cardInner p-4">
+
+              @if (assetsLoading()) {
+                <div class="text-center py-4">
+                  <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  <span class="bc-sub">Loading assets...</span>
+                </div>
+              } @else {
+
+                <!-- Asset table -->
+                @if (orgAssets().length > 0) {
+                  <div class="d-flex gap-2 mb-2">
+                    <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="selectAllAssets()">
+                      Select All
+                    </button>
+                    <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="deselectAllAssets()">
+                      Deselect All
+                    </button>
+                  </div>
+                  <div class="table-responsive mb-3">
+                    <table class="table bc-table mb-0">
+                      <thead>
+                        <tr>
+                          <th style="width:40px"></th>
+                          <th>Name</th>
+                          <th>Type</th>
+                          <th>Environment</th>
+                          <th>Criticality</th>
+                          <th>Target</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (asset of orgAssets(); track asset.id) {
+                          <tr class="bc-wizardAssetRow"
+                            [class.bc-wizardAssetSelected]="isAssetSelected(asset.id)"
+                            (click)="toggleAssetSelection(asset.id)">
+                            <td class="text-center">
+                              <input type="checkbox" class="form-check-input"
+                                [checked]="isAssetSelected(asset.id)"
+                                (click)="$event.stopPropagation()"
+                                (change)="toggleAssetSelection(asset.id)">
+                            </td>
+                            <td>{{ asset.name }}</td>
+                            <td>{{ assetTypeLabels[asset.asset_type] || asset.asset_type }}</td>
+                            <td>{{ assetEnvLabels[asset.environment] || asset.environment }}</td>
+                            <td>
+                              <span class="badge" [ngClass]="{
+                                'bg-danger': asset.criticality === 'high',
+                                'bg-warning text-dark': asset.criticality === 'medium',
+                                'bg-secondary': asset.criticality === 'low'
+                              }">{{ assetCritLabels[asset.criticality] || asset.criticality }}</span>
+                            </td>
+                            <td class="bc-sub">{{ asset.target || '—' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                } @else {
+                  <div class="bc-emptyState mb-3">
+                    <i class="bi bi-hdd-network" style="font-size:1.5rem;opacity:0.3"></i>
+                    <p class="bc-sub mt-2 mb-0">No assets found for this client. Create one below.</p>
+                  </div>
+                }
+
+                <!-- Create new asset toggle -->
+                <div class="mb-3">
+                  <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleAssetForm()">
+                    <i class="bi me-1" [ngClass]="showAssetForm() ? 'bi-x-lg' : 'bi-plus-circle'"></i>
+                    {{ showAssetForm() ? 'Cancel' : 'Add New Asset' }}
+                  </button>
+                </div>
+
+                <!-- Inline asset form -->
+                @if (showAssetForm()) {
+                  <div class="bc-wizardInlineForm">
+                    <form [formGroup]="assetForm" (ngSubmit)="submitNewAsset()" autocomplete="off">
+                      <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                          <label class="form-label bc-label">Name <span class="bc-required">*</span></label>
+                          <input type="text" class="form-control bc-input" formControlName="name"
+                            placeholder="Asset name">
+                          @if (assetForm.get('name')?.touched && assetForm.get('name')?.hasError('required')) {
+                            <div class="bc-fieldError">Name is required.</div>
+                          }
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label bc-label">Target</label>
+                          <input type="text" class="form-control bc-input" formControlName="target"
+                            placeholder="IP, hostname, URL...">
+                        </div>
+                      </div>
+                      <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                          <label class="form-label bc-label">Type</label>
+                          <select class="form-select bc-input" formControlName="asset_type">
+                            @for (opt of typeOptions; track opt[0]) {
+                              <option [value]="opt[0]">{{ opt[1] }}</option>
+                            }
+                          </select>
+                        </div>
+                        <div class="col-md-4">
+                          <label class="form-label bc-label">Environment</label>
+                          <select class="form-select bc-input" formControlName="environment">
+                            @for (opt of envOptions; track opt[0]) {
+                              <option [value]="opt[0]">{{ opt[1] }}</option>
+                            }
+                          </select>
+                        </div>
+                        <div class="col-md-4">
+                          <label class="form-label bc-label">Criticality</label>
+                          <select class="form-select bc-input" formControlName="criticality">
+                            @for (opt of critOptions; track opt[0]) {
+                              <option [value]="opt[0]">{{ opt[1] }}</option>
+                            }
+                          </select>
+                        </div>
+                      </div>
+                      <button type="submit" class="btn btn-sm btn-success bc-btn" [disabled]="assetSaving()">
+                        @if (assetSaving()) {
+                          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        }
+                        <i class="bi bi-plus-circle me-1" *ngIf="!assetSaving()"></i>
+                        Create Asset
+                      </button>
+                    </form>
+                  </div>
+                }
+
+                <!-- Selection summary -->
+                @if (selectedAssetIds().size > 0) {
+                  <div class="bc-wizardSelection mt-3">
+                    <i class="bi bi-check-circle-fill me-2" style="color:var(--bc-accent)"></i>
+                    <strong>{{ selectedAssetIds().size }}</strong> asset{{ selectedAssetIds().size === 1 ? '' : 's' }} selected
+                  </div>
+                }
+              }
+
+              <!-- Navigation -->
+              <div class="bc-wizardNav mt-4">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="prevStep()">
+                  <i class="bi bi-arrow-left me-1"></i> Back
+                </button>
+                <button class="btn btn-success bc-btn" type="button"
+                  [disabled]="!canProceedFromAssets()"
+                  (click)="proceedFromAssets()">
+                  Next: Engagement Details
+                  <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- STEP 3: Engagement Details                                 -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        @if (currentStep() === 'details') {
+          <div class="bc-card">
+            <div class="bc-wizardStepHead">
+              <h3 class="bc-wizardStepTitle">
+                <i class="bi bi-shield-check me-2"></i>Engagement Details
+              </h3>
+              <span class="bc-sub" style="font-size:0.8rem">
+                Provide the basic details for this engagement.
+              </span>
+            </div>
+            <div class="bc-cardInner p-4">
+
+              <!-- Summary of previous steps -->
+              <div class="bc-wizardSummaryBar mb-4">
+                <span><i class="bi bi-building me-1"></i> {{ selectedOrgName() }}</span>
+                <span class="bc-wizardSummaryDot"></span>
+                <span><i class="bi bi-hdd-network me-1"></i> {{ selectedAssetIds().size }} asset{{ selectedAssetIds().size === 1 ? '' : 's' }}</span>
+              </div>
+
+              <form [formGroup]="engForm" (ngSubmit)="proceedFromDetails()" autocomplete="off">
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-8">
+                    <label for="wizEngName" class="form-label bc-label">Name <span class="bc-required">*</span></label>
+                    <input id="wizEngName" type="text" class="form-control bc-input" formControlName="name"
+                      minlength="3" maxlength="200" placeholder="Q1 External Pentest">
+                    @if (isEngFormInvalid('name')) {
+                      <div class="bc-fieldError">
+                        @if (engForm.get('name')?.hasError('required')) {
+                          <span>Name is required.</span>
+                        }
+                        @if (engForm.get('name')?.hasError('minlength')) {
+                          <span>Name must be at least 3 characters.</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label bc-label">Status</label>
+                    <input type="text" class="form-control bc-input" value="Planned" disabled>
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label for="wizEngStart" class="form-label bc-label">Start Date <span class="bc-required">*</span></label>
+                    <input id="wizEngStart" type="date" class="form-control bc-input" formControlName="start_date">
+                    @if (isEngFormInvalid('start_date')) {
+                      <div class="bc-fieldError">Start date is required.</div>
+                    }
+                  </div>
+                  <div class="col-md-6">
+                    <label for="wizEngEnd" class="form-label bc-label">End Date</label>
+                    <input id="wizEngEnd" type="date" class="form-control bc-input" formControlName="end_date">
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-12">
+                    <label for="wizEngDesc" class="form-label bc-label">Description</label>
+                    <textarea id="wizEngDesc" class="form-control bc-input" formControlName="description" rows="3"
+                      maxlength="5000" placeholder="Engagement scope and objectives..."></textarea>
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-12">
+                    <label for="wizEngNotes" class="form-label bc-label">Notes</label>
+                    <textarea id="wizEngNotes" class="form-control bc-input" formControlName="notes" rows="3"
+                      maxlength="5000" placeholder="Scope highlights, constraints, delivery notes..."></textarea>
+                  </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="bc-wizardNav mt-4">
+                  <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="prevStep()">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                  </button>
+                  <button class="btn btn-success bc-btn" type="submit" [disabled]="submitting()">
+                    @if (submitting()) {
+                      <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                      Creating...
+                    } @else {
+                      Next: Statement of Work
+                      <i class="bi bi-arrow-right ms-1"></i>
+                    }
+                  </button>
+                </div>
+
+              </form>
+
+            </div>
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- STEP 4: Approve SoW                                       -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        @if (currentStep() === 'sow') {
+          <div class="bc-card">
+            <div class="bc-wizardStepHead">
+              <h3 class="bc-wizardStepTitle">
+                <i class="bi bi-file-earmark-text me-2"></i>Statement of Work
+              </h3>
+              <span class="bc-sub" style="font-size:0.8rem">
+                Review the scope and approve the Statement of Work.
+              </span>
+            </div>
+            <div class="bc-cardInner p-4">
+
+              <!-- SoW info -->
+              @if (createdSow(); as sow) {
+                <div class="mb-3">
+                  <div class="bc-label mb-1">Title</div>
+                  <div class="bc-sub">{{ sow.title }}</div>
+                </div>
+                <div class="mb-1">
+                  <div class="bc-label mb-1">Status</div>
+                  <span class="badge" [ngClass]="{
+                    'bg-warning text-dark': sow.status === 'draft',
+                    'bg-success': sow.status === 'approved'
+                  }">{{ sow.status | titlecase }}</span>
+                </div>
+              }
+
+              <!-- Scoped assets table -->
+              <div class="bc-label mt-3 mb-2">In-Scope Assets ({{ selectedAssetsList().length }})</div>
+              <div class="table-responsive mb-3">
+                <table class="table bc-table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Type</th>
+                      <th>Environment</th>
+                      <th>Criticality</th>
+                      <th>Target</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (asset of selectedAssetsList(); track asset.id) {
+                      <tr>
+                        <td>{{ asset.name }}</td>
+                        <td>{{ assetTypeLabels[asset.asset_type] || asset.asset_type }}</td>
+                        <td>{{ assetEnvLabels[asset.environment] || asset.environment }}</td>
+                        <td>
+                          <span class="badge" [ngClass]="{
+                            'bg-danger': asset.criticality === 'high',
+                            'bg-warning text-dark': asset.criticality === 'medium',
+                            'bg-secondary': asset.criticality === 'low'
+                          }">{{ assetCritLabels[asset.criticality] || asset.criticality }}</span>
+                        </td>
+                        <td class="bc-sub">{{ asset.target || '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Navigation -->
+              <div class="bc-wizardNav mt-4">
+                <div></div>
+                @if (createdSow()?.status === 'approved') {
+                  <button class="btn btn-success bc-btn" type="button" (click)="nextStep()">
+                    Next: Review
+                    <i class="bi bi-arrow-right ms-1"></i>
+                  </button>
+                } @else {
+                  <button class="btn btn-success bc-btn" type="button"
+                    [disabled]="submitting()"
+                    (click)="approveSow()">
+                    @if (submitting()) {
+                      <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                      Approving...
+                    } @else {
+                      <i class="bi bi-check-circle me-1"></i>
+                      Approve SoW & Continue
+                    }
+                  </button>
+                }
+              </div>
+
+            </div>
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- STEP 5: Review & Activate                                  -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        @if (currentStep() === 'review') {
+          <div class="bc-card">
+            <div class="bc-wizardStepHead">
+              <h3 class="bc-wizardStepTitle">
+                <i class="bi bi-rocket-takeoff me-2"></i>Review &amp; Activate
+              </h3>
+              <span class="bc-sub" style="font-size:0.8rem">
+                Review everything and activate the engagement.
+              </span>
+            </div>
+            <div class="bc-cardInner p-4">
+
+              @if (createdEngagement(); as eng) {
+
+                <!-- Engagement summary -->
+                <div class="bc-wizardReviewSection mb-4">
+                  <h4 class="bc-wizardReviewLabel">
+                    <i class="bi bi-shield-check me-2"></i>Engagement
+                  </h4>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div class="bc-reviewField">
+                        <span class="bc-reviewKey">Name</span>
+                        <span class="bc-reviewVal">{{ eng.name }}</span>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="bc-reviewField">
+                        <span class="bc-reviewKey">Start Date</span>
+                        <span class="bc-reviewVal">{{ eng.start_date || '—' }}</span>
+                      </div>
+                    </div>
+                    @if (eng.end_date) {
+                      <div class="col-md-3">
+                        <div class="bc-reviewField">
+                          <span class="bc-reviewKey">End Date</span>
+                          <span class="bc-reviewVal">{{ eng.end_date }}</span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  @if (eng.description) {
+                    <div class="mt-2">
+                      <span class="bc-reviewKey">Description</span>
+                      <p class="bc-reviewVal mb-0" style="white-space:pre-line">{{ eng.description }}</p>
+                    </div>
+                  }
+                  @if (eng.notes) {
+                    <div class="mt-2">
+                      <span class="bc-reviewKey">Notes</span>
+                      <p class="bc-reviewVal mb-0" style="white-space:pre-line">{{ eng.notes }}</p>
+                    </div>
+                  }
+                </div>
+
+                <!-- Organization -->
+                <div class="bc-wizardReviewSection mb-4">
+                  <h4 class="bc-wizardReviewLabel">
+                    <i class="bi bi-building me-2"></i>Client
+                  </h4>
+                  <div class="bc-reviewVal">{{ selectedOrgName() }}</div>
+                </div>
+
+                <!-- SoW & Scope -->
+                <div class="bc-wizardReviewSection mb-4">
+                  <h4 class="bc-wizardReviewLabel">
+                    <i class="bi bi-file-earmark-text me-2"></i>Statement of Work
+                  </h4>
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="bc-reviewVal">{{ createdSow()?.title }}</span>
+                    <span class="badge bg-success">Approved</span>
+                  </div>
+                  <div class="bc-reviewKey mb-1">In-Scope Assets ({{ selectedAssetsList().length }})</div>
+                  <ul class="bc-wizardReviewList">
+                    @for (asset of selectedAssetsList(); track asset.id) {
+                      <li>
+                        <strong>{{ asset.name }}</strong>
+                        <span class="bc-sub ms-2">{{ assetTypeLabels[asset.asset_type] }} &middot; {{ asset.target || 'No target' }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+
+                <!-- Activate button -->
+                <div class="bc-wizardActivate">
+                  <p class="bc-sub mb-3" style="font-size:0.85rem">
+                    Everything looks good? Activate the engagement to start working on it, or leave it in Planned state for later.
+                  </p>
+                  <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <button class="btn btn-lg btn-success bc-btn bc-wizardActivateBtn" type="button"
+                      [disabled]="submitting()"
+                      (click)="activateEngagement()">
+                      @if (submitting()) {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Activating...
+                      } @else {
+                        <i class="bi bi-rocket-takeoff me-2"></i>
+                        Activate Engagement
+                      }
+                    </button>
+                    <button class="btn btn-lg btn-outline-light bc-wizardActivateBtn" type="button"
+                      [disabled]="submitting()"
+                      (click)="keepPlanned()">
+                      <i class="bi bi-clock me-2"></i>
+                      Keep as Planned
+                    </button>
+                  </div>
+                </div>
+
+              }
+
+            </div>
+          </div>
+        }
+
+      </main>
+
+      <!-- Help aside -->
+      <aside class="bc-helpPane" *ngIf="showHelp">
+        <div class="bc-helpHead">
+          <div>
+            <div class="bc-helpKicker">Help</div>
+            <div class="bc-helpTitle">New Engagement Wizard</div>
+          </div>
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="bc-helpBody">
+          <div class="bc-sub mb-2">
+            Create a new engagement in 5 easy steps:
+          </div>
+          <ul class="bc-helpList">
+            <li><strong>Step 1:</strong> Choose or create the client.</li>
+            <li><strong>Step 2:</strong> Select assets that will be in scope, or create new ones.</li>
+            <li><strong>Step 3:</strong> Fill in the engagement details (name, dates, description).</li>
+            <li><strong>Step 4:</strong> Review the auto-generated Statement of Work and approve it.</li>
+            <li><strong>Step 5:</strong> Review everything and activate the engagement.</li>
+          </ul>
+          <div class="bc-sub mt-2" style="font-size:0.78rem">
+            Clients and assets created during this wizard are saved immediately, even if you don't complete the engagement.
+          </div>
+        </div>
+      </aside>
+
+    </div>
+
+  </div>
+</div>

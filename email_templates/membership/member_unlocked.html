@@ -1,0 +1,28 @@
+{% extends "shells/branded.html" %}
+{% block title %}Account unlocked — BytesCop{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                Your account in <strong style="color:#e6edf3;">{{ tenant_name | default('an organization', true) }}</strong> on BytesCop has been <strong style="color:#00ffb3;">unlocked</strong>. You can sign in again.
+              </p>
+
+              <!-- CTA button -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 28px;">
+                <tr>
+                  <td align="center" style="padding:0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center" style="background-color:#00ffb3; border-radius:6px;">
+                          <a href="{{ login_url }}" target="_blank" style="display:inline-block; padding:14px 40px; font-size:16px; font-weight:700; color:#070a0f; text-decoration:none; letter-spacing:1px; font-family:'Courier New', Courier, monospace;">
+                            SIGN IN
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+{% endblock %}
+{% block sub_footer %}You received this email because your BytesCop account was unlocked by an administrator.{% endblock %}

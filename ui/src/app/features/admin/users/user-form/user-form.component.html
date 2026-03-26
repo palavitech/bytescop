@@ -1,0 +1,135 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+
+  <!-- Section: Account -->
+  <div class="bc-formSection">
+    <div class="bc-formSectionHead">
+      <i class="bi bi-at"></i>
+      <span>Account</span>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="email" class="form-label bc-label">Email Address <span class="bc-required">*</span></label>
+        <input id="email" type="email" class="form-control bc-input" formControlName="email"
+          placeholder="user@example.com">
+        <div class="bc-fieldError"
+          *ngIf="form.get('email')?.touched && form.get('email')?.hasError('required')">
+          Email is required.
+        </div>
+        <div class="bc-fieldError"
+          *ngIf="form.get('email')?.touched && form.get('email')?.hasError('email')">
+          Enter a valid email address.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Personal Info -->
+  <div class="bc-formSection">
+    <div class="bc-formSectionHead">
+      <i class="bi bi-person"></i>
+      <span>Personal Information</span>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="firstName" class="form-label bc-label">First Name <span class="bc-required">*</span></label>
+        <input id="firstName" type="text" class="form-control bc-input" formControlName="first_name"
+          placeholder="First name">
+        <div class="bc-fieldError"
+          *ngIf="form.get('first_name')?.touched && form.get('first_name')?.hasError('required')">
+          First name is required.
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label for="lastName" class="form-label bc-label">Last Name <span class="bc-required">*</span></label>
+        <input id="lastName" type="text" class="form-control bc-input" formControlName="last_name"
+          placeholder="Last name">
+        <div class="bc-fieldError"
+          *ngIf="form.get('last_name')?.touched && form.get('last_name')?.hasError('required')">
+          Last name is required.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Password (create only) -->
+  <div class="bc-formSection" *ngIf="mode === 'create'">
+    <div class="bc-formSectionHead">
+      <i class="bi bi-key"></i>
+      <span>Password</span>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="password" class="form-label bc-label">Password <span class="bc-required">*</span></label>
+        <input id="password" type="password" class="form-control bc-input" formControlName="password"
+          placeholder="Set initial password" autocomplete="new-password">
+        <div class="bc-fieldError"
+          *ngIf="form.get('password')?.touched && form.get('password')?.hasError('required')">
+          Password is required.
+        </div>
+        <div *ngIf="policy && passwordValue" class="bc-policyChecklist mt-2">
+          <div class="bc-policyItem" [class.is-met]="meetsMinLength">
+            <i class="bi" [ngClass]="meetsMinLength ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+            <span>At least {{ policy.min_length }} characters</span>
+          </div>
+          <div *ngIf="policy.require_uppercase" class="bc-policyItem" [class.is-met]="hasUppercase">
+            <i class="bi" [ngClass]="hasUppercase ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+            <span>Uppercase letter</span>
+          </div>
+          <div *ngIf="policy.require_number" class="bc-policyItem" [class.is-met]="hasNumber">
+            <i class="bi" [ngClass]="hasNumber ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+            <span>Number</span>
+          </div>
+          <div *ngIf="policy.require_special" class="bc-policyItem" [class.is-met]="hasSpecial">
+            <i class="bi" [ngClass]="hasSpecial ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+            <span>Special character</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label for="passwordConfirm" class="form-label bc-label">Confirm Password <span class="bc-required">*</span></label>
+        <input id="passwordConfirm" type="password" class="form-control bc-input" formControlName="password_confirm"
+          placeholder="Repeat password" autocomplete="new-password"
+          [class.is-invalid]="passwordMismatch">
+        <div class="bc-fieldError" *ngIf="passwordMismatch">
+          Passwords do not match.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Permissions -->
+  <div class="bc-formSection" *ngIf="member?.role !== 'owner'">
+    <div class="bc-formSectionHead">
+      <i class="bi bi-shield-lock"></i>
+      <span>Permissions</span>
+    </div>
+    <label class="form-label bc-label">Group Memberships</label>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button"
+        *ngFor="let g of availableGroups"
+        class="btn btn-sm bc-groupChip"
+        [class.active]="isGroupSelected(g.id)"
+        (click)="toggleGroup(g.id)">
+        <i class="bi" [ngClass]="isGroupSelected(g.id) ? 'bi-check-square' : 'bi-square'"></i>
+        <span class="ms-1">{{ g.name }}</span>
+      </button>
+    </div>
+    <div class="bc-fieldHint" *ngIf="availableGroups.length === 0">
+      No groups available. Create groups first to assign permissions.
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="bc-formFoot">
+    <button type="button" class="btn btn-outline-light bc-iconBtn" (click)="onCancel()">
+      <i class="bi bi-x-lg"></i>
+      <span>Cancel</span>
+    </button>
+    <button type="submit" class="btn btn-success bc-btn" [disabled]="saving">
+      <span *ngIf="saving" class="spinner-border spinner-border-sm me-1" role="status"></span>
+      <i class="bi me-1" *ngIf="!saving" [ngClass]="mode === 'create' ? 'bi-person-plus' : 'bi-check-lg'"></i>
+      {{ mode === 'create' ? 'Create User' : 'Save Changes' }}
+    </button>
+  </div>
+
+</form>

@@ -1,0 +1,178 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+          <div class="bc-pageCard mb-3">
+            <div class="bc-pageCardHead">
+              <div class="bc-pageCardTitle">
+                <div class="bc-h1">Groups</div>
+                <div class="bc-sub">Manage permission groups and their assignments.</div>
+              </div>
+              <div class="bc-pageCardTools">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+                  <i class="bi bi-arrow-left"></i>
+                  <span>Back</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+                  <i class="bi bi-arrow-repeat"></i>
+                  <span>Refresh</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+                  <i class="bi bi-question-circle"></i>
+                  <span>Help</span>
+                </button>
+              </div>
+            </div>
+            <div class="bc-pageCardFoot">
+              <div class="bc-pageCardFootLeft">
+                <div class="bc-badge" *ngIf="vm.state === 'ready'">
+                  <span class="bc-dot"></span>
+                  <span>Total: {{ vm.total }}</span>
+                </div>
+              </div>
+              <div class="bc-pageCardFootRight">
+                <div class="dropdown bc-footDropdown">
+                  <button class="btn btn-outline-light bc-iconBtn dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical"></i>
+                    <span>Actions</span>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <button class="dropdown-item" type="button" (click)="exportCsv(vm.groups)">
+                        <i class="bi bi-filetype-csv"></i> Export CSV
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+                <a class="btn btn-success bc-btn bc-btnCtaFoot" routerLink="/admin/groups/create"
+                  *bcHasPermission="'group.create'">
+                  <i class="bi bi-plus-circle"></i>
+                  <span class="ms-2">New Group</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+        <main>
+
+          <!-- Table -->
+          <div class="bc-card">
+            <div class="bc-cardInner p-0">
+              <div class="table-responsive">
+                <table class="table table-dark mb-0 align-middle bc-table">
+                  <thead>
+                    <tr>
+                      <th style="min-width:200px">Name</th>
+                      <th style="min-width:260px">Description</th>
+                      <th style="min-width:100px">Type</th>
+                      <th style="min-width:100px" class="text-center">Members</th>
+                      <th class="text-end" style="min-width:180px">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+
+                    <!-- Loading -->
+                    <tr *ngIf="vm.state === 'init'">
+                      <td colspan="5" class="p-4">
+                        <div class="bc-sub">Fetching groups...</div>
+                      </td>
+                    </tr>
+
+                    <!-- Error -->
+                    <tr *ngIf="vm.state === 'error'">
+                      <td colspan="5" class="p-4">
+                        <div class="alert alert-danger mb-0">Could not load groups.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Empty -->
+                    <tr *ngIf="vm.state === 'ready' && vm.groups.length === 0">
+                      <td colspan="5" class="p-4">
+                        <div class="bc-sub">No groups found.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Data rows -->
+                    <ng-container *ngIf="vm.state === 'ready'">
+                      <tr *ngFor="let g of vm.groups">
+                        <td>
+                          <a class="bc-rowLink" [routerLink]="['/admin/groups', g.id]">{{ g.name }}</a>
+                        </td>
+                        <td class="bc-sub">{{ g.description || '—' }}</td>
+                        <td>
+                          <span class="bc-typeBadge" [class.bc-typeBadge--default]="g.is_default">
+                            {{ g.is_default ? 'Default' : 'Custom' }}
+                          </span>
+                        </td>
+                        <td class="text-center">{{ g.member_count }}</td>
+                        <td class="text-end">
+                          <!-- Delete confirmation overlay -->
+                          <div class="bc-deleteConfirm" *ngIf="vm.deletingId === g.id">
+                            <span class="bc-sub me-2">Delete?</span>
+                            <button class="btn btn-sm btn-danger bc-btn me-1" (click)="deleteGroup(g)"><i class="bi bi-check-lg me-1"></i>Yes</button>
+                            <button class="btn btn-sm btn-outline-light bc-btnSoft" (click)="cancelDelete()"><i class="bi bi-x-lg me-1"></i>No</button>
+                          </div>
+
+                          <ng-container *ngIf="vm.deletingId !== g.id">
+                            <a class="btn btn-sm btn-outline-light bc-btnSoft bc-tableActionBtn me-1"
+                              [routerLink]="['/admin/groups', g.id, 'edit']"
+                              *bcHasPermission="'group.update'"
+                              title="Edit">
+                              <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger bc-btnSoft bc-tableActionBtn"
+                              *bcHasPermission="'group.delete'"
+                              (click)="confirmDelete(g.id)"
+                              title="Delete"
+                              [disabled]="g.is_default">
+                              <i class="bi bi-trash3"></i>
+                            </button>
+                          </ng-container>
+                        </td>
+                      </tr>
+                    </ng-container>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- Help aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp">
+          <div class="bc-helpHead">
+            <div>
+              <div class="bc-helpKicker">Help</div>
+              <div class="bc-helpTitle">Groups</div>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="bc-helpBody">
+            <div class="bc-sub mb-2">
+              Groups bundle permissions together and assign them to users. Default groups come pre-configured with standard permission sets.
+            </div>
+            <ul class="bc-helpList">
+              <li><strong>Default groups:</strong> Pre-configured groups (e.g. Administrators, Analysts, Collaborators) are created automatically. They cannot be deleted or have their permissions changed, but you can manage their members.</li>
+              <li><strong>Custom groups:</strong> Create your own groups with specific permission sets tailored to your workflow.</li>
+              <li><strong>Members:</strong> Add or remove users from groups on the group edit page.</li>
+              <li><strong>Permissions:</strong> Each group can have any combination of the available permissions.</li>
+              <li><strong>Export:</strong> Use the Actions menu to export the group list as CSV.</li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

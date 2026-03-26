@@ -1,0 +1,278 @@
+/* Avatar preview (128px circle) */
+.bc-avatarPreview {
+  width: 128px;
+  height: 128px;
+  min-width: 128px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(0, 255, 179, .35), transparent 60%),
+    linear-gradient(135deg, rgba(0, 183, 255, .18), rgba(0, 255, 179, .10));
+  border: 2px solid rgba(0, 183, 255, .22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bc-avatarPreviewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.bc-avatarPreviewInitials {
+  font-family: 'Orbitron', system-ui, sans-serif;
+  font-size: 2.5rem;
+  letter-spacing: 2px;
+  color: var(--bc-text, #e0e6ed);
+}
+
+/* Avatar spinner overlay */
+.bc-avatarSpinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.bc-avatarSpinnerRing {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 255, 179, 0.15);
+  border-top-color: var(--bc-accent, #00ffb3);
+  border-radius: 50%;
+  animation: avatarSpin 0.8s linear infinite;
+}
+
+.bc-avatarSpinnerText {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--bc-accent, #00ffb3);
+  opacity: 0.8;
+}
+
+@keyframes avatarSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Section headers */
+.bc-sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 2px solid rgba(0, 255, 179, 0.18);
+  position: relative;
+}
+
+.table-responsive {
+  position: relative;
+}
+
+/* Remove top radius on table header when nested in card */
+.bc-table thead th:first-child {
+  border-top-left-radius: 0;
+}
+.bc-table thead th:last-child {
+  border-top-right-radius: 0;
+}
+
+/* Fixed-width columns for Setting / Value / Actions tables */
+.bc-profileTable {
+  table-layout: fixed;
+  width: 100%;
+}
+.bc-profileTable .bc-colSetting { width: 60%; }
+.bc-profileTable .bc-colValue   { width: 26%; }
+.bc-profileTable .bc-colAction  { width: 14%; }
+
+.bc-settingLabel {
+  font-weight: 600;
+  color: var(--bc-textPrimary, #e0e6f0);
+  font-size: 0.9rem;
+}
+
+.bc-settingDesc {
+  font-size: 0.8rem;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.bc-settingInput {
+  max-width: 320px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 179, 0.18);
+  color: var(--bc-textPrimary, #e0e6f0);
+}
+
+.bc-settingInput::placeholder {
+  color: rgba(201, 212, 255, 0.35);
+}
+
+.bc-settingInput:focus {
+  border-color: var(--bc-accent, #00ffb3);
+  box-shadow: 0 0 0 2px rgba(0, 255, 179, 0.12);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--bc-textPrimary, #e0e6f0);
+}
+
+/* Save/Cancel bar below table */
+.bc-tableActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(0, 255, 179, 0.08);
+}
+
+/* 3-column password grid */
+.bc-pwdGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  padding: 16px 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.bc-pwdCol {
+  padding: 6px 12px 6px 0;
+}
+
+.bc-pwdCol:nth-child(3n) {
+  padding-right: 0;
+}
+
+.bc-pwdInput {
+  max-width: 100%;
+  width: 100%;
+}
+
+.bc-mfaNotEnabled {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 31px; /* match form-control-sm height */
+  font-size: 0.8rem;
+  color: var(--bc-muted, #71808e);
+  opacity: 0.7;
+}
+
+.bc-mfaNotEnabled .bi {
+  font-size: 0.95rem;
+}
+
+@media (max-width: 767.98px) {
+  .bc-pwdGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Password policy checklist */
+.bc-policyChecklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-left: 10px;
+}
+
+.bc-policyItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--bc-muted, #71808e);
+  transition: color 0.2s;
+}
+
+.bc-policyItem .bi {
+  font-size: 0.9rem;
+}
+
+.bc-policyItem.is-met {
+  color: var(--bc-accent, #00ffb3);
+}
+
+/* Top-level forced reset banner (above all sections) */
+.bc-alertBannerTop {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 6px;
+  background: rgba(255, 59, 122, 0.08);
+  border: 1px solid rgba(255, 59, 122, 0.3);
+  color: var(--bc-danger, #ff3b7a);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.bc-alertBannerTop .bi {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.bc-alertBannerLink {
+  margin-left: auto;
+  color: var(--bc-accent, #00ffb3);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.bc-alertBannerLink:hover {
+  text-decoration: underline;
+}
+
+/* Forced reset banner (inside password section) */
+.bc-alertBanner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.25);
+  color: #ffc107;
+  font-size: 0.85rem;
+}
+
+.bc-alertBanner .bi {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* Password error list */
+.bc-errorList {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bc-errorItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--bc-danger, #ff3b7a);
+}
+
+.bc-errorItem .bi {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* Danger text for expired passwords */
+.bc-text-danger {
+  color: var(--bc-danger, #ff3b7a);
+  font-weight: 600;
+}
+

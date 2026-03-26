@@ -1,0 +1,41 @@
+# Secrets
+ssl/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+db.sqlite3
+
+# Node
+node_modules/
+ui/dist/
+ui/.angular/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+api/media/
+api/logs/
+api/staticfiles/
+
+# Claude memory (local only)
+**/memory/
+
+# Host-mounted volumes
+logs/
+data/

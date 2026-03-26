@@ -1,0 +1,83 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <label for="engName" class="form-label bc-label">Name <span class="bc-required">*</span></label>
+      <input id="engName" type="text" class="form-control bc-input" formControlName="name"
+        minlength="3" maxlength="200" placeholder="Q1 External Pentest">
+      <div class="bc-fieldError" *ngIf="isInvalid('name')">
+        <span *ngIf="form.get('name')?.hasError('required')">Name is required.</span>
+        <span *ngIf="form.get('name')?.hasError('minlength')">Name must be at least 3 characters.</span>
+        <span *ngIf="form.get('name')?.hasError('maxlength')">Name is too long.</span>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <label for="engOrg" class="form-label bc-label">Client <span class="bc-required">*</span></label>
+      <select id="engOrg" class="form-select bc-input" formControlName="client_id"
+        [class.is-invalid]="isInvalid('client_id')">
+        <option [ngValue]="null" disabled>Select client...</option>
+        <option *ngFor="let org of (organizations$ | async) ?? []" [ngValue]="org.id">{{ org.name }}</option>
+      </select>
+      <div class="bc-fieldError" *ngIf="isInvalid('client_id')">
+        Client is required.
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <label for="engStatus" class="form-label bc-label">Status</label>
+      <ng-container *ngIf="mode === 'create'; else statusSelect">
+        <input id="engStatus" type="text" class="form-control bc-input" value="Planned" disabled>
+      </ng-container>
+      <ng-template #statusSelect>
+        <select id="engStatus" class="form-select bc-input" formControlName="status">
+          <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
+        </select>
+      </ng-template>
+    </div>
+
+    <div class="col-md-4">
+      <label for="engStart" class="form-label bc-label">Start Date <span class="bc-required">*</span></label>
+      <input id="engStart" type="date" class="form-control bc-input" formControlName="start_date">
+      <div class="bc-fieldError" *ngIf="isInvalid('start_date')">
+        Start date is required.
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <label for="engEnd" class="form-label bc-label">End Date</label>
+      <input id="engEnd" type="date" class="form-control bc-input" formControlName="end_date">
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12">
+      <label for="engDesc" class="form-label bc-label">Description</label>
+      <textarea id="engDesc" class="form-control bc-input" formControlName="description" rows="3"
+        maxlength="5000" placeholder="Engagement scope and objectives..."></textarea>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-12">
+      <label for="engNotes" class="form-label bc-label">Notes</label>
+      <textarea id="engNotes" class="form-control bc-input" formControlName="notes" rows="3"
+        maxlength="5000" placeholder="Scope highlights, constraints, and delivery notes..."></textarea>
+    </div>
+  </div>
+
+  <div class="bc-formFoot">
+    <button type="button" class="btn btn-outline-light bc-iconBtn" (click)="onCancel()">
+      <i class="bi bi-x-lg"></i>
+      <span>Cancel</span>
+    </button>
+    <button type="submit" class="btn btn-success bc-btn" [disabled]="saving">
+      <span *ngIf="saving" class="spinner-border spinner-border-sm me-1" role="status"></span>
+      <i class="bi me-1" *ngIf="!saving" [ngClass]="mode === 'create' ? 'bi-plus-circle' : 'bi-check-lg'"></i>
+      {{ mode === 'create' ? 'Create Engagement' : 'Save Changes' }}
+    </button>
+  </div>
+
+</form>

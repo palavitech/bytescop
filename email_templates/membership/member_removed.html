@@ -1,0 +1,25 @@
+{% extends "shells/base.html" %}
+{% block title %}Removed from organization — BytesCop{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                You have been removed from <strong style="color:#e6edf3;">{{ tenant_name | default('an organization', true) }}</strong> on BytesCop{% if removed_by %} by <strong style="color:#e6edf3;">{{ removed_by }}</strong>{% endif %}.
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                You will no longer be able to access this organization's data, engagements, or findings.
+              </p>
+
+              <!-- Info box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(139,148,158,0.06); border:1px solid rgba(139,148,158,0.12); border-radius:6px;">
+                    <p style="margin:0; font-size:14px; color:#8b949e; line-height:1.7;">
+                      If you believe this was done in error, please contact your organization administrator or reach out to us at <a href="mailto:team@bytescop.com" style="color:#00b7ff; text-decoration:none;">team@bytescop.com</a>.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+{% endblock %}
+{% block sub_footer %}You received this email because your membership in a BytesCop organization was revoked.{% endblock %}

@@ -1,0 +1,22 @@
+.bc-miniCard .bc-cardInner {
+  border-radius: 14px;
+}
+
+.bc-kpiLabel {
+  font-size: 12px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .65);
+}
+
+.bc-kpiValue {
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.bc-kpiIcon {
+  font-size: 26px;
+  opacity: .6;
+}

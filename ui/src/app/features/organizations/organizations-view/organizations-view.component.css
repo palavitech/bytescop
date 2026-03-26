@@ -1,0 +1,14 @@
+.bc-assetsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(0, 255, 179, 0.1);
+}
+
+.bc-typeBadge {
+  font-size: 0.78rem;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.5px;
+  color: var(--bc-blue);
+}

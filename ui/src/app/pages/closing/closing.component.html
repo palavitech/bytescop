@@ -1,0 +1,123 @@
+<div class="bc-authWrap">
+  <div class="bc-authCard" style="max-width: 540px">
+    <div class="bc-authInner">
+
+      <!-- Brand -->
+      <div class="bc-authBrand">
+        <div class="bc-logoMark"></div>
+        <div class="bc-brandText">
+          <strong>BytesCop</strong>
+          <span>Security Platform</span>
+        </div>
+      </div>
+
+      <!-- Invalid link -->
+      @if (state() === 'invalid') {
+        <div class="bc-closingIcon">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <h2 class="bc-authTitle">Invalid Link</h2>
+        <p class="bc-authSub">This closing link is missing a valid closure ID.</p>
+        <button class="bc-authSubmit" (click)="goToLogin()">Go to Login</button>
+      }
+
+      <!-- Loading -->
+      @if (state() === 'loading') {
+        <div class="bc-closingIcon">
+          <div class="bc-closingSpinner"></div>
+        </div>
+        <h2 class="bc-authTitle">Loading...</h2>
+        <p class="bc-authSub">Checking closure status.</p>
+      }
+
+      <!-- Processing -->
+      @if (state() === 'processing') {
+        <div class="bc-closingIcon">
+          <div class="bc-closingSpinner"></div>
+        </div>
+        <h2 class="bc-authTitle">Deleting Workspace</h2>
+        <p class="bc-authSub">
+          @if (tenantName()) {
+            "{{ tenantName() }}" is being permanently deleted...
+          } @else {
+            Your workspace is being permanently deleted...
+          }
+        </p>
+
+        <!-- Worker health warning -->
+        @if (workersHealthy() === false) {
+          <div class="bc-closingWarning">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>
+              <strong>Background workers are not running</strong>
+              <p>The deletion process requires background workers. Start them with
+                <code>docker compose up -d</code> or <code>./api-devrun.sh</code>.</p>
+            </div>
+          </div>
+        }
+
+        <!-- Step list -->
+        @if (steps().length) {
+          <div class="bc-closingSteps">
+            @for (step of steps(); track step.name) {
+              <div class="bc-closingStep" [class.bc-closingStep--done]="step.status === 'done'"
+                   [class.bc-closingStep--active]="step.status === 'in_progress'">
+                <span class="bc-closingStepIcon">
+                  @if (step.status === 'done') {
+                    <i class="bi bi-check-circle-fill"></i>
+                  } @else if (step.status === 'in_progress') {
+                    <div class="bc-closingSpinnerSmall"></div>
+                  } @else {
+                    <i class="bi bi-circle"></i>
+                  }
+                </span>
+                <span class="bc-closingStepName">{{ step.name }}</span>
+              </div>
+            }
+          </div>
+        }
+      }
+
+      <!-- Completed -->
+      @if (state() === 'completed') {
+        <div class="bc-closingIcon bc-closingIcon--success">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <h2 class="bc-authTitle">Workspace Deleted</h2>
+        <p class="bc-authSub">
+          @if (tenantName()) {
+            "{{ tenantName() }}" has been permanently deleted.
+          } @else {
+            Your workspace has been permanently deleted.
+          }
+        </p>
+
+        @if (remainingTenants() > 0) {
+          <p class="bc-authSub">You still have other workspaces. Log in to continue.</p>
+          <button class="bc-authSubmit" (click)="goToLogin()">Login</button>
+        } @else {
+          <p class="bc-authSub">
+            No workspaces remaining. Redirecting to setup in {{ countdown() }}s...
+          </p>
+          <button class="bc-authSubmit" (click)="goToSetup()">Go to Setup</button>
+        }
+      }
+
+      <!-- Failed -->
+      @if (state() === 'failed') {
+        <div class="bc-closingIcon bc-closingIcon--error">
+          <i class="bi bi-x-circle-fill"></i>
+        </div>
+        <h2 class="bc-authTitle">Deletion Failed</h2>
+        @if (error()) {
+          <div class="bc-authError">{{ error() }}</div>
+        }
+        <p class="bc-authSub">
+          The workspace deletion encountered an error. Please contact your administrator.
+        </p>
+        <button class="bc-authSubmit" (click)="goToLogin()">Go to Login</button>
+      }
+
+    </div>
+  </div>
+</div>

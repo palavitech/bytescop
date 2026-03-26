@@ -1,0 +1,42 @@
+export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+
+export type FindingStatus =
+  | 'open'
+  | 'triage'
+  | 'accepted'
+  | 'fixed'
+  | 'false_positive';
+
+export interface Finding {
+  id: string;
+  engagement_id: string;
+  asset_id: string | null;
+  asset_name: string;
+  title: string;
+  severity: FindingSeverity;
+  assessment_area: string;
+  owasp_category: string;
+  cwe_id: string;
+  status: FindingStatus;
+  description_md: string;
+  recommendation_md: string;
+  is_draft: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const FINDING_SEVERITY_LABELS: Record<FindingSeverity, string> = {
+  critical: 'Critical',
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+  info: 'Info',
+};
+
+export const FINDING_STATUS_LABELS: Record<FindingStatus, string> = {
+  open: 'Open',
+  triage: 'Triage',
+  accepted: 'Accepted',
+  fixed: 'Fixed',
+  false_positive: 'False Positive',
+};

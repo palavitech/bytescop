@@ -1,0 +1,36 @@
+{% extends "shells/base.html" %}
+{% block title %}MFA device changed — BytesCop{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                The authenticator device for your BytesCop account has been <strong style="color:#00b7ff;">changed</strong>. Your previous device can no longer be used to sign in.
+              </p>
+
+              <!-- Info box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(0,183,255,0.06); border:1px solid rgba(0,183,255,0.12); border-radius:6px;">
+                    <p style="margin:0 0 8px; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      <strong style="color:#00b7ff;">What happened:</strong>
+                    </p>
+                    <p style="margin:0; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      Your MFA secret has been regenerated and new backup codes have been issued. Previous backup codes are no longer valid.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Warning box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(255,59,122,0.06); border:1px solid rgba(255,59,122,0.12); border-radius:6px;">
+                    <p style="margin:0; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      If you did not make this change, your account may be compromised. Contact your organization administrator immediately.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+{% endblock %}
+{% block sub_footer %}You received this email because the MFA device on your BytesCop account was changed.{% endblock %}

@@ -1,0 +1,520 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <!-- Header card -->
+    <div class="bc-pageCard mb-3">
+      <div class="bc-pageCardHead">
+        <div class="bc-pageCardTitle">
+          <div class="bc-h1">Profile</div>
+          <div class="bc-sub">Manage your personal information and avatar.</div>
+        </div>
+        <div class="bc-pageCardTools">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+            <i class="bi bi-question-circle"></i>
+            <span>Help</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top-level forced reset banner (visible immediately, no scrolling needed) -->
+    <div *ngIf="passwordResetRequired" class="bc-alertBannerTop mb-3">
+      <i class="bi bi-shield-exclamation"></i>
+      <span>{{ passwordResetReason || 'You must change your password before continuing.' }}</span>
+      <a class="bc-alertBannerLink" href="javascript:void(0)" (click)="scrollToSecurity()">Change password below</a>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="(state$ | async) === 'init'" class="bc-card">
+      <div class="bc-cardInner p-4">
+        <div class="bc-sub">Loading profile...</div>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="(state$ | async) === 'error'" class="bc-card">
+      <div class="bc-cardInner p-4">
+        <div class="alert alert-danger mb-0">Could not load profile.</div>
+      </div>
+    </div>
+
+    <!-- Ready -->
+    <ng-container *ngIf="(state$ | async) === 'ready' && (profile$ | async) as p">
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+        <main>
+
+          <!-- Avatar section -->
+          <div class="bc-card mb-3">
+            <div class="bc-sectionHead">
+              <h3 class="bc-sectionLabel">Avatar</h3>
+            </div>
+            <div class="bc-cardInner p-4">
+              <div class="d-flex align-items-center gap-4">
+                <!-- Avatar preview -->
+                <div class="bc-avatarPreview">
+                  <img *ngIf="avatarPreviewUrl && !avatarBusy" [src]="avatarPreviewUrl"
+                       class="bc-avatarPreviewImg" alt="Avatar">
+                  <span *ngIf="!avatarPreviewUrl && !avatarBusy" class="bc-avatarPreviewInitials">
+                    {{ getInitials() }}
+                  </span>
+                  <div *ngIf="avatarBusy" class="bc-avatarSpinner">
+                    <div class="bc-avatarSpinnerRing"></div>
+                    <span class="bc-avatarSpinnerText">Processing</span>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex flex-column gap-2">
+                  <label class="btn btn-sm btn-outline-light bc-iconBtn mb-0"
+                         [class.disabled]="(uploadingAvatar$ | async)">
+                    <i class="bi bi-upload"></i>
+                    <span>{{ (uploadingAvatar$ | async) ? 'Uploading...' : 'Upload Image' }}</span>
+                    <input type="file" class="d-none"
+                           accept="image/png, image/jpeg, image/gif, image/webp"
+                           (change)="onFileSelected($event)"
+                           [disabled]="(uploadingAvatar$ | async) === true">
+                  </label>
+
+                  <button *ngIf="p.user.avatar_url"
+                          class="btn btn-sm btn-outline-danger bc-iconBtn"
+                          type="button"
+                          (click)="removeAvatar()"
+                          [disabled]="(removingAvatar$ | async) === true">
+                    <i class="bi bi-trash3"></i>
+                    <span>{{ (removingAvatar$ | async) ? 'Removing...' : 'Remove' }}</span>
+                  </button>
+
+                  <div class="bc-sub" style="font-size: 0.72rem;">
+                    PNG, JPEG, GIF, or WebP. Max 2 MB.<br>
+                    Images are resized to 256x256.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal Information section -->
+          <div class="bc-card mb-3">
+            <div class="bc-sectionHead">
+              <h3 class="bc-sectionLabel mb-0">Personal Information</h3>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dark mb-0 align-middle bc-table bc-profileTable">
+                <thead>
+                  <tr>
+                    <th class="bc-colSetting">Setting</th>
+                    <th class="bc-colValue">Value</th>
+                    <th class="bc-colAction text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="bc-settingLabel">First Name</div>
+                      <div class="bc-sub bc-settingDesc">Your given name.</div>
+                    </td>
+                    <td>
+                      <input type="text" class="form-control form-control-sm bc-settingInput"
+                             [(ngModel)]="firstName" maxlength="150">
+                    </td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="bc-settingLabel">Last Name</div>
+                      <div class="bc-sub bc-settingDesc">Your family name.</div>
+                    </td>
+                    <td>
+                      <input type="text" class="form-control form-control-sm bc-settingInput"
+                             [(ngModel)]="lastName" maxlength="150">
+                    </td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="bc-settingLabel">Phone</div>
+                      <div class="bc-sub bc-settingDesc">Optional contact number.</div>
+                    </td>
+                    <td>
+                      <input type="tel" class="form-control form-control-sm bc-settingInput"
+                             [(ngModel)]="phone" maxlength="40" placeholder="Not set">
+                    </td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="bc-settingLabel">Timezone</div>
+                      <div class="bc-sub bc-settingDesc">Your local timezone for date formatting.</div>
+                    </td>
+                    <td>
+                      <input type="text" class="form-control form-control-sm bc-settingInput"
+                             [(ngModel)]="timezone" maxlength="80" placeholder="e.g. America/New_York">
+                    </td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="bc-cardInner bc-tableActions">
+              <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button"
+                      (click)="cancelEdit()">
+                <i class="bi bi-x-lg me-1"></i>Cancel
+              </button>
+              <button class="btn btn-sm bc-btnPrimary" type="button"
+                      (click)="saveName()"
+                      [disabled]="(saving$ | async) === true">
+                <i class="bi bi-check-lg me-1"></i>{{ (saving$ | async) ? 'Saving...' : 'Save Changes' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Account section (read-only) -->
+          <div class="bc-card mb-3">
+            <div class="bc-sectionHead">
+              <h3 class="bc-sectionLabel mb-0">Account</h3>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dark mb-0 align-middle bc-table bc-profileTable">
+                <thead>
+                  <tr>
+                    <th class="bc-colSetting">Setting</th>
+                    <th class="bc-colValue">Value</th>
+                    <th class="bc-colAction text-end"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="bc-settingLabel">Email</div>
+                      <div class="bc-sub bc-settingDesc">Your login email address.</div>
+                    </td>
+                    <td>
+                      <span class="bc-settingLabel">{{ p.user.email }}</span>
+                    </td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="bc-settingLabel">Role</div>
+                      <div class="bc-sub bc-settingDesc">Your access level in this tenant.</div>
+                    </td>
+                    <td>
+                      <span class="bc-settingLabel">{{ prettyRole(p.role) }}</span>
+                    </td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="bc-settingLabel">Member Since</div>
+                      <div class="bc-sub bc-settingDesc">Date you joined this tenant.</div>
+                    </td>
+                    <td>
+                      <span class="bc-settingLabel">{{ p.member_since | bcDate }}</span>
+                    </td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Password section -->
+          <div class="bc-card" #securitySection>
+            <div class="bc-sectionHead">
+              <h3 class="bc-sectionLabel mb-0">Password</h3>
+            </div>
+
+            <!-- Forced reset banner -->
+            <div *ngIf="passwordResetRequired" class="bc-alertBanner mx-4 mt-3">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span>{{ passwordResetReason || 'You must change your password before continuing.' }}</span>
+            </div>
+
+            <!-- Password expiry info -->
+            <div *ngIf="policy && policy.expiry_days > 0" class="bc-sub mx-4 mt-3">
+              <span>Password last changed: {{ passwordChangedAt | bcDate }}</span>
+              <span class="mx-1">&middot;</span>
+              <span *ngIf="daysUntilExpiry !== null && daysUntilExpiry > 7">
+                Expires in {{ daysUntilExpiry }} days
+              </span>
+              <span *ngIf="daysUntilExpiry !== null && daysUntilExpiry > 0 && daysUntilExpiry <= 7"
+                    class="text-warning">
+                Expires in {{ daysUntilExpiry }} days
+              </span>
+              <span *ngIf="daysUntilExpiry !== null && daysUntilExpiry <= 0"
+                    class="bc-text-danger">
+                Expired
+              </span>
+            </div>
+
+            <!-- Password error messages -->
+            <div *ngIf="passwordErrors.length > 0" class="bc-errorList mx-4 mt-3">
+              <div *ngFor="let err of passwordErrors" class="bc-errorItem">
+                <i class="bi bi-x-circle-fill"></i>
+                <span>{{ err }}</span>
+              </div>
+            </div>
+
+            <!-- 3-column password grid -->
+            <div class="bc-pwdGrid">
+              <!-- Row 1: Labels -->
+              <div class="bc-pwdCol">
+                <div class="bc-settingLabel">Current Password</div>
+                <div class="bc-sub bc-settingDesc">Your existing password.</div>
+              </div>
+              <div class="bc-pwdCol">
+                <div class="bc-settingLabel">New Password</div>
+                <div class="bc-sub bc-settingDesc">Choose a strong replacement.</div>
+              </div>
+              <div class="bc-pwdCol">
+                <div class="bc-settingLabel">Authenticator Code</div>
+                <div class="bc-sub bc-settingDesc">Required if MFA is enabled.</div>
+              </div>
+
+              <!-- Row 2: Inputs -->
+              <div class="bc-pwdCol">
+                <input id="currentPassword" type="password"
+                       class="form-control form-control-sm bc-settingInput bc-pwdInput"
+                       [(ngModel)]="currentPassword" autocomplete="current-password"
+                       placeholder="Enter current password">
+              </div>
+              <div class="bc-pwdCol">
+                <input id="newPassword" type="password"
+                       class="form-control form-control-sm bc-settingInput bc-pwdInput"
+                       [(ngModel)]="newPassword" autocomplete="new-password"
+                       placeholder="Enter new password">
+                <!-- Policy checklist (same cell, below input) -->
+                <div *ngIf="policy" class="bc-policyChecklist mt-2">
+                  <div class="bc-policyItem" [class.is-met]="meetsMinLength">
+                    <i class="bi" [ngClass]="meetsMinLength ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                    <span>At least {{ policy.min_length }} characters</span>
+                  </div>
+                  <div *ngIf="policy.require_uppercase" class="bc-policyItem" [class.is-met]="hasUppercase">
+                    <i class="bi" [ngClass]="hasUppercase ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                    <span>Uppercase letter</span>
+                  </div>
+                  <div *ngIf="policy.require_number" class="bc-policyItem" [class.is-met]="hasNumber">
+                    <i class="bi" [ngClass]="hasNumber ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                    <span>Number</span>
+                  </div>
+                  <div *ngIf="policy.require_special" class="bc-policyItem" [class.is-met]="hasSpecial">
+                    <i class="bi" [ngClass]="hasSpecial ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                    <span>Special character</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bc-pwdCol">
+                <ng-container *ngIf="mfaStatus?.mfa_enabled; else mfaDisabledTpl">
+                  <input id="mfaCodeForPassword" type="text"
+                         class="form-control form-control-sm bc-settingInput bc-pwdInput"
+                         [(ngModel)]="mfaCodeForPassword" placeholder="******"
+                         maxlength="20" autocomplete="one-time-code">
+                </ng-container>
+                <ng-template #mfaDisabledTpl>
+                  <div class="bc-mfaNotEnabled">
+                    <i class="bi bi-shield-slash"></i>
+                    <span>MFA not enabled</span>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="bc-cardInner bc-tableActions">
+              <button class="btn btn-sm bc-btnPrimary" type="button"
+                      (click)="changePassword()"
+                      [disabled]="!canSubmitPasswordChange || (changingPassword$ | async) === true">
+                <i class="bi bi-shield-lock me-1"></i>
+                {{ (changingPassword$ | async) ? 'Changing...' : 'Change Password' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- MFA section -->
+          <div class="bc-card mt-3" *ngIf="mfaStatus">
+            <div class="bc-sectionHead">
+              <h3 class="bc-sectionLabel">Multi-Factor Authentication</h3>
+            </div>
+            <div class="bc-cardInner p-4">
+
+              <!-- MFA status info -->
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="bc-pillStatus" [class.is-inactive]="!mfaStatus.mfa_enabled">
+                  <span class="bc-pillDot"></span>
+                  <span>{{ mfaStatus.mfa_enabled ? 'Enabled' : 'Disabled' }}</span>
+                </span>
+                <span class="bc-pillStatus" [class.is-inactive]="!mfaStatus.mfa_required"
+                      style="border-color: rgba(0, 183, 255, .35);">
+                  <span class="bc-pillDot" style="background: var(--bc-accent2, #00b7ff);"></span>
+                  <span>{{ mfaStatus.mfa_required ? 'Required' : 'Optional' }}</span>
+                </span>
+              </div>
+
+              <div *ngIf="mfaStatus.mfa_enabled" class="bc-sub mb-3">
+                <span *ngIf="mfaStatus.mfa_enrolled_at">Enrolled: {{ mfaStatus.mfa_enrolled_at | bcDate }}</span>
+                <span class="mx-1">&middot;</span>
+                <span>Backup codes remaining: {{ mfaStatus.backup_codes_remaining }}</span>
+              </div>
+
+              <!-- Idle state: action buttons -->
+              <ng-container *ngIf="mfaStep === 'idle'">
+                <!-- Enable MFA -->
+                <button *ngIf="!mfaStatus.mfa_enabled"
+                        class="btn btn-success bc-btn me-2" type="button"
+                        (click)="startMfaEnroll()"
+                        [disabled]="(mfaLoading$ | async) === true">
+                  <i class="bi bi-shield-check"></i>
+                  <span>{{ (mfaLoading$ | async) ? 'Setting up...' : 'Enable MFA' }}</span>
+                </button>
+
+                <!-- Disable MFA (only if enabled and not required) -->
+                <button *ngIf="mfaStatus.mfa_enabled && !mfaStatus.mfa_required"
+                        class="btn btn-outline-danger bc-iconBtn me-2" type="button"
+                        (click)="mfaStep = 'disabling'">
+                  <i class="bi bi-shield-x"></i>
+                  <span>Disable MFA</span>
+                </button>
+                <span *ngIf="mfaStatus.mfa_enabled && mfaStatus.mfa_required"
+                      class="bc-sub">
+                  <i class="bi bi-info-circle"></i>
+                  MFA is mandatory for your account and cannot be disabled.
+                </span>
+
+                <!-- Change Device (re-enroll) -->
+                <button *ngIf="mfaStatus.mfa_enabled"
+                        class="btn btn-outline-light bc-iconBtn me-2" type="button"
+                        (click)="startMfaReEnroll()">
+                  <i class="bi bi-phone"></i>
+                  <span>Change Device</span>
+                </button>
+
+                <!-- Regenerate backup codes -->
+                <button *ngIf="mfaStatus.mfa_enabled"
+                        class="btn btn-outline-light bc-iconBtn" type="button"
+                        (click)="mfaBackupCodes = []; mfaStep = 'regenerating'">
+                  <i class="bi bi-arrow-repeat"></i>
+                  <span>Regenerate Backup Codes</span>
+                </button>
+              </ng-container>
+
+              <!-- Enrollment flow: QR + codes -->
+              <app-mfa-setup-card *ngIf="mfaStep === 'enrolling'"
+                [qrCode]="mfaEnrollQr"
+                [secret]="mfaEnrollSecret"
+                [backupCodes]="mfaBackupCodes"
+                [loading]="(mfaLoading$ | async) === true"
+                [requireDownload]="true"
+                subtitle="Scan this QR code with your authenticator app."
+                codeLabel="Enter code from your app to confirm"
+                confirmLabel="Confirm"
+                confirmLoadingLabel="Confirming..."
+                (confirm)="mfaCode = $event; confirmMfaEnroll()"
+                (cancel)="cancelMfaAction()"
+                (download)="downloadMfaBackupCodes()">
+              </app-mfa-setup-card>
+
+              <!-- Disable MFA: code only -->
+              <app-mfa-setup-card *ngIf="mfaStep === 'disabling'"
+                [loading]="(mfaLoading$ | async) === true"
+                subtitle="Disable multi-factor authentication."
+                codeLabel="Enter MFA code to disable"
+                [codeMaxLength]="20"
+                confirmLabel="Disable MFA"
+                confirmLoadingLabel="Disabling..."
+                (confirm)="mfaCode = $event; disableMfa()"
+                (cancel)="cancelMfaAction()">
+              </app-mfa-setup-card>
+
+              <!-- Regenerate backup codes: enter MFA code -->
+              <app-mfa-setup-card *ngIf="mfaStep === 'regenerating'"
+                [loading]="(mfaLoading$ | async) === true"
+                subtitle="Regenerate your backup codes."
+                codeLabel="Enter MFA code to regenerate backup codes"
+                confirmLabel="Regenerate"
+                confirmLoadingLabel="Regenerating..."
+                (confirm)="mfaCode = $event; regenerateBackupCodes()"
+                (cancel)="cancelMfaAction()">
+              </app-mfa-setup-card>
+
+              <!-- Regenerate backup codes: show new codes -->
+              <app-mfa-setup-card *ngIf="mfaStep === 'regenerated'"
+                [backupCodes]="mfaBackupCodes"
+                [displayOnly]="true"
+                [requireDownload]="true"
+                subtitle="Your new backup codes are ready. Download and store them securely."
+                (cancel)="cancelMfaAction()"
+                (download)="downloadMfaBackupCodes()">
+              </app-mfa-setup-card>
+
+              <!-- Re-enroll step 1: verify current device -->
+              <app-mfa-setup-card *ngIf="mfaStep === 're-enroll-verify'"
+                [loading]="(mfaLoading$ | async) === true"
+                subtitle="Verify your current device before switching."
+                codeLabel="Enter current MFA code to verify your identity"
+                [codeMaxLength]="20"
+                confirmLabel="Verify"
+                confirmLoadingLabel="Verifying..."
+                (confirm)="mfaCode = $event; submitReEnrollVerify()"
+                (cancel)="cancelMfaAction()">
+              </app-mfa-setup-card>
+
+              <!-- Re-enroll step 2: scan new QR + confirm -->
+              <app-mfa-setup-card *ngIf="mfaStep === 're-enrolling'"
+                [qrCode]="mfaEnrollQr"
+                [secret]="mfaEnrollSecret"
+                [backupCodes]="mfaBackupCodes"
+                [loading]="(mfaLoading$ | async) === true"
+                [requireDownload]="true"
+                subtitle="Scan this QR code with your new authenticator device."
+                codeLabel="Enter code from your new device to confirm"
+                confirmLabel="Confirm"
+                confirmLoadingLabel="Confirming..."
+                (confirm)="mfaCode = $event; confirmReEnroll()"
+                (cancel)="cancelMfaAction()"
+                (download)="downloadMfaBackupCodes()">
+              </app-mfa-setup-card>
+
+            </div>
+          </div>
+
+        </main>
+
+        <!-- Help aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp">
+          <div class="bc-helpHead">
+            <div>
+              <div class="bc-helpKicker">Help</div>
+              <div class="bc-helpTitle">Profile</div>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="bc-helpBody">
+            <div class="bc-sub mb-2">
+              Manage your personal profile information and avatar image.
+            </div>
+            <ul class="bc-helpList">
+              <li><strong>Avatar:</strong> Upload a profile image (PNG, JPEG, GIF, WebP, max 2 MB). Images are automatically resized to 256x256 pixels.</li>
+              <li><strong>Name:</strong> Update your first and last name. Changes appear immediately in the navigation bar.</li>
+              <li><strong>Phone / Timezone:</strong> Optional contact details. Phone and timezone are shown in engagement team members and stakeholders.</li>
+              <li><strong>Account:</strong> Email, role, and membership date are read-only and managed by your administrator.</li>
+              <li><strong>Password:</strong> Change your password here. The live checklist shows your organization's password policy requirements. All checks must pass before you can submit. If MFA is enabled, your authenticator code is also required.</li>
+              <li><strong>Password Expiry:</strong> If your organization enforces password expiry, you'll see the days remaining. Expired passwords must be changed before you can continue using the app.</li>
+              <li><strong>MFA:</strong> Enable, disable, or change your authenticator device. When enabled, you'll need your authenticator code for login and sensitive actions. Download and save your backup codes in case you lose your device.</li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

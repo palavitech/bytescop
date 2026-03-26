@@ -1,0 +1,133 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bytescop}
+      POSTGRES_USER: ${POSTGRES_USER:-bytescop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bytescop}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: bytescop.settings.production
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      BYTESCOP_LOG_DIR: /app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media:/app/media
+      - ./logs:/app/logs
+
+  worker-notify:
+    build: ./api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: bytescop.settings.production
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      BYTESCOP_LOG_DIR: /app/logs
+    command: celery -A bytescop worker -Q notifications --concurrency=2 --loglevel=info --logfile=/app/logs/worker-notify.log
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media:/app/media
+      - ./logs:/app/logs
+
+  worker-jobs:
+    build: ./api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: bytescop.settings.production
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      BYTESCOP_LOG_DIR: /app/logs
+    command: celery -A bytescop worker -Q jobs --concurrency=1 --loglevel=info --logfile=/app/logs/worker-jobs.log
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media:/app/media
+      - ./logs:/app/logs
+
+  beat:
+    build: ./api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: bytescop.settings.production
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      BYTESCOP_LOG_DIR: /app/logs
+    command: celery -A bytescop beat --loglevel=info --schedule=/tmp/celerybeat-schedule --logfile=/app/logs/beat.log
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+
+  ui:
+    build: ./ui
+    restart: "no"
+    volumes:
+      - ui_dist:/app/ui
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "${BC_PORT:-443}:443"
+      - "80:80"
+    volumes:
+      - ./api/docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - media:/app/media:ro
+      - ui_dist:/app/ui:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      api:
+        condition: service_started
+      ui:
+        condition: service_completed_successfully
+
+volumes:
+  redisdata:
+  media:
+  ui_dist:

@@ -1,0 +1,206 @@
+<div class="bc-authWrap">
+  <div class="bc-authCard">
+    <div class="bc-authInner">
+
+      <div class="bc-authBrand">
+        <div class="bc-logoMark"></div>
+        <div class="bc-brandText">
+          <strong>BytesCop</strong>
+          <span>security findings vault</span>
+        </div>
+      </div>
+
+      <!-- Workspace deleted banner -->
+      <div *ngIf="tenantClosedBanner" class="bc-authClosedBanner">
+        <i class="bi bi-shield-x"></i>
+        <div>
+          <strong>Workspace deleted</strong>
+          <span>Your workspace has been deleted and all data will be permanently removed.</span>
+        </div>
+      </div>
+
+      <!-- Step 1: Credentials -->
+      <ng-container *ngIf="step === 1">
+        <h1 class="bc-authTitle">Log In</h1>
+        <p class="bc-authSub">Enter your credentials to continue.</p>
+
+        <div class="bc-authError" *ngIf="apiError">{{ apiError }}</div>
+
+        <form (ngSubmit)="onStep1()" autocomplete="off">
+          <div class="bc-authField">
+            <label for="email">Email <span class="bc-required">*</span></label>
+            <input #emailInput id="email" type="email" class="form-control" placeholder="you@example.com"
+              [(ngModel)]="email" name="email" required>
+          </div>
+
+          <div class="bc-authField">
+            <label for="password">Password <span class="bc-required">*</span></label>
+            <input id="password" type="password" class="form-control" placeholder="Your password"
+              [(ngModel)]="password" name="password" required>
+          </div>
+
+          <div class="bc-authRemember">
+            <label class="bc-checkLabel">
+              <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe">
+              <span>Remember me</span>
+            </label>
+            <a routerLink="/forgot-password" class="bc-forgotLink">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="bc-authSubmit" [disabled]="!canSubmitStep1">
+            {{ submitting ? 'Authenticating...' : 'Continue' }}
+          </button>
+        </form>
+
+      </ng-container>
+
+      <!-- Step 2: Tenant picker -->
+      <ng-container *ngIf="step === 2">
+        <h1 class="bc-authTitle">Select Workspace</h1>
+        <p class="bc-authSub">Choose which workspace to enter.</p>
+
+        <div class="bc-authError" *ngIf="apiError">{{ apiError }}</div>
+
+        <div class="bc-tenantList">
+          <div class="bc-tenantItem" *ngFor="let t of tenants" (click)="selectTenant(t)"
+            [class.bc-tenantItem--disabled]="submitting && t.slug !== selectedTenantSlug"
+            [class.bc-tenantItem--active]="submitting && t.slug === selectedTenantSlug"
+            [attr.aria-disabled]="submitting || null">
+            <span class="bc-tenantName">{{ t.name }}</span>
+            <span class="bc-tenantRole">{{ submitting && t.slug === selectedTenantSlug ? 'Connecting...' : t.role }}</span>
+          </div>
+        </div>
+
+        <button type="button" class="bc-authSubmit" style="background: transparent; border-color: rgba(0,255,179,.32); color: var(--bc-text);"
+          (click)="backToStep1()" [disabled]="submitting">
+          Back
+        </button>
+      </ng-container>
+
+      <!-- Email Verification Required -->
+      <ng-container *ngIf="step === 'email-verify'">
+        <div class="bc-emailSentIcon">
+          <i class="bi bi-envelope-exclamation"></i>
+        </div>
+        <h1 class="bc-authTitle">Verify Your Email</h1>
+        <p class="bc-authSub" style="margin-bottom: 16px;">
+          Your email address has not been verified yet. Please check your inbox for the verification link.
+        </p>
+
+        <div class="bc-authError" *ngIf="apiError">{{ apiError }}</div>
+
+        <div *ngIf="verificationResent" class="bc-authSuccess">
+          <i class="bi bi-check-circle"></i>
+          Verification email sent. Check your inbox.
+        </div>
+
+        <button type="button" class="bc-authSubmit" (click)="resendVerification()"
+          [disabled]="resendingVerification || verificationResent">
+          {{ resendingVerification ? 'Sending...' : verificationResent ? 'Email Sent' : 'Resend Verification Email' }}
+        </button>
+
+        <button type="button" class="bc-authSubmit" style="background: transparent; border-color: rgba(0,255,179,.32); color: var(--bc-text);"
+          (click)="backToStep1()" [disabled]="resendingVerification">
+          Back
+        </button>
+      </ng-container>
+
+      <!-- MFA Verify -->
+      <ng-container *ngIf="step === 'mfa-verify'">
+        <h1 class="bc-authTitle">Two-Factor Authentication</h1>
+        <p class="bc-authSub">Enter the 6-digit code from your authenticator app, or an 8-character backup code.</p>
+
+        <div class="bc-authError" *ngIf="apiError">{{ apiError }}</div>
+
+        <form (ngSubmit)="onMfaVerify()" autocomplete="off">
+          <div class="bc-authField">
+            <label for="mfaCode">Code <span class="bc-required">*</span></label>
+            <input #mfaCodeInput id="mfaCode" type="text" class="form-control bc-mfaCodeInput"
+              [(ngModel)]="mfaCode" name="mfaCode"
+              placeholder="******"
+              maxlength="20"
+              autocomplete="one-time-code"
+              required>
+          </div>
+
+          <button type="submit" class="bc-authSubmit" [disabled]="!canSubmitMfaVerify">
+            {{ submitting ? 'Verifying...' : 'Verify' }}
+          </button>
+        </form>
+
+        <button type="button" class="bc-authSubmit" style="background: transparent; border-color: rgba(0,255,179,.32); color: var(--bc-text);"
+          (click)="backToStep1()" [disabled]="submitting">
+          Back
+        </button>
+      </ng-container>
+
+      <!-- MFA Setup: QR + Backup Codes -->
+      <ng-container *ngIf="step === 'mfa-setup'">
+        <h1 class="bc-authTitle">Set Up MFA</h1>
+        <p class="bc-authSub">Multi-factor authentication is required. Scan the QR code with your authenticator app.</p>
+
+        <div class="bc-authError" *ngIf="apiError">{{ apiError }}</div>
+
+        <div class="bc-mfaSetupWrap">
+          <!-- QR Code -->
+          <div class="bc-mfaQr">
+            <img [src]="mfaSetupQr" alt="TOTP QR Code" class="bc-mfaQrImg">
+          </div>
+
+          <!-- Manual entry key -->
+          <div class="bc-mfaManualKey">
+            <span class="bc-sub">Manual entry key:</span>
+            <code class="bc-mfaSecret">{{ mfaSetupSecret }}</code>
+          </div>
+
+          <!-- Backup codes -->
+          <div class="bc-mfaBackupSection">
+            <div class="bc-sub mb-2">Save your backup codes. Each code can only be used once.</div>
+            <div class="bc-mfaBackupGrid">
+              <code *ngFor="let code of mfaBackupCodes" class="bc-mfaBackupCode">{{ code }}</code>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-light bc-iconBtn mt-2" (click)="downloadBackupCodes()">
+              <i class="bi bi-download"></i>
+              <span>Download Codes</span>
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="bc-authSubmit" (click)="proceedToMfaConfirm()"
+          [disabled]="!mfaBackupDownloaded">
+          {{ mfaBackupDownloaded ? 'Continue' : 'Download codes to continue' }}
+        </button>
+      </ng-container>
+
+      <!-- MFA Setup Confirm: Enter code to verify -->
+      <ng-container *ngIf="step === 'mfa-setup-confirm'">
+        <h1 class="bc-authTitle">Verify Setup</h1>
+        <p class="bc-authSub">Enter the 6-digit code from your authenticator app to confirm setup.</p>
+
+        <div class="bc-authError" *ngIf="apiError">{{ apiError }}</div>
+
+        <form (ngSubmit)="onMfaSetupConfirm()" autocomplete="off">
+          <div class="bc-authField">
+            <label for="mfaConfirmCode">Code <span class="bc-required">*</span></label>
+            <input #mfaCodeInput id="mfaConfirmCode" type="text" class="form-control bc-mfaCodeInput"
+              [(ngModel)]="mfaCode" name="mfaConfirmCode"
+              placeholder="******"
+              maxlength="6"
+              autocomplete="one-time-code"
+              required>
+          </div>
+
+          <button type="submit" class="bc-authSubmit" [disabled]="!canSubmitMfaSetupConfirm">
+            {{ submitting ? 'Confirming...' : 'Confirm & Log In' }}
+          </button>
+        </form>
+
+        <button type="button" class="bc-authSubmit" style="background: transparent; border-color: rgba(0,255,179,.32); color: var(--bc-text);"
+          (click)="backToStep1()" [disabled]="submitting">
+          Back
+        </button>
+      </ng-container>
+
+    </div>
+  </div>
+</div>

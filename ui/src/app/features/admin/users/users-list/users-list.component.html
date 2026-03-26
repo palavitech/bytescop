@@ -1,0 +1,209 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+          <div class="bc-pageCard mb-3">
+            <div class="bc-pageCardHead">
+              <div class="bc-pageCardTitle">
+                <div class="bc-h1">Users</div>
+                <div class="bc-sub">Manage tenant users, roles, and account status.</div>
+              </div>
+              <div class="bc-pageCardTools">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+                  <i class="bi bi-arrow-left"></i>
+                  <span>Back</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+                  <i class="bi bi-arrow-repeat"></i>
+                  <span>Refresh</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+                  <i class="bi bi-question-circle"></i>
+                  <span>Help</span>
+                </button>
+              </div>
+            </div>
+            <div class="bc-pageCardFoot">
+              <div class="bc-pageCardFootLeft">
+                <div class="bc-badge" *ngIf="vm.state === 'ready'">
+                  <span class="bc-dot"></span>
+                  <span>Total: {{ vm.total }}</span>
+                </div>
+              </div>
+              <div class="bc-pageCardFootRight">
+                <div class="dropdown bc-footDropdown">
+                  <button class="btn btn-outline-light bc-iconBtn dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical"></i>
+                    <span>Actions</span>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <button class="dropdown-item" type="button" (click)="exportCsv(vm.members)">
+                        <i class="bi bi-filetype-csv"></i> Export CSV
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+                <button class="btn btn-success bc-btn bc-btnCtaFoot" type="button"
+                  (click)="createUser()" *bcHasPermission="'user.create'">
+                  <i class="bi bi-plus-circle"></i>
+                  <span class="ms-2">New User</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+        <main>
+
+          <!-- Table -->
+          <div class="bc-card">
+            <div class="bc-cardInner p-0">
+              <div class="table-responsive">
+                <table class="table table-dark mb-0 align-middle bc-table">
+                  <thead>
+                    <tr>
+                      <th style="min-width:200px">Name</th>
+                      <th style="min-width:220px">Email</th>
+                      <th style="min-width:100px">Role</th>
+                      <th style="min-width:100px">Status</th>
+                      <th style="min-width:60px">MFA</th>
+                      <th style="min-width:200px">Groups</th>
+                      <th class="text-end" style="min-width:220px">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+
+                    <!-- Loading -->
+                    <tr *ngIf="vm.state === 'init'">
+                      <td colspan="7" class="p-4">
+                        <div class="bc-sub">Fetching users...</div>
+                      </td>
+                    </tr>
+
+                    <!-- Error -->
+                    <tr *ngIf="vm.state === 'error'">
+                      <td colspan="7" class="p-4">
+                        <div class="alert alert-danger mb-0">Could not load users.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Empty -->
+                    <tr *ngIf="vm.state === 'ready' && vm.members.length === 0">
+                      <td colspan="7" class="p-4">
+                        <div class="bc-sub">No users found.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Data rows -->
+                    <ng-container *ngIf="vm.state === 'ready'">
+                      <tr *ngFor="let m of vm.members">
+                        <td>
+                          <a class="bc-rowLink d-inline-flex align-items-center gap-2" [routerLink]="['/admin/users', m.id]">
+                            <ng-container *ngIf="buildAvatarUrl(m.user.avatar_url) | secureImage | async as blobUrl">
+                              <img [src]="blobUrl" class="bc-avatarInline" alt="">
+                            </ng-container>
+                            <span *ngIf="!m.user.avatar_url" class="bc-avatarInline bc-avatarInlineInitials">
+                              {{ getInitials(m.user) }}
+                            </span>
+                            <span>{{ m.user.first_name }} {{ m.user.last_name }}</span>
+                          </a>
+                        </td>
+                        <td>{{ m.user.email }}</td>
+                        <td>
+                          <span class="bc-roleBadge" [class.bc-roleBadge--owner]="m.role === 'owner'">
+                            {{ prettyRole(m.role) }}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="bc-pillStatus"
+                            [class.is-inactive]="!m.is_active"
+                            [class.is-invited]="m.invite_status === 'pending'">
+                            <span class="bc-pillDot"></span>
+                            <span>{{ m.invite_status === 'pending' ? 'Invited' : (m.is_active ? 'Active' : 'Locked') }}</span>
+                          </span>
+                        </td>
+                        <td>
+                          <i *ngIf="m.user.mfa_enabled" class="bi bi-shield-check"
+                             style="color: var(--bc-accent); font-size: 1.1rem;"
+                             title="MFA enabled"></i>
+                          <span *ngIf="!m.user.mfa_enabled" class="bc-sub">—</span>
+                        </td>
+                        <td>
+                          <span class="d-inline-flex flex-wrap gap-1">
+                            <span class="bc-groupPill" *ngFor="let g of m.groups">{{ g.name }}</span>
+                            <span class="bc-sub" *ngIf="m.groups.length === 0">—</span>
+                          </span>
+                        </td>
+                        <td class="text-end">
+                          <!-- Delete confirmation overlay -->
+                          <div class="bc-deleteConfirm" *ngIf="vm.deletingId === m.id">
+                            <span class="bc-sub me-2">Remove user?</span>
+                            <button class="btn btn-sm btn-danger bc-btn me-1" (click)="deleteUser(m)"><i class="bi bi-check-lg me-1"></i>Yes</button>
+                            <button class="btn btn-sm btn-outline-light bc-btnSoft" (click)="cancelDelete()"><i class="bi bi-x-lg me-1"></i>No</button>
+                          </div>
+
+                          <ng-container *ngIf="vm.deletingId !== m.id">
+                            <button class="btn btn-sm btn-outline-light bc-btnSoft bc-tableActionBtn me-1"
+                              *bcHasPermission="'user.update'"
+                              (click)="toggleActive(m)"
+                              [title]="m.is_active ? 'Lock' : 'Unlock'"
+                              [disabled]="m.role === 'owner'">
+                              <i class="bi" [ngClass]="m.is_active ? 'bi-lock' : 'bi-unlock'"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger bc-btnSoft bc-tableActionBtn"
+                              *bcHasPermission="'user.delete'"
+                              (click)="confirmDelete(m.id)"
+                              title="Remove"
+                              [disabled]="m.role === 'owner'">
+                              <i class="bi bi-trash3"></i>
+                            </button>
+                          </ng-container>
+                        </td>
+                      </tr>
+                    </ng-container>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- Help aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp">
+          <div class="bc-helpHead">
+            <div>
+              <div class="bc-helpKicker">Help</div>
+              <div class="bc-helpTitle">Users</div>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="bc-helpBody">
+            <div class="bc-sub mb-2">
+              Manage the users who have access to this tenant. Assign roles and groups to control what each user can do.
+            </div>
+            <ul class="bc-helpList">
+              <li><strong>Roles:</strong> Owner and Member. Owners can promote members or demote other owners from the user detail page.</li>
+              <li><strong>Groups:</strong> Assign users to permission groups to grant fine-grained access.</li>
+              <li><strong>Invite:</strong> New users receive an email invitation to set their password and join the tenant.</li>
+              <li><strong>Lock/Unlock:</strong> Temporarily disable a user's access without removing them. Owners cannot be locked.</li>
+              <li><strong>MFA:</strong> Shows whether each user has multi-factor authentication enabled.</li>
+              <li><strong>Export:</strong> Use the Actions menu to export the user list as CSV.</li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

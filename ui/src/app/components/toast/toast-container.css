@@ -1,0 +1,241 @@
+/* ── Host: top-center ── */
+.bc-toastHost{
+  position:fixed;
+  top:calc(var(--bc-topH) + 12px);
+  left:50%;
+  transform:translateX(-50%);
+  z-index:2000;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  width:min(440px, calc(100vw - 24px));
+  pointer-events:none;
+}
+
+/* ── Toast card ── */
+.bc-toast{
+  pointer-events:auto;
+  position:relative;
+  overflow:hidden;
+  border-radius:10px;
+  border:1px solid rgba(0,255,179,.14);
+  background:linear-gradient(135deg, rgba(8,14,26,.96), rgba(12,20,36,.92));
+  backdrop-filter:blur(14px);
+  box-shadow:
+    0 0 0 1px rgba(0,255,179,.06),
+    0 0 30px rgba(0,0,0,.5),
+    0 0 60px rgba(0,0,0,.25);
+
+  /* Entrance */
+  animation: bc-toastIn .32s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* Exit */
+.bc-toast--exit{
+  animation: bc-toastOut .28s cubic-bezier(.55,.06,.68,.19) both;
+}
+
+@keyframes bc-toastIn{
+  from{ opacity:0; transform:translateY(-18px) scale(.97); }
+  to  { opacity:1; transform:translateY(0) scale(1); }
+}
+
+@keyframes bc-toastOut{
+  from{ opacity:1; transform:translateY(0) scale(1); }
+  to  { opacity:0; transform:translateY(-12px) scale(.96); }
+}
+
+/* ── Left accent bar ── */
+.bc-toastAccent{
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:3px;
+  background:var(--bc-accent);
+  box-shadow:0 0 12px rgba(0,255,179,.35);
+  border-radius:10px 0 0 10px;
+}
+
+/* ── Scanline overlay ── */
+.bc-toastScanlines{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 3px,
+    rgba(255,255,255,.015) 3px,
+    rgba(255,255,255,.015) 4px
+  );
+  border-radius:10px;
+}
+
+/* ── Content row ── */
+.bc-toastRow{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:10px 12px 10px 14px;
+  position:relative;
+  z-index:1;
+}
+
+/* ── Icon ── */
+.bc-toastIcon{
+  flex:0 0 auto;
+  width:26px;
+  height:26px;
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,255,179,.1);
+  border:1px solid rgba(0,255,179,.2);
+  margin-top:1px;
+}
+
+.bc-toastIconGlyph{
+  font-size:13px;
+  font-weight:700;
+  color:var(--bc-accent);
+  line-height:1;
+}
+
+/* ── Body ── */
+.bc-toastBody{flex:1 1 auto;min-width:0;}
+
+.bc-toastTitle{
+  font-family:"Orbitron",system-ui,sans-serif;
+  font-size:11px;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:var(--bc-text);
+  margin-bottom:3px;
+}
+
+.bc-toastMsg{
+  font-size:13px;
+  line-height:1.4;
+  color:var(--bc-muted);
+  word-break:break-word;
+}
+
+/* ── Close button ── */
+.bc-toastClose{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:var(--bc-muted);
+  font-size:20px;
+  line-height:18px;
+  padding:2px 4px;
+  margin-left:4px;
+  cursor:pointer;
+  flex:0 0 auto;
+  opacity:.6;
+  transition:opacity .15s, color .15s;
+}
+.bc-toastClose:hover{color:var(--bc-text);opacity:1;}
+.bc-toastClose:focus-visible{outline:none;box-shadow:var(--bc-focus);border-radius:6px;}
+
+/* ── Progress bar ── */
+.bc-toastProgress{
+  height:2px;
+  background:rgba(255,255,255,.04);
+  position:relative;
+  overflow:hidden;
+}
+
+.bc-toastProgressBar{
+  position:absolute;
+  inset:0;
+  background:var(--bc-accent);
+  box-shadow:0 0 8px rgba(0,255,179,.4);
+  transform-origin:left;
+  animation:bc-progressShrink linear both;
+}
+
+@keyframes bc-progressShrink{
+  from{ transform:scaleX(1); }
+  to  { transform:scaleX(0); }
+}
+
+/* ══════════════════════════════
+   Variant overrides
+   ══════════════════════════════ */
+
+/* ── Success (green) ── */
+.bc-toast--success{ border-color:rgba(0,255,179,.2); }
+.bc-toast--success .bc-toastAccent{
+  background:var(--bc-accent);
+  box-shadow:0 0 12px rgba(0,255,179,.35);
+}
+.bc-toast--success .bc-toastIcon{
+  background:rgba(0,255,179,.1);
+  border-color:rgba(0,255,179,.25);
+}
+.bc-toast--success .bc-toastIconGlyph{ color:var(--bc-accent); }
+.bc-toast--success .bc-toastProgressBar{
+  background:var(--bc-accent);
+  box-shadow:0 0 8px rgba(0,255,179,.4);
+}
+
+/* ── Info (blue) ── */
+.bc-toast--info{ border-color:rgba(0,183,255,.2); }
+.bc-toast--info .bc-toastAccent{
+  background:var(--bc-accent2);
+  box-shadow:0 0 12px rgba(0,183,255,.35);
+}
+.bc-toast--info .bc-toastIcon{
+  background:rgba(0,183,255,.1);
+  border-color:rgba(0,183,255,.25);
+}
+.bc-toast--info .bc-toastIconGlyph{ color:var(--bc-accent2); }
+.bc-toast--info .bc-toastProgressBar{
+  background:var(--bc-accent2);
+  box-shadow:0 0 8px rgba(0,183,255,.4);
+}
+
+/* ── Warning (amber) ── */
+.bc-toast--warning{ border-color:rgba(255,193,7,.2); }
+.bc-toast--warning .bc-toastAccent{
+  background:#ffc107;
+  box-shadow:0 0 12px rgba(255,193,7,.35);
+}
+.bc-toast--warning .bc-toastIcon{
+  background:rgba(255,193,7,.1);
+  border-color:rgba(255,193,7,.25);
+}
+.bc-toast--warning .bc-toastIconGlyph{ color:#ffc107; }
+.bc-toast--warning .bc-toastProgressBar{
+  background:#ffc107;
+  box-shadow:0 0 8px rgba(255,193,7,.4);
+}
+
+/* ── Error (red) ── */
+.bc-toast--error{ border-color:rgba(255,59,122,.25); }
+.bc-toast--error .bc-toastAccent{
+  background:var(--bc-danger);
+  box-shadow:0 0 12px rgba(255,59,122,.4);
+}
+.bc-toast--error .bc-toastIcon{
+  background:rgba(255,59,122,.1);
+  border-color:rgba(255,59,122,.25);
+}
+.bc-toast--error .bc-toastIconGlyph{ color:var(--bc-danger); }
+.bc-toast--error .bc-toastProgressBar{
+  background:var(--bc-danger);
+  box-shadow:0 0 8px rgba(255,59,122,.4);
+}
+
+/* ── Mobile ── */
+@media (max-width: 576px){
+  .bc-toastHost{
+    left:10px;
+    right:10px;
+    transform:none;
+    width:auto;
+  }
+}

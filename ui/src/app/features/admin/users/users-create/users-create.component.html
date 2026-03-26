@@ -1,0 +1,73 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <div class="bc-pageCard mb-3">
+      <div class="bc-pageCardHead">
+        <div class="bc-pageCardTitle">
+          <div class="bc-h1">Create User</div>
+          <div class="bc-sub">Add a new user to this tenant.</div>
+        </div>
+        <div class="bc-pageCardTools">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+            <i class="bi bi-question-circle"></i>
+            <span>Help</span>
+          </button>
+        </div>
+      </div>
+      <div class="bc-pageCardFoot">
+        <div class="bc-pageCardFootLeft">
+        </div>
+      </div>
+    </div>
+
+    <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+      <main>
+
+        <div class="bc-card">
+          <div class="bc-cardInner p-4">
+            <app-user-form
+              mode="create"
+              [availableGroups]="(groups$ | async) ?? []"
+              [saving]="(saving$ | async) ?? false"
+              (formSubmit)="onSubmit($event)"
+              (formCancel)="onCancel()">
+            </app-user-form>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Help aside -->
+      <aside class="bc-helpPane" *ngIf="showHelp">
+        <div class="bc-helpHead">
+          <div>
+            <div class="bc-helpKicker">Help</div>
+            <div class="bc-helpTitle">Create User</div>
+          </div>
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="bc-helpBody">
+          <div class="bc-sub mb-2">
+            Add a new user to this tenant.
+          </div>
+          <ul class="bc-helpList">
+            <li><strong>Email:</strong> If the email matches an existing account, the user is added to this tenant. Otherwise a new account is created.</li>
+            <li><strong>Name:</strong> First and last name for the new user.</li>
+            <li><strong>Password:</strong> Set a temporary password for the user. Share it with them securely.</li>
+            <li><strong>Role:</strong> All new users are assigned the Member role. Only the tenant signup owner gets the Owner role.</li>
+            <li><strong>Groups:</strong> Assign permission groups to control what the user can access. You can change these later.</li>
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+
+  </div>
+</div>

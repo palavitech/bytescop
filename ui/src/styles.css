@@ -1,0 +1,1789 @@
+/* BytesCop styles.css (global)
+   Cyber theme — single global stylesheet.
+   Sections are commented so new contributors can find what they need quickly.
+*/
+
+/* Milkdown Crepe editor theme */
+@import "@milkdown/crepe/theme/common/style.css";
+@import "@milkdown/crepe/theme/frame.css";
+
+/* 1) Theme variables: colors, sizing, shadows */
+:root {
+   --bc-bg: #070a0f;
+   --bc-panel: #0b1220;
+   --bc-panel2: #0a0f1a;
+   --bc-text: #c9d4ff;
+   --bc-muted: #8ea0d7;
+   --bc-accent: #00ffb3;
+   --bc-accent2: #00b7ff;
+   --bc-danger: #ff3b7a;
+   --bc-border: rgba(0, 255, 179, .22);
+   --bc-shadow: 0 0 0 1px rgba(0, 255, 179, .18), 0 18px 50px rgba(0, 0, 0, .55);
+   --bc-radius: 14px;
+   --bc-topH: 64px;
+   --bc-sideW: 280px;
+   --bc-sideWCollapsed: 84px;
+   --bc-focus: 0 0 0 3px rgba(0, 255, 179, .18);
+}
+
+/* 2) Global base: typography, background, links */
+html,
+body {
+   height: 100%
+}
+
+body {
+   margin: 0;
+   color: var(--bc-text);
+   background:
+      radial-gradient(900px 600px at 20% 0%, rgba(0, 183, 255, .12), transparent 60%),
+      radial-gradient(900px 600px at 100% 30%, rgba(0, 255, 179, .10), transparent 60%),
+      var(--bc-bg);
+   font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+   overflow-x: hidden;
+}
+
+a {
+   text-decoration: none;
+   color: inherit
+}
+
+a:hover {
+   color: var(--bc-accent)
+}
+
+/* 3) Decorative cyber layers: grid + scanlines */
+.bc-cyber-grid {
+   position: fixed;
+   inset: 0;
+   pointer-events: none;
+   opacity: .12;
+   background-image:
+      linear-gradient(to right, rgba(0, 255, 179, .10) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 183, 255, .08) 1px, transparent 1px);
+   background-size: 48px 48px;
+   mask-image: radial-gradient(circle at 30% 20%, #000 0%, rgba(0, 0, 0, .7) 40%, transparent 70%);
+   z-index: 0;
+}
+
+.bc-scanlines {
+   position: fixed;
+   inset: 0;
+   pointer-events: none;
+   background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .03) 0, rgba(255, 255, 255, .03) 1px, transparent 2px, transparent 6px);
+   mix-blend-mode: overlay;
+   opacity: .35;
+   z-index: 0;
+}
+
+/* 4) Bootstrap overrides: keep dark look, accent borders */
+.navbar.bc-navbar {
+   background: linear-gradient(180deg, rgba(11, 18, 32, .92), rgba(11, 18, 32, .78));
+   backdrop-filter: blur(10px);
+   border-bottom: 1px solid rgba(0, 255, 179, .18);
+   z-index: 50;
+}
+
+.bc-btn {
+   border: 1px solid rgba(0, 255, 179, .18);
+   background: rgba(0, 255, 179, .06);
+   color: var(--bc-text);
+}
+
+.bc-btn:hover {
+   background: rgba(0, 255, 179, .10);
+   border-color: rgba(0, 255, 179, .28);
+   color: var(--bc-text);
+}
+
+.bc-btn:focus-visible {
+   outline: none;
+   box-shadow: var(--bc-focus)
+}
+
+/* Form footer — action bar separated from fields */
+.bc-formFoot {
+   border-top: 1px solid rgba(0, 255, 179, 0.10);
+   margin: 0 -1.5rem;
+   padding: 1rem 1.5rem 0;
+   display: flex;
+   justify-content: flex-end;
+   align-items: center;
+   gap: 0.75rem;
+}
+
+.bc-formFoot .bc-iconBtn {
+   height: auto;
+   padding: .375rem .75rem;
+   border-radius: .375rem;
+}
+
+
+
+.bc-pill {
+   border-radius: 999px
+}
+
+/* 5) Brand block: BytesCop logo + title */
+.bc-brand {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   min-width: 240px;
+   text-decoration: none;
+   color: inherit;
+}
+
+.bc-logoMark {
+   width: 34px;
+   height: 34px;
+   border-radius: 10px;
+   background:
+      radial-gradient(circle at 30% 30%, rgba(0, 255, 179, .35), transparent 55%),
+      radial-gradient(circle at 70% 70%, rgba(0, 183, 255, .25), transparent 60%),
+      linear-gradient(135deg, rgba(0, 255, 179, .14), rgba(0, 183, 255, .10));
+   border: 1px solid rgba(0, 255, 179, .28);
+   box-shadow: 0 0 22px rgba(0, 255, 179, .12);
+   position: relative;
+}
+
+.bc-logoMark:before {
+   content: "";
+   position: absolute;
+   inset: 7px;
+   border-radius: 8px;
+   border: 1px dashed rgba(0, 255, 179, .35);
+   opacity: .8;
+}
+
+.bc-brandTitle {
+   display: flex;
+   flex-direction: column;
+   line-height: 1.05;
+}
+
+.bc-brandTitle strong {
+   font-family: "Orbitron", system-ui, sans-serif;
+   font-weight: 600;
+   letter-spacing: 1.2px;
+   color: var(--bc-accent);
+   text-transform: uppercase;
+}
+
+.bc-brandTitle span {
+   font-size: 12px;
+   color: var(--bc-muted);
+   letter-spacing: .6px;
+}
+
+/* 6) Sidebar: fixed navigation with collapse support */
+.bc-page {
+   position: relative;
+   z-index: 1;
+   padding-top: var(--bc-topH);
+   min-height: 100vh
+}
+
+.bc-sidebar {
+   position: fixed;
+   top: var(--bc-topH);
+   left: 0;
+   height: calc(100vh - var(--bc-topH));
+   width: var(--bc-sideW);
+   background: linear-gradient(180deg, rgba(10, 15, 26, .92), rgba(10, 15, 26, .80));
+   backdrop-filter: blur(10px);
+   border-right: 1px solid rgba(0, 255, 179, .16);
+   padding: 12px;
+   padding-bottom: 0;
+   overflow: hidden;
+   z-index: 40;
+   transition: width .22s ease;
+   display: flex;
+   flex-direction: column;
+}
+
+body.bc-sidebar-collapsed .bc-sidebar {
+   width: var(--bc-sideWCollapsed)
+}
+
+.bc-sidebarTop {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+   margin: 2px 6px 10px 6px;
+   padding: 10px 10px;
+   border-radius: 14px;
+   border: 1px solid rgba(0, 255, 179, .16);
+   background: rgba(0, 0, 0, .16);
+}
+
+.bc-sidebarTopTitle {
+   font-family: "Orbitron", system-ui, sans-serif;
+   font-size: 12px;
+   letter-spacing: 1.2px;
+   text-transform: uppercase;
+   color: var(--bc-muted);
+}
+
+body.bc-sidebar-collapsed .bc-sidebarTop {
+   justify-content: center
+}
+
+body.bc-sidebar-collapsed .bc-sidebarTopTitle {
+   display: none
+}
+
+.bc-navSectionTitle {
+   font-family: 'Orbitron', system-ui, sans-serif;
+   font-size: 10px;
+   letter-spacing: 2px;
+   color: var(--bc-muted);
+   padding: 0 12px 4px;
+   text-transform: uppercase;
+}
+
+body.bc-sidebar-collapsed .bc-navSectionTitle {
+   display: none
+}
+
+/* 7) Sidebar items: themed boxy links (matches legacy) */
+.bc-navLink {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   padding: 10px 12px;
+   border-radius: 12px;
+   border: 1px solid rgba(0, 255, 179, .14);
+   background: rgba(0, 0, 0, .18);
+   color: var(--bc-text);
+   white-space: nowrap;
+   overflow: hidden;
+   transition: background .2s ease, border-color .2s ease, transform .06s ease;
+}
+
+.bc-navLink:hover {
+   background: rgba(0, 255, 179, .08);
+   border-color: rgba(0, 255, 179, .28);
+   color: var(--bc-text);
+}
+
+.bc-navLink:active {
+   transform: translateY(1px);
+}
+
+/* Sidebar active link */
+.bc-navLink.active {
+   background: rgba(0, 255, 179, .10);
+   border-color: rgba(0, 255, 179, .40);
+   box-shadow: 0 0 0 1px rgba(0, 255, 179, .14);
+}
+
+.bc-navLink.active .bc-navIco {
+   border-color: rgba(0, 183, 255, .40);
+   box-shadow: 0 0 18px rgba(0, 183, 255, .18);
+}
+
+.bc-navLink.active .bc-navLabel {
+   color: var(--bc-text);
+}
+
+.bc-navIco {
+   width: 26px;
+   min-width: 26px;
+   height: 26px;
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   border-radius: 8px;
+   background: rgba(0, 183, 255, .10);
+   border: 1px solid rgba(0, 183, 255, .22);
+   color: var(--bc-accent2);
+   font-size: 14px;
+   line-height: 1;
+}
+
+.bc-navLink:hover .bc-navIco {
+   color: var(--bc-accent2);
+}
+
+/* 8) Main area: shifts based on sidebar width */
+.bc-main {
+   margin-left: var(--bc-sideW);
+   min-height: calc(100vh - var(--bc-topH));
+   display: flex;
+   flex-direction: column;
+   transition: margin-left .22s ease;
+}
+
+body.bc-sidebar-collapsed .bc-main {
+   margin-left: var(--bc-sideWCollapsed)
+}
+
+.bc-main.bc-main-no-sidebar {
+   margin-left: 0;
+}
+
+/* 9) Avatar used in top-right user button + dropdown */
+.bc-avatar {
+   border-radius: 50%;
+   background:
+      radial-gradient(circle at 30% 30%, rgba(0, 255, 179, .35), transparent 60%),
+      linear-gradient(135deg, rgba(0, 183, 255, .18), rgba(0, 255, 179, .10));
+   border: 1px solid rgba(0, 183, 255, .22);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-family: "Orbitron", system-ui, sans-serif;
+   letter-spacing: .8px;
+   color: var(--bc-text);
+   /* default: small (navbar button) */
+   width: 26px;
+   height: 26px;
+   font-size: 12px;
+}
+
+/* 10) Main content card: welcome panel */
+.bc-card {
+   background: linear-gradient(180deg, rgba(11, 18, 32, .85), rgba(11, 18, 32, .65));
+   border: 1px solid rgba(0, 255, 179, .18);
+   border-radius: var(--bc-radius);
+   box-shadow: var(--bc-shadow);
+   position: relative;
+   overflow: hidden;
+}
+
+.bc-card:before {
+   content: "";
+   position: absolute;
+   inset: -2px;
+   background: conic-gradient(from 220deg, transparent 0 25%, rgba(0, 255, 179, .18), transparent 55%, rgba(0, 183, 255, .14), transparent 85%, rgba(255, 59, 122, .10));
+   opacity: .20;
+   filter: blur(18px);
+}
+
+.bc-cardInner {
+   position: relative;
+   z-index: 1
+}
+
+.bc-h1 {
+   font-family: "Orbitron", system-ui, sans-serif;
+   letter-spacing: 1.4px;
+   text-transform: uppercase;
+   color: var(--bc-accent)
+}
+
+.bc-h2 {
+   font-family: "Orbitron", system-ui, sans-serif;
+   letter-spacing: 1px;
+   text-transform: uppercase;
+   color: var(--bc-accent);
+}
+
+.bc-widgetTitle {
+   font-size: 13px;
+   font-weight: 600;
+   letter-spacing: .04em;
+   text-transform: uppercase;
+   color: var(--bc-muted);
+}
+
+.bc-sectionLabel {
+   font-family: "Orbitron", system-ui, sans-serif;
+   font-size: 16px;
+   font-weight: 400;
+   letter-spacing: .08em;
+   text-transform: uppercase;
+   color: var(--bc-text);
+}
+
+.bc-sub {
+   color: var(--bc-muted)
+}
+
+.bc-badge {
+   display: inline-flex;
+   align-items: center;
+   gap: 8px;
+   padding: 8px 10px;
+   border-radius: 999px;
+   border: 1px solid rgba(0, 255, 179, .18);
+   background: rgba(0, 255, 179, .06);
+   color: var(--bc-text);
+   font-size: 13px;
+}
+
+.bc-badge.bc-badgeInvite {
+   border-color: rgba(0, 183, 255, .25);
+   background: rgba(0, 183, 255, .08);
+   color: var(--bc-accent2);
+}
+
+.bc-dot {
+   width: 9px;
+   height: 9px;
+   border-radius: 50%;
+   background: var(--bc-accent);
+   box-shadow: 0 0 16px rgba(0, 255, 179, .28);
+   display: inline-block
+}
+
+/* 11) Footer: typical links area */
+.bc-footer {
+   border-top: 1px solid rgba(0, 255, 179, .14);
+   background: linear-gradient(180deg, rgba(10, 15, 26, .72), rgba(10, 15, 26, .90));
+   backdrop-filter: blur(10px);
+   color: var(--bc-muted)
+}
+
+/* 12) Drop menus shell: shared for Apps + User dropdown */
+.bc-drop {
+   position: fixed;
+   top: calc(var(--bc-topH) + 10px);
+   right: 18px;
+   background: linear-gradient(180deg, rgba(11, 18, 32, .92), rgba(10, 15, 26, .92));
+   border: 1px solid rgba(0, 255, 179, .22);
+   border-radius: 16px;
+   box-shadow: 0 0 0 1px rgba(0, 255, 179, .14), 0 26px 70px rgba(0, 0, 0, .65);
+   overflow: hidden;
+   transform: translateY(-8px) scale(.98);
+   opacity: 0;
+   pointer-events: none;
+   transition: opacity .16s ease, transform .16s ease;
+}
+
+.bc-drop.open {
+   opacity: 1;
+   transform: translateY(0) scale(1);
+   pointer-events: auto
+}
+
+.bc-drop:before {
+   content: "";
+   position: absolute;
+   inset: 0;
+   background:
+      linear-gradient(to right, rgba(0, 255, 179, .12) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 183, 255, .10) 1px, transparent 1px);
+   opacity: .18;
+   pointer-events: none;
+}
+
+/* 13) Apps menu: 3x2 grid tiles */
+#bcAppsMenu {
+   width: 420px;
+   max-width: calc(100vw - 24px);
+   z-index: 90
+}
+
+.bc-dropHeader {
+   position: relative;
+   z-index: 1;
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+   padding: 12px 14px;
+   border-bottom: 1px solid rgba(0, 255, 179, .16)
+}
+
+.bc-dropTitle {
+   font-size: 12px;
+   letter-spacing: 1.2px;
+   text-transform: uppercase;
+   color: var(--bc-muted)
+}
+
+.bc-appTile {
+   background: rgba(0, 0, 0, .16);
+   border-right: 1px solid rgba(0, 255, 179, .14);
+   border-bottom: 1px solid rgba(0, 255, 179, .14);
+   padding: 18px 12px;
+   transition: background .18s ease, border-color .18s ease
+}
+
+.bc-appTile:hover {
+   background: rgba(0, 255, 179, .08);
+   border-color: rgba(0, 255, 179, .26)
+}
+
+.bc-appIco {
+   width: 42px;
+   height: 42px;
+   border-radius: 14px;
+   background: rgba(0, 183, 255, .10);
+   border: 1px solid rgba(0, 183, 255, .22);
+   color: var(--bc-accent2);
+   box-shadow: 0 0 22px rgba(0, 183, 255, .10);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 18px
+}
+
+.bc-appLabel {
+   font-family: "Orbitron", system-ui, sans-serif;
+   font-size: 12px;
+   letter-spacing: 1px;
+   text-transform: uppercase;
+   color: var(--bc-text);
+   opacity: .95
+}
+
+/* 14) User menu: header + list-group */
+#bcUserMenu {
+   width: 280px;
+   max-width: calc(100vw - 24px);
+   z-index: 95
+}
+
+.bc-userHead {
+   position: relative;
+   z-index: 1;
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   padding: 12px 14px;
+   border-bottom: 1px solid rgba(0, 255, 179, .16)
+}
+
+/* Large avatar variant (user dropdown header) */
+.bc-avatar.bc-avatarLg {
+   width: 34px;
+   height: 34px;
+   font-size: 13px;
+}
+
+.bc-avatar.bc-avatarImg {
+   object-fit: cover;
+}
+
+.bc-userEmail strong {
+   font-family: "Orbitron", system-ui, sans-serif;
+   font-weight: 600;
+   letter-spacing: .8px;
+   font-size: 12px;
+   text-transform: uppercase;
+   color: var(--bc-text)
+}
+
+.bc-userEmail span {
+   font-size: 12px;
+   color: var(--bc-muted)
+}
+
+.bc-listGroup .list-group-item {
+   background: rgba(0, 0, 0, .16);
+   border: 1px solid rgba(0, 255, 179, .14);
+   color: var(--bc-text);
+   border-radius: 12px;
+   margin-bottom: 6px;
+   display: flex;
+   align-items: center;
+   justify-content: space-between
+}
+
+.bc-listGroup .list-group-item:hover {
+   background: rgba(0, 255, 179, .08);
+   border-color: rgba(0, 255, 179, .26);
+   color: var(--bc-text)
+}
+
+.bc-miniIco {
+   width: 26px;
+   height: 26px;
+   border-radius: 10px;
+   background: rgba(0, 183, 255, .10);
+   border: 1px solid rgba(0, 183, 255, .22);
+   color: var(--bc-accent2);
+   display: flex;
+   align-items: center;
+   justify-content: center
+}
+
+/* 15) Responsive tweaks: smaller menus on phones */
+@media (max-width:720px) {
+   #bcAppsMenu {
+      width: 360px;
+      right: 12px
+   }
+
+   #bcUserMenu {
+      right: 12px
+   }
+
+   .bc-brandTitle span {
+      display: none
+   }
+}
+
+/* remove the extra space that shows up after the icon when the side bar is collapsed */
+body.bc-sidebar-collapsed .bc-navLabel {
+   display: none;
+}
+
+body.bc-sidebar-collapsed .bc-navLink {
+   gap: 0;
+   justify-content: center;
+}
+
+body.bc-sidebar-collapsed .bc-navLink.active {
+   background: rgba(0, 255, 179, .12);
+}
+
+
+/* 16) Bootstrap dropdown skin for Apps/User */
+.dropdown-menu.bc-dropMenu {
+   background: linear-gradient(180deg, rgba(11, 18, 32, .92), rgba(10, 15, 26, .92));
+   border: 1px solid rgba(0, 255, 179, .22);
+   border-radius: 16px;
+   box-shadow: 0 0 0 1px rgba(0, 255, 179, .14), 0 26px 70px rgba(0, 0, 0, .65);
+   overflow: hidden;
+   min-width: 0;
+}
+
+.dropdown-menu.bc-dropMenu .dropdown-item {
+   color: var(--bc-text);
+   padding: 10px 14px;
+   border-bottom: 1px solid rgba(0, 255, 179, .10);
+   background: transparent;
+}
+
+.dropdown-menu.bc-dropMenu .dropdown-item:last-child {
+   border-bottom: 0;
+}
+
+.dropdown-menu.bc-dropMenu .dropdown-item:hover,
+.dropdown-menu.bc-dropMenu .dropdown-item:focus {
+   background: rgba(0, 255, 179, .08);
+   color: var(--bc-text);
+}
+
+.dropdown-menu.bc-dropMenu:before {
+   content: "";
+   position: absolute;
+   inset: 0;
+   background:
+      linear-gradient(to right, rgba(0, 255, 179, .12) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 183, 255, .10) 1px, transparent 1px);
+   opacity: .18;
+   pointer-events: none;
+}
+
+.dropdown-menu.bc-dropMenu>* {
+   position: relative;
+   z-index: 1
+}
+
+
+/* 17) Routed page wrapper: consistent layout for all router-outlet pages */
+.bc-pageWrap {
+   padding: 5px 20px
+}
+
+.bc-crumbWrap {
+   padding: 5px 20px;
+}
+
+.bc-pageInner {
+   max-width: 1100px;
+   margin: 0 auto;
+   padding-bottom: 3rem;
+}
+
+/* Opt-in wide pages (full width)
+   Add class "bc-pageWide" to .bc-pageWrap for screens that should use all available width.
+   This keeps the default centered 1100px layout for most pages. */
+.bc-pageWrap.bc-pageWide {
+   width: 100%;
+}
+
+.bc-pageWrap.bc-pageWide .bc-pageInner {
+   max-width: none !important;
+   width: 100% !important;
+   margin-left: 0 !important;
+   margin-right: 0 !important;
+}
+
+.bc-pageWrap.bc-pageWide .bc-card {
+   max-width: none !important;
+   width: 100% !important;
+   margin-left: 0 !important;
+   margin-right: 0 !important;
+}
+
+@media (max-width:720px) {
+   .bc-pageWrap {
+      padding: 18px 14px
+   }
+}
+
+
+/* Auto-collapse sidebar on small screens */
+@media (max-width:991.98px) {
+   .bc-sidebar {
+      width: var(--bc-sideWCollapsed) !important;
+   }
+
+   .bc-main {
+      margin-left: var(--bc-sideWCollapsed) !important;
+   }
+
+   .bc-main.bc-main-no-sidebar {
+      margin-left: 0 !important;
+   }
+
+   .bc-sidebarTop {
+      justify-content: center;
+   }
+
+   .bc-sidebarTopTitle {
+      display: none;
+   }
+
+   .bc-navLabel {
+      display: none;
+   }
+
+   .bc-navLink {
+      gap: 0;
+      justify-content: center;
+   }
+
+   .bc-navLink.active {
+      background: rgba(0, 255, 179, .12);
+   }
+}
+
+
+/* Top nav style */
+.bc-topNav {
+   display: flex;
+   align-items: center;
+   gap: 14px;
+   flex: 1;
+}
+
+.bc-topNav .nav-link {
+   padding: 4px 10px;
+   border-radius: 10px;
+   color: var(--muted);
+   border: 1px solid transparent;
+   background: transparent;
+}
+
+.bc-topNav .nav-link:hover {
+   color: var(--text);
+   border-color: rgba(0, 255, 179, .18);
+   background: rgba(0, 255, 179, .06);
+}
+
+.nav.nav-pills.bc-topNav .nav-link.active,
+.nav.nav-pills.bc-topNav .nav-link[aria-current="page"],
+.nav.nav-pills.bc-topNav .show>.nav-link {
+   color: var(--text);
+   background: rgba(0, 255, 179, .06);
+   border-color: rgba(0, 255, 179, .35);
+   box-shadow: 0 0 0 1px rgba(0, 255, 179, .22), 0 0 22px rgba(0, 255, 179, .18);
+}
+
+
+
+/* Loading bar */
+.bc-navbar {
+   position: fixed;
+}
+
+.bc-navbar.bc-loading::after {
+   content: "";
+   position: absolute;
+   left: 0;
+   right: 0;
+   bottom: -1px;
+   height: 3px;
+   pointer-events: none;
+   background:
+      linear-gradient(90deg,
+         transparent 0%,
+         rgba(0, 255, 179, 0) 12%,
+         rgba(0, 255, 179, .85) 26%,
+         rgba(0, 183, 255, .70) 36%,
+         rgba(0, 255, 179, .85) 46%,
+         rgba(0, 255, 179, 0) 60%,
+         transparent 78%);
+   transform: translateX(-70%);
+   animation: bcNavScan .9s linear infinite;
+   filter:
+      drop-shadow(0 0 8px rgba(0, 255, 179, .55)) drop-shadow(0 0 14px rgba(0, 183, 255, .35));
+}
+
+.bc-navbar.bc-loading {
+   box-shadow:
+      0 0 0 1px rgba(0, 255, 179, .14),
+      0 10px 28px rgba(0, 0, 0, .35);
+   border-bottom: 1px solid rgba(0, 255, 179, .22);
+}
+
+@keyframes bcNavScan {
+   0% {
+      transform: translateX(-70%)
+   }
+
+   100% {
+      transform: translateX(70%)
+   }
+}
+
+
+/* Theme buttons */
+.bc-btnPrimary {
+   background: linear-gradient(135deg, rgba(0, 255, 179, .95), rgba(0, 183, 255, .85));
+   border: 1px solid rgba(0, 255, 179, .55);
+   color: #061018;
+   font-weight: 700;
+   border-radius: 12px;
+   padding: 10px 14px;
+   box-shadow: 0 0 0 1px rgba(0, 255, 179, .18), 0 14px 40px rgba(0, 0, 0, .55);
+   transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+   text-decoration: none;
+}
+
+.bc-btnPrimary:hover {
+   filter: brightness(1.05);
+   transform: translateY(-1px);
+   box-shadow: 0 0 0 1px rgba(0, 255, 179, .28), 0 18px 55px rgba(0, 0, 0, .62);
+   color: #061018;
+}
+
+.bc-btnPrimary:active {
+   transform: translateY(0);
+   filter: brightness(.98);
+}
+
+.bc-btnPrimary:focus-visible {
+   outline: none;
+   box-shadow: 0 0 0 3px rgba(0, 255, 179, .22), 0 0 0 1px rgba(0, 255, 179, .35), 0 18px 55px rgba(0, 0, 0, .62);
+}
+
+.bc-btnGhost {
+   background: transparent;
+   border: 1px solid rgba(0, 255, 179, .32);
+   color: var(--bc-text);
+   font-weight: 600;
+   border-radius: 12px;
+   padding: 10px 14px;
+   transition: background .12s ease, border-color .12s ease, transform .12s ease;
+   text-decoration: none;
+}
+
+.bc-btnGhost:hover {
+   background: rgba(0, 255, 179, .08);
+   border-color: rgba(0, 255, 179, .48);
+   color: var(--bc-text);
+   transform: translateY(-1px);
+}
+
+.bc-btnGhost:active {
+   transform: translateY(0);
+}
+
+.bc-btnGhost:focus-visible {
+   outline: none;
+   box-shadow: 0 0 0 3px rgba(0, 255, 179, .18);
+}
+
+.bc-btnSoft {
+   border: 1px solid rgba(0, 255, 179, .18);
+   background: rgba(0, 255, 179, .06);
+   color: var(--bc-text);
+}
+
+.bc-btnSoft:hover {
+   background: rgba(0, 255, 179, .10);
+   border-color: rgba(0, 255, 179, .28);
+   color: var(--bc-text);
+}
+
+.bc-btnSm {
+  padding: .35rem .6rem;
+  border-radius: 12px;
+  font-size: .92rem;
+}
+
+/* Breadcrumb (global) */
+.bc-crumbBar {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   margin: 0 0 12px 0;
+   padding: 0;
+   background: transparent;
+}
+
+.bc-crumbList {
+   list-style: none;
+   padding: 0;
+   margin: 0;
+   display: flex;
+   flex-wrap: wrap;
+   gap: 8px;
+   align-items: center;
+}
+
+.bc-crumbItem {
+   display: inline-flex;
+   align-items: center;
+   gap: 8px;
+}
+
+.bc-crumbSep {
+   opacity: .7;
+   color: rgba(142, 160, 215, .55);
+}
+
+.bc-crumbLink {
+   color: rgba(201, 212, 255, .78);
+   text-decoration: none;
+}
+
+.bc-crumbLink:hover {
+   color: var(--bc-accent);
+}
+
+.bc-crumbCurrent {
+   opacity: .9;
+   color: rgba(201, 212, 255, .92);
+   font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+   letter-spacing: .2px;
+   font-size: 13px;
+}
+
+.bc-crumbBar,
+.bc-crumbLink,
+.bc-crumbCurrent {
+   text-transform: none;
+}
+
+
+/* Table skin */
+.bc-table {
+   --bc-table-border: rgba(0, 255, 179, 0.14);
+   --bc-table-border-strong: rgba(0, 255, 179, 0.22);
+   --bc-table-head-bg: rgba(255, 255, 255, 0.05);
+   --bc-table-row-a: rgba(255, 255, 255, 0.015);
+   --bc-table-row-b: rgba(255, 255, 255, 0.03);
+   --bc-table-hover: rgba(0, 255, 179, 0.06);
+   --bc-table-glow: rgba(0, 255, 179, 0.18);
+   border-collapse: separate;
+   border-spacing: 0;
+}
+
+.bc-table thead th {
+   background: var(--bc-table-head-bg);
+   color: var(--bc-text);
+   letter-spacing: 0.06em;
+   text-transform: uppercase;
+   font-size: 12px;
+   border-bottom: 1px solid var(--bc-table-border-strong) !important;
+   padding: 14px 14px;
+}
+
+.bc-table tbody td {
+   border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+   padding: 10px 10px;
+   color: var(--bc-text);
+}
+
+.bc-table tbody tr:nth-child(odd) td {
+   background: var(--bc-table-row-a);
+}
+
+.bc-table tbody tr:nth-child(even) td {
+   background: var(--bc-table-row-b);
+}
+
+.bc-table tbody tr:hover td {
+   background: var(--bc-table-hover);
+   box-shadow: none;
+}
+
+.bc-table tbody tr:hover {
+   box-shadow: inset 0 1px 0 rgba(0, 255, 179, 0.10), inset 0 -1px 0 rgba(0, 255, 179, 0.10);
+}
+
+.bc-table thead th:first-child {
+   border-top-left-radius: 14px;
+}
+
+.bc-table thead th:last-child {
+   border-top-right-radius: 14px;
+}
+
+.bc-table tbody tr:last-child td:first-child {
+   border-bottom-left-radius: 14px;
+}
+
+.bc-table tbody tr:last-child td:last-child {
+   border-bottom-right-radius: 14px;
+}
+
+.bc-table a {
+   color: var(--bc-accent);
+   text-decoration: none;
+}
+
+.bc-table a:hover {
+   text-decoration: underline;
+   text-underline-offset: 3px;
+   text-shadow: 0 0 18px rgba(0, 255, 179, 0.25);
+}
+
+
+/* Form controls skin */
+.bc-card .form-label {
+   color: rgba(201, 212, 255, .78);
+   font-size: 12px;
+   letter-spacing: .08em;
+   text-transform: uppercase;
+   font-family: "Orbitron", system-ui, sans-serif;
+   margin-bottom: 6px;
+}
+
+.bc-card .form-control,
+.bc-card textarea.form-control {
+   background: rgba(0, 0, 0, .18);
+   color: var(--bc-text);
+   border: 1px solid rgba(0, 255, 179, .20);
+   border-radius: 12px;
+   padding: 10px 12px;
+   color-scheme: dark;
+}
+
+.bc-card .form-control::placeholder,
+.bc-card textarea.form-control::placeholder {
+   color: rgba(142, 160, 215, .65);
+}
+
+.bc-card {
+   color-scheme: dark;
+}
+
+.bc-card .form-select {
+   background-color: rgba(0, 0, 0, .18);
+   color: var(--bc-text);
+   border: 1px solid rgba(0, 255, 179, .20);
+   border-radius: 12px;
+   padding: 10px 12px;
+}
+
+.bc-card .form-control:focus,
+.bc-card .form-select:focus,
+.bc-card textarea.form-control:focus {
+   background: rgba(0, 0, 0, .22);
+   color: var(--bc-text);
+   border-color: rgba(0, 255, 179, .45);
+   box-shadow: 0 0 0 3px rgba(0, 255, 179, .12);
+   outline: none;
+}
+
+.bc-card .form-control:disabled,
+.bc-card .form-select:disabled,
+.bc-card textarea.form-control:disabled {
+   opacity: .75;
+   background: rgba(0, 0, 0, .10);
+   border-color: rgba(255, 255, 255, .12);
+}
+
+.bc-card .form-control.is-invalid,
+.bc-card .form-select.is-invalid,
+.bc-card textarea.form-control.is-invalid {
+   border-color: rgba(255, 59, 122, .55);
+   box-shadow: 0 0 0 3px rgba(255, 59, 122, .12);
+}
+
+.bc-card .invalid-feedback {
+   color: rgba(255, 59, 122, .92);
+}
+
+/* ── Unified field error ── */
+.bc-fieldError {
+  color: rgba(255, 59, 122, .92);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ── Required field asterisk ── */
+.bc-required {
+  color: var(--bc-danger, #ff3b7a);
+  margin-left: 2px;
+}
+
+.bc-card .form-select option {
+   background-color: #0b1218;
+   color: #eaf6ff;
+}
+
+/* Dropdown z-index */
+.bc-dropMenu.dropdown-menu {
+   z-index: 2000;
+}
+
+/* Findings dropdown: ensure readable width and themed items */
+.dropdown-menu.bc-dropMenu.bc-findingsMenu {
+   min-width: 340px;
+   max-width: 460px;
+}
+
+/* Findings menu header: stack title + helper line instead of split columns */
+.dropdown-menu.bc-dropMenu.bc-findingsMenu .bc-dropHeader {
+   flex-direction: column;
+   align-items: flex-start;
+   justify-content: flex-start;
+}
+
+
+/* Page header card pattern */
+.bc-pageCard {
+   border: 1px solid var(--bc-border);
+   border-radius: 18px;
+   background: linear-gradient(180deg, rgba(11, 18, 32, .92), rgba(7, 10, 15, .92));
+   box-shadow: var(--bc-shadow);
+   overflow: hidden;
+}
+
+.bc-pageCardHead {
+   display: flex;
+   align-items: flex-start;
+   justify-content: space-between;
+   gap: 14px;
+   padding: 18px 18px 14px;
+   border-bottom: 1px solid rgba(0, 255, 179, 0.12);
+}
+
+.bc-pageCardTitle {
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+   min-width: 220px;
+}
+
+.bc-pageCardTitle .bc-h1 {
+   margin: 0;
+}
+
+.bc-pageCardTools {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+   .bc-pageCardHead {
+      flex-direction: column;
+      align-items: stretch;
+   }
+
+   .bc-pageCardTools {
+      justify-content: flex-start;
+   }
+}
+
+/* Compact icon buttons for header tools */
+.bc-iconBtn {
+   height: 34px;
+   padding: 0 10px;
+   border-radius: 10px;
+   display: inline-flex;
+   align-items: center;
+   gap: 8px;
+}
+
+.bc-iconBtn .bi {
+   font-size: 1rem;
+}
+
+/* Footer action strip */
+.bc-pageCardFoot {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 12px;
+   padding: 12px 18px;
+   border-top: 1px solid rgba(0, 255, 179, 0.12);
+   background: rgba(0, 0, 0, 0.12);
+}
+
+.bc-pageCardFootLeft {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   flex-wrap: wrap;
+}
+
+.bc-pageCardFootRight {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   flex-wrap: wrap;
+}
+
+/* Footer CTA button */
+.bc-btnCtaFoot {
+   border-radius: 12px;
+   padding: 8px 12px;
+}
+
+/* Footer actions dropdown */
+.bc-footDropdown .dropdown-menu {
+   background: rgba(11, 18, 32, 0.96);
+   border: 1px solid var(--bc-border);
+   border-radius: 10px;
+   box-shadow: var(--bc-shadow);
+   padding: 6px 0;
+   min-width: 160px;
+}
+
+.bc-footDropdown .dropdown-item {
+   color: var(--bc-text);
+   font-size: 0.85rem;
+   padding: 8px 14px;
+   display: flex;
+   align-items: center;
+   gap: 8px;
+}
+
+.bc-footDropdown .dropdown-item:hover,
+.bc-footDropdown .dropdown-item:focus {
+   background: rgba(0, 255, 179, 0.08);
+   color: var(--bc-accent);
+}
+
+.bc-footDropdown .dropdown-item .bi {
+   font-size: 0.9rem;
+   opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+   .bc-pageCardFoot {
+      flex-direction: column;
+      align-items: stretch;
+   }
+
+   .bc-pageCardFootRight {
+      justify-content: flex-start;
+   }
+}
+
+/* ===  Help / aside pane layout  === */
+.bc-helpLayout {
+   display: grid;
+   grid-template-columns: 1fr;
+   gap: 16px;
+   align-items: start;
+}
+
+.bc-helpLayoutRight.is-helpOpen {
+   grid-template-columns: 1fr 360px;
+}
+
+.bc-helpPane {
+   position: sticky;
+   top: 88px;
+   max-height: calc(100vh - 110px);
+   overflow: auto;
+   border: 1px solid var(--bc-border);
+   border-radius: 16px;
+   background: linear-gradient(180deg, rgba(11, 18, 32, .86), rgba(10, 15, 26, .72));
+   box-shadow: var(--bc-shadow);
+}
+
+.bc-helpHead {
+   padding: 14px 16px;
+   border-bottom: 1px solid rgba(0, 255, 179, .15);
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+}
+
+.bc-helpBody {
+   padding: 14px 16px 16px;
+}
+
+.bc-helpKicker {
+   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+   letter-spacing: .08em;
+   font-size: 12px;
+   color: var(--bc-muted);
+   text-transform: uppercase;
+}
+
+.bc-helpTitle {
+   font-weight: 700;
+   letter-spacing: .04em;
+   color: var(--bc-text);
+}
+
+.bc-helpList {
+   margin: 10px 0 0 0;
+   padding-left: 18px;
+   color: var(--bc-text);
+}
+
+.bc-helpList li {
+   margin: 8px 0;
+}
+
+/* Allow main content to shrink when help pane is open */
+.bc-helpLayout > main {
+   min-width: 0;
+}
+
+.bc-helpLayout > main .bc-pageCard,
+.bc-helpLayout > main .bc-card,
+.bc-helpLayout > main .bc-cardInner,
+.bc-helpLayout > main .table-responsive {
+   min-width: 0;
+}
+
+.bc-helpLayout > main .table-responsive {
+   overflow-x: auto;
+}
+
+@media (max-width: 992px) {
+   .bc-helpLayoutRight.is-helpOpen {
+      grid-template-columns: 1fr;
+   }
+
+   .bc-helpPane {
+      position: relative;
+      top: auto;
+      max-height: none;
+   }
+}
+
+
+/* 18) Meta block: label/value detail rows for view screens */
+.bc-metaBlock {
+   display: grid;
+   gap: 8px;
+   max-width: 520px;
+}
+
+.bc-metaRow {
+   display: flex;
+   gap: 10px;
+   align-items: baseline;
+}
+
+.bc-metaLabel {
+   min-width: 108px;
+   opacity: .7;
+   font-size: 12px;
+   letter-spacing: .08em;
+   text-transform: uppercase;
+   font-family: "Orbitron", system-ui, sans-serif;
+}
+
+.bc-metaValue {
+   font-weight: 600;
+   color: rgba(201, 212, 255, .95);
+}
+
+/* 19a) Filter dropdowns */
+.bc-filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.bc-filterLabel {
+  font-size: 12px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(201, 212, 255, .75);
+}
+
+.bc-filterSelect.form-select,
+.bc-filterSelect.form-control {
+  background-color: var(--bc-panel, #0b1220);
+  color: var(--bc-text, #c9d4ff);
+  border: 1px solid rgba(0, 255, 179, .25);
+  border-radius: 12px;
+}
+
+.bc-filterSelect.form-select:focus,
+.bc-filterSelect.form-control:focus {
+  border-color: rgba(0, 255, 179, .45);
+  box-shadow: 0 0 0 3px rgba(0, 255, 179, .12);
+}
+
+.bc-filterSelect.form-control::placeholder {
+  color: rgba(142, 160, 215, .65);
+}
+
+.bc-filterSelect.form-control::-webkit-calendar-picker-indicator {
+  filter: invert(.75) sepia(.15) saturate(1.5) hue-rotate(190deg);
+}
+
+/* 19b) Active filter pills */
+.bc-activeFilters {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bc-activeLabel {
+  font-size: 12px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(201, 212, 255, .70);
+}
+
+.bc-pillBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 255, 179, .22);
+  background: rgba(0, 255, 179, .06);
+  color: var(--bc-text, #c9d4ff);
+}
+
+.bc-pillText {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.bc-pillX {
+  border: 0;
+  background: transparent;
+  color: rgba(201, 212, 255, .85);
+  padding: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bc-pillX:hover {
+  color: var(--bc-accent, #00ffb3);
+}
+
+/* 19) Status pill */
+.bc-pillStatus {
+   display: inline-flex;
+   align-items: center;
+   gap: 8px;
+   padding: 3px 10px;
+   border-radius: 999px;
+   border: 1px solid rgba(0, 255, 179, 0.18);
+   background: rgba(0, 255, 179, 0.06);
+   font-size: 12px;
+   letter-spacing: 0.04em;
+}
+
+.bc-pillStatus .bc-pillDot {
+   width: 8px;
+   height: 8px;
+   border-radius: 50%;
+   background: var(--bc-accent);
+   box-shadow: 0 0 0 3px rgba(0, 255, 179, 0.10);
+}
+
+.bc-pillStatus.is-inactive {
+   border-color: rgba(255, 255, 255, 0.18);
+   background: rgba(255, 255, 255, 0.06);
+   color: rgba(201, 212, 255, 0.70);
+}
+
+.bc-pillStatus.is-inactive .bc-pillDot {
+   background: rgba(255, 255, 255, 0.55);
+   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.bc-pillStatus.is-invited {
+   border-color: rgba(0, 183, 255, 0.25);
+   background: rgba(0, 183, 255, 0.08);
+   color: var(--bc-blue);
+}
+
+.bc-pillStatus.is-invited .bc-pillDot {
+   background: var(--bc-blue);
+   box-shadow: 0 0 0 3px rgba(0, 183, 255, 0.12);
+}
+
+/* 20) Row link: clickable name/title in tables and view screens */
+.bc-rowLink {
+   color: var(--bc-accent2);
+   text-decoration: none;
+   transition: color 0.15s;
+}
+
+.bc-rowLink:hover {
+   color: var(--bc-accent);
+}
+
+/* 21) Engagement status pills */
+.bc-statusEngagement--planned {
+   border-color: var(--bc-blue);
+   background: rgba(0, 183, 255, 0.06);
+   color: var(--bc-blue);
+}
+
+.bc-statusEngagement--planned .bc-pillDot {
+   background: var(--bc-blue);
+   box-shadow: 0 0 0 3px rgba(0, 183, 255, 0.10);
+}
+
+.bc-statusEngagement--active {
+   border-color: var(--bc-accent);
+   background: rgba(0, 255, 179, 0.06);
+   color: var(--bc-accent);
+}
+
+.bc-statusEngagement--active .bc-pillDot {
+   background: var(--bc-accent);
+   box-shadow: 0 0 0 3px rgba(0, 255, 179, 0.10);
+}
+
+.bc-statusEngagement--on_hold {
+   border-color: #f0ad4e;
+   background: rgba(240, 173, 78, 0.06);
+   color: #f0ad4e;
+}
+
+.bc-statusEngagement--on_hold .bc-pillDot {
+   background: #f0ad4e;
+   box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.10);
+}
+
+.bc-statusEngagement--completed {
+   border-color: var(--bc-muted);
+   background: rgba(201, 212, 255, 0.04);
+   color: var(--bc-muted);
+}
+
+.bc-statusEngagement--completed .bc-pillDot {
+   background: var(--bc-muted);
+   box-shadow: 0 0 0 3px rgba(201, 212, 255, 0.06);
+}
+
+/* ===== Markdown rendered content (.bc-md) — global so [innerHTML] picks it up ===== */
+
+.bc-md :where(p, ul, ol, pre, blockquote) {
+  margin: 0 0 12px 0;
+}
+
+.bc-md :where(ul, ol) {
+  padding-left: 18px;
+}
+
+.bc-md pre {
+  background: rgba(0, 0, 0, .22);
+  border: 1px solid rgba(0, 255, 179, .18);
+  border-radius: 12px;
+  padding: 12px;
+  overflow: auto;
+}
+
+.bc-md code {
+  color: rgba(210, 224, 255, .92);
+}
+
+.bc-mdImg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid rgba(0, 255, 179, .25);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(120, 0, 255, .18), 0 0 18px rgba(0, 255, 179, .10);
+  margin: 10px 0;
+}
+
+.bc-mdFigure {
+  position: relative;
+  display: block;
+  margin: 16px auto;
+  text-align: center;
+}
+
+.bc-mdFigure .bc-mdImg {
+  margin: 0 auto;
+  display: block;
+}
+
+.bc-mdFigcaption {
+  display: block;
+  margin-top: 6px;
+  font-size: .88em;
+  color: rgba(180, 200, 220, .55);
+  letter-spacing: .01em;
+  text-align: center;
+}
+
+
+/* 22) Shared component styles — extracted from individual component CSS files
+   to ensure consistency and reduce duplication. */
+
+/* Section header inside bc-card — view/detail screens
+   (groups-view, users-view, assets-view, engagements-view, findings-view, organizations-view, audit-view) */
+.bc-sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(0, 255, 179, 0.1);
+  position: relative;
+}
+
+/* Inline delete confirmation wrapper — list/view screens with destructive actions
+   (groups, users, assets, findings, organizations, engagements) */
+.bc-deleteConfirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Themed link to related resources — view/edit screens
+   (assets-view, engagements-view, sow-edit, organizations-view) */
+.bc-link {
+  color: var(--bc-blue);
+  text-decoration: none;
+}
+
+.bc-link:hover {
+  color: var(--bc-accent);
+  text-decoration: underline;
+}
+
+/* Severity pills — findings lists/views and engagement summaries
+   (findings-list, findings-view, engagements-list) */
+.bc-severityPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.bc-severityPill--critical {
+  background: rgba(255, 40, 40, .14);
+  border: 1px solid rgba(255, 40, 40, .40);
+  color: #ff5c5c;
+}
+
+.bc-severityPill--high {
+  background: rgba(255, 140, 0, .14);
+  border: 1px solid rgba(255, 140, 0, .40);
+  color: #ffaa33;
+}
+
+.bc-severityPill--medium {
+  background: rgba(255, 220, 50, .12);
+  border: 1px solid rgba(255, 220, 50, .35);
+  color: #ffe066;
+}
+
+.bc-severityPill--low {
+  background: rgba(0, 183, 255, .12);
+  border: 1px solid rgba(0, 183, 255, .35);
+  color: #55ccff;
+}
+
+.bc-severityPill--info {
+  background: rgba(160, 170, 200, .10);
+  border: 1px solid rgba(160, 170, 200, .28);
+  color: rgba(201, 212, 255, .70);
+}
+
+/* Asset criticality badge — asset and scope tables
+   (assets-list, assets-view, engagements-view, sow-edit) */
+.bc-critBadge {
+  font-size: 0.78rem;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+.bc-critBadge[data-crit="high"] {
+  color: var(--bc-danger);
+}
+
+.bc-critBadge[data-crit="medium"] {
+  color: #ffb347;
+}
+
+.bc-critBadge[data-crit="low"] {
+  color: var(--bc-accent);
+}
+
+/* Asset target text — scope/asset tables
+   (engagements-view, sow-edit, organizations-view) */
+.bc-target {
+  font-size: 0.82rem;
+  color: var(--bc-text);
+  background: rgba(0, 183, 255, 0.06);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+/* User role badge — user list/view screens (users-list, users-view) */
+.bc-roleBadge {
+  font-size: 0.78rem;
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+}
+
+.bc-roleBadge--owner {
+  color: var(--bc-accent);
+  font-weight: 600;
+}
+
+/* Group type badge default modifier — groups list/view (groups-list, groups-view) */
+.bc-typeBadge--default {
+  background: rgba(0, 255, 179, 0.08);
+  border-color: rgba(0, 255, 179, 0.2);
+  color: var(--bc-accent);
+}
+
+/* Audit action badge — audit list/view screens (audit-list, audit-view) */
+.bc-actionBadge {
+  font-size: 0.72rem;
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.2rem 0.5rem;
+}
+
+.bg-orange {
+  background-color: #e67e22 !important;
+  color: #fff !important;
+}
+
+/* Nested table inside bc-card — stacks above bc-card::before glow overlay
+   (engagements-view, sow-edit, organizations-view, audit-view) */
+.table-responsive {
+  position: relative;
+}
+
+/* Nested table corner radius reset — when table follows a section header,
+   the card already has rounded corners so the table shouldn't
+   (engagements-view, sow-edit, organizations-view, audit-view) */
+.bc-sectionHead + .bc-cardInner .bc-table thead th:first-child {
+  border-top-left-radius: 0;
+}
+
+.bc-sectionHead + .bc-cardInner .bc-table thead th:last-child {
+  border-top-right-radius: 0;
+}

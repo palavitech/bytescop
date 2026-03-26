@@ -1,0 +1,35 @@
+# Dependencies
+/node_modules
+
+# Build output
+/dist
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Angular cache
+.angular/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment overrides
+/src/environments/environment.local.ts
+
+# Coverage
+/coverage
+
+# Misc
+*.log
+npm-debug.log*
+
+# Playwright
+e2e/.auth/
+e2e/**/*.png
+playwright-report/
+test-results/
+blob-report/

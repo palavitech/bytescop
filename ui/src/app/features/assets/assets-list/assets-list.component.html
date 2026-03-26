@@ -1,0 +1,199 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+          <div class="bc-pageCard mb-3">
+            <div class="bc-pageCardHead">
+              <div class="bc-pageCardTitle">
+                <div class="bc-h1">Assets</div>
+                <div class="bc-sub">
+                  Manage security assets across clients.
+                  <span *ngIf="vm.clientFilter" class="ms-1">(Filtered by client)</span>
+                </div>
+              </div>
+              <div class="bc-pageCardTools">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+                  <i class="bi bi-arrow-left"></i>
+                  <span>Back</span>
+                </button>
+                <a class="btn btn-outline-light bc-iconBtn" routerLink="/assets" *ngIf="vm.clientFilter">
+                  <i class="bi bi-funnel"></i>
+                  <span>Clear Filter</span>
+                </a>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+                  <i class="bi bi-arrow-repeat"></i>
+                  <span>Refresh</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+                  <i class="bi bi-question-circle"></i>
+                  <span>Help</span>
+                </button>
+              </div>
+            </div>
+            <div class="bc-pageCardFoot">
+              <div class="bc-pageCardFootLeft">
+                <div class="bc-badge" *ngIf="vm.state === 'ready'">
+                  <span class="bc-dot"></span>
+                  <span>Total: {{ vm.total }}</span>
+                </div>
+              </div>
+              <div class="bc-pageCardFootRight">
+                <div class="dropdown bc-footDropdown">
+                  <button class="btn btn-outline-light bc-iconBtn dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical"></i>
+                    <span>Actions</span>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <button class="dropdown-item" type="button" (click)="exportCsv(vm.assets)">
+                        <i class="bi bi-filetype-csv"></i> Export CSV
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+                <button class="btn btn-success bc-btn bc-btnCtaFoot" type="button"
+                  (click)="createAsset()" *bcHasPermission="'asset.create'">
+                  <i class="bi bi-plus-circle"></i>
+                  <span class="ms-2">New Asset</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+        <main>
+
+          <!-- Table -->
+          <div class="bc-card">
+            <div class="bc-cardInner p-0">
+              <div class="table-responsive">
+                <table class="table table-dark mb-0 align-middle bc-table">
+                  <thead>
+                    <tr>
+                      <th style="min-width:200px">Name</th>
+                      <th style="min-width:100px">Type</th>
+                      <th style="min-width:160px">Client</th>
+                      <th style="min-width:100px">Environment</th>
+                      <th style="min-width:100px">Criticality</th>
+                      <th style="min-width:160px">Target</th>
+                      <th class="text-end" style="min-width:160px">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+
+                    <!-- Loading -->
+                    <tr *ngIf="vm.state === 'init'">
+                      <td colspan="7" class="p-4">
+                        <div class="bc-sub">Fetching assets...</div>
+                      </td>
+                    </tr>
+
+                    <!-- Error -->
+                    <tr *ngIf="vm.state === 'error'">
+                      <td colspan="7" class="p-4">
+                        <div class="alert alert-danger mb-0">Could not load assets.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Empty -->
+                    <tr *ngIf="vm.state === 'ready' && vm.assets.length === 0">
+                      <td colspan="7" class="p-4">
+                        <div class="bc-sub">No assets found.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Data rows -->
+                    <ng-container *ngIf="vm.state === 'ready'">
+                      <tr *ngFor="let asset of vm.assets">
+                        <td>
+                          <a class="bc-rowLink" [routerLink]="['/assets', asset.id]">
+                            {{ asset.name }}
+                          </a>
+                        </td>
+                        <td>
+                          <span class="bc-typeBadge">{{ typeLabel(asset.asset_type) }}</span>
+                        </td>
+                        <td>
+                          <a *ngIf="asset.client_id" class="bc-rowLink" [routerLink]="['/organizations', asset.client_id]">
+                            {{ asset.client_name }}
+                          </a>
+                          <span *ngIf="!asset.client_id" class="bc-sub">—</span>
+                        </td>
+                        <td class="bc-sub">{{ envLabel(asset.environment) }}</td>
+                        <td>
+                          <span class="bc-critBadge" [attr.data-crit]="asset.criticality">
+                            {{ critLabel(asset.criticality) }}
+                          </span>
+                        </td>
+                        <td class="bc-sub">{{ asset.target || '—' }}</td>
+                        <td class="text-end">
+                          <!-- Delete confirmation overlay -->
+                          <div class="bc-deleteConfirm" *ngIf="vm.deletingId === asset.id">
+                            <span class="bc-sub me-2">Delete?</span>
+                            <button class="btn btn-sm btn-danger bc-btn me-1" (click)="deleteAsset(asset)"><i class="bi bi-check-lg me-1"></i>Yes</button>
+                            <button class="btn btn-sm btn-outline-light bc-btnSoft" (click)="cancelDelete()"><i class="bi bi-x-lg me-1"></i>No</button>
+                          </div>
+
+                          <ng-container *ngIf="vm.deletingId !== asset.id">
+                            <a class="btn btn-sm btn-outline-light bc-btnSoft bc-tableActionBtn me-1"
+                              [routerLink]="['/assets', asset.id, 'edit']"
+                              *bcHasPermission="'asset.update'"
+                              title="Edit">
+                              <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger bc-btnSoft bc-tableActionBtn"
+                              *bcHasPermission="'asset.delete'"
+                              (click)="confirmDelete(asset.id)"
+                              title="Delete">
+                              <i class="bi bi-trash3"></i>
+                            </button>
+                          </ng-container>
+                        </td>
+                      </tr>
+                    </ng-container>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- Help aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp">
+          <div class="bc-helpHead">
+            <div>
+              <div class="bc-helpKicker">Help</div>
+              <div class="bc-helpTitle">Assets</div>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="bc-helpBody">
+            <div class="bc-sub mb-2">
+              Assets represent the systems, applications, and infrastructure being assessed. They can be grouped under clients.
+            </div>
+            <ul class="bc-helpList">
+              <li><strong>Type:</strong> Host, WebApp, API, Cloud, Network Device, Mobile App, or Other.</li>
+              <li><strong>Environment:</strong> Prod, Staging, Dev, or Lab.</li>
+              <li><strong>Criticality:</strong> Low, Medium, or High — indicates business impact.</li>
+              <li><strong>Target:</strong> IP address, hostname, URL, or other identifier.</li>
+              <li><strong>Client:</strong> The client that owns this asset. Click the client name to navigate to it.</li>
+              <li><strong>Filter:</strong> When accessed from a client page, the list is pre-filtered to that client's assets. Use "Clear Filter" to show all.</li>
+              <li><strong>Export:</strong> Use the Actions menu to export the list as CSV.</li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

@@ -1,0 +1,53 @@
+{% extends "shells/base.html" %}
+{% block title %}MFA reset by administrator — BytesCop{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                Your multi-factor authentication (MFA) has been <strong style="color:#ff3b7a;">reset</strong> by an administrator.
+              </p>
+
+              <!-- Admin info box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(0,183,255,0.06); border:1px solid rgba(0,183,255,0.12); border-radius:6px;">
+                    <p style="margin:0 0 8px; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      <strong style="color:#00b7ff;">Reset by:</strong>
+                      {{ admin_name }}{% if admin_email %} ({{ admin_email }}){% endif %}
+                    </p>
+                    {% if tenant_name %}
+                    <p style="margin:0; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      <strong style="color:#00b7ff;">Organization:</strong> {{ tenant_name }}
+                    </p>
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Action required box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(255,59,122,0.06); border:1px solid rgba(255,59,122,0.12); border-radius:6px;">
+                    <p style="margin:0 0 8px; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      <strong style="color:#ff3b7a;">Action required:</strong>
+                    </p>
+                    <p style="margin:0; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      MFA is now disabled on your account. You will be prompted to set up a new authenticator device the next time you sign in. Please do so as soon as possible to keep your account secure.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Didn't expect this -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(139,148,158,0.06); border:1px solid rgba(139,148,158,0.12); border-radius:6px;">
+                    <p style="margin:0; font-size:14px; color:#8b949e; line-height:1.7;">
+                      If you did not expect this change, contact the administrator listed above or your organization's security team.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+{% endblock %}
+{% block sub_footer %}You received this email because an administrator reset MFA on your BytesCop account.{% endblock %}

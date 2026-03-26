@@ -1,0 +1,467 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+          <div class="bc-pageCard mb-3">
+            <div class="bc-pageCardHead">
+              <div class="bc-pageCardTitle">
+                <div class="bc-h1">User</div>
+                <div class="bc-sub" *ngIf="vm.member">
+                  {{ vm.member.user.first_name }} {{ vm.member.user.last_name }}
+                </div>
+              </div>
+              <div class="bc-pageCardTools">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+                  <i class="bi bi-arrow-left"></i>
+                  <span>Back</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+                  <i class="bi bi-arrow-repeat"></i>
+                  <span>Refresh</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+                  <i class="bi bi-question-circle"></i>
+                  <span>Help</span>
+                </button>
+              </div>
+            </div>
+            <div class="bc-pageCardFoot" *ngIf="vm.state === 'ready' && vm.member">
+              <div class="bc-pageCardFootLeft">
+                <span class="bc-pillStatus"
+                  [class.is-inactive]="!vm.member.is_active"
+                  [class.is-invited]="vm.member.invite_status === 'pending'">
+                  <span class="bc-pillDot"></span>
+                  <span>{{ vm.member.invite_status === 'pending' ? 'Invited' : (vm.member.is_active ? 'Active' : 'Locked') }}</span>
+                </span>
+              </div>
+              <div class="bc-pageCardFootRight">
+                <!-- Delete confirmation -->
+                <div class="bc-deleteConfirm" *ngIf="confirmingDelete$ | async">
+                  <span class="bc-sub me-2">Remove user?</span>
+                  <button class="btn btn-sm btn-danger bc-btn me-1"
+                    [disabled]="deleting$ | async"
+                    (click)="deleteUser(vm.member)">
+                    <i class="bi bi-check-lg me-1"></i>Yes
+                  </button>
+                  <button class="btn btn-sm btn-outline-light bc-btnSoft"
+                    [disabled]="deleting$ | async"
+                    (click)="cancelDelete()">
+                    <i class="bi bi-x-lg me-1"></i>No
+                  </button>
+                </div>
+
+                <ng-container *ngIf="(confirmingDelete$ | async) === false">
+                  <button class="btn btn-outline-danger bc-iconBtn"
+                    *bcHasPermission="'user.delete'"
+                    (click)="confirmDelete()"
+                    [disabled]="vm.member.role === 'owner'">
+                    <i class="bi bi-trash3"></i>
+                    <span>Delete</span>
+                  </button>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+        <main>
+
+          <!-- Loading -->
+          <div class="bc-card" *ngIf="vm.state === 'init'">
+            <div class="bc-cardInner p-4">
+              <div class="bc-sub">Loading user details...</div>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div class="bc-card" *ngIf="vm.state === 'error'">
+            <div class="bc-cardInner p-4">
+              <div class="alert alert-danger mb-0">Could not load user details.</div>
+            </div>
+          </div>
+
+          <!-- Not found -->
+          <div class="bc-card" *ngIf="vm.state === 'missing'">
+            <div class="bc-cardInner p-4">
+              <div class="alert alert-warning mb-0">User not found.</div>
+            </div>
+          </div>
+
+          <!-- Details -->
+          <ng-container *ngIf="vm.state === 'ready' && vm.member as member">
+            <div class="bc-card">
+              <div class="bc-sectionHead">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">Details</h3>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <a class="btn btn-sm btn-outline-light bc-iconBtn"
+                    [routerLink]="['/admin/users', member.id, 'edit']"
+                    *bcHasPermission="'user.update'">
+                    <i class="bi bi-pencil"></i>
+                    <span>Edit</span>
+                  </a>
+                </div>
+              </div>
+              <div class="bc-cardInner p-4">
+                <div class="row g-4">
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Name</div>
+                    <div class="mt-1">{{ member.user.first_name }} {{ member.user.last_name }}</div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Email</div>
+                      <div class="mt-1">{{ member.user.email }}</div>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Phone</div>
+                      <div class="mt-1">{{ member.user.phone || '—' }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Role</div>
+                    <div class="mt-1 d-flex align-items-center gap-3">
+                      <span class="bc-roleBadge" [class.bc-roleBadge--owner]="member.role === 'owner'">
+                        {{ prettyRole(member.role) }}
+                      </span>
+
+                      <!-- Promote to Owner (member target, current user is owner) -->
+                      <ng-container *ngIf="isCurrentUserOwner && member.role === 'member'">
+                        <div *ngIf="confirmingPromote$ | async" class="bc-promoteConfirm d-inline-flex align-items-center gap-2">
+                          <span class="bc-sub me-1">Enter your MFA code to confirm:</span>
+                          <input type="text" class="form-control form-control-sm bc-mfaInput"
+                            [(ngModel)]="promoteMfaCode" placeholder="MFA code" maxlength="6" autocomplete="off">
+                          <button class="btn btn-sm btn-warning bc-btn"
+                            (click)="promote(member)"
+                            [disabled]="(promoting$ | async) || !promoteMfaCode">
+                            Confirm
+                          </button>
+                          <button class="btn btn-sm btn-outline-light bc-btnSoft"
+                            (click)="cancelPromote()"
+                            [disabled]="promoting$ | async">
+                            Cancel
+                          </button>
+                        </div>
+
+                        <ng-container *ngIf="(confirmingPromote$ | async) === false">
+                          <button class="btn btn-sm btn-outline-warning bc-iconBtn"
+                            (click)="confirmPromote()">
+                            <i class="bi bi-arrow-up-circle"></i>
+                            <span>Promote to Owner</span>
+                          </button>
+                        </ng-container>
+                      </ng-container>
+
+                      <!-- Demote to Member (owner target, not self, current user is owner) -->
+                      <ng-container *ngIf="isCurrentUserOwner && member.role === 'owner' && !isSelf(member)">
+                        <div *ngIf="confirmingDemote$ | async" class="d-inline-flex align-items-center gap-2">
+                          <span class="bc-sub me-2">Demote to member?</span>
+                          <button class="btn btn-sm btn-warning bc-btn"
+                            (click)="demote(member)"
+                            [disabled]="demoting$ | async">
+                            <i class="bi bi-check-lg me-1"></i>Yes
+                          </button>
+                          <button class="btn btn-sm btn-outline-light bc-btnSoft"
+                            (click)="cancelDemote()"
+                            [disabled]="demoting$ | async">
+                            <i class="bi bi-x-lg me-1"></i>No
+                          </button>
+                        </div>
+
+                        <ng-container *ngIf="(confirmingDemote$ | async) === false">
+                          <button class="btn btn-sm btn-outline-light bc-iconBtn"
+                            (click)="confirmDemote()">
+                            <i class="bi bi-arrow-down-circle"></i>
+                            <span>Demote to Member</span>
+                          </button>
+                        </ng-container>
+                      </ng-container>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Status</div>
+                      <div class="mt-1">
+                        <span class="bc-pillStatus"
+                          [class.is-inactive]="!member.is_active"
+                          [class.is-invited]="member.invite_status === 'pending'">
+                          <span class="bc-pillDot"></span>
+                          <span>{{ member.invite_status === 'pending' ? 'Invited' : (member.is_active ? 'Active' : 'Locked') }}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Timezone</div>
+                      <div class="mt-1">{{ member.user.timezone || '—' }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Created</div>
+                    <div class="mt-1">{{ member.created_at | bcDate:'datetime' }}</div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Updated</div>
+                      <div class="mt-1">{{ member.updated_at | bcDate:'datetime' }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="bc-sub">Groups</div>
+                    <div class="mt-1">
+                      <span class="d-inline-flex flex-wrap gap-1" *ngIf="member.groups.length > 0">
+                        <span class="bc-groupPill" *ngFor="let g of member.groups">{{ g.name }}</span>
+                      </span>
+                      <span *ngIf="member.groups.length === 0">None</span>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="bc-sub">Multi-Factor Authentication</div>
+                    <div class="mt-1 d-flex align-items-center gap-3">
+                      <span class="bc-pillStatus" [class.is-inactive]="!member.user.mfa_enabled">
+                        <span class="bc-pillDot"></span>
+                        <span>{{ member.user.mfa_enabled ? 'Enabled' : 'Not Enabled' }}</span>
+                      </span>
+
+                      <ng-container *ngIf="member.user.mfa_enabled && (member.role !== 'owner' || isCurrentUserOwner)">
+                        <!-- Reset MFA confirmation -->
+                        <div *ngIf="confirmingMfaReset$ | async" class="d-inline-flex align-items-center gap-2">
+                          <span class="bc-sub">Reset MFA?</span>
+                          <button class="btn btn-sm btn-danger bc-btn"
+                            [disabled]="resettingMfa$ | async"
+                            (click)="resetMfa(member)">
+                            <i class="bi bi-check-lg me-1"></i>Yes
+                          </button>
+                          <button class="btn btn-sm btn-outline-light bc-btnSoft"
+                            [disabled]="resettingMfa$ | async"
+                            (click)="cancelMfaReset()">
+                            <i class="bi bi-x-lg me-1"></i>No
+                          </button>
+                        </div>
+
+                        <ng-container *ngIf="(confirmingMfaReset$ | async) === false">
+                          <button class="btn btn-sm btn-outline-warning bc-iconBtn"
+                            *bcHasPermission="'user.update'"
+                            (click)="confirmMfaReset()">
+                            <i class="bi bi-shield-x"></i>
+                            <span>Reset MFA</span>
+                          </button>
+                        </ng-container>
+                      </ng-container>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Reset Password -->
+          <ng-container *ngIf="vm.state === 'ready' && vm.member && !isSelf(vm.member)">
+            <div class="bc-card mt-3" *bcHasPermission="'user.update'">
+              <div class="bc-sectionHead">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">Reset Password</h3>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <button class="btn btn-sm btn-outline-warning bc-iconBtn"
+                    (click)="togglePasswordReset()"
+                    *ngIf="!showPasswordReset">
+                    <i class="bi bi-key"></i>
+                    <span>Reset</span>
+                  </button>
+                </div>
+              </div>
+              <div class="bc-cardInner p-4" *ngIf="showPasswordReset">
+                <div class="row g-3">
+                  <div class="col-md-5">
+                    <label class="form-label bc-label">New Password <span class="bc-required">*</span></label>
+                    <input type="password" class="form-control bc-input"
+                      [(ngModel)]="resetNewPassword" placeholder="New password" autocomplete="new-password">
+                    <div *ngIf="passwordPolicy && resetNewPassword" class="bc-policyChecklist mt-2">
+                      <div class="bc-policyItem" [class.is-met]="resetMeetsMinLength">
+                        <i class="bi" [ngClass]="resetMeetsMinLength ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                        <span>At least {{ passwordPolicy.min_length }} characters</span>
+                      </div>
+                      <div *ngIf="passwordPolicy.require_uppercase" class="bc-policyItem" [class.is-met]="resetHasUppercase">
+                        <i class="bi" [ngClass]="resetHasUppercase ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                        <span>Uppercase letter</span>
+                      </div>
+                      <div *ngIf="passwordPolicy.require_number" class="bc-policyItem" [class.is-met]="resetHasNumber">
+                        <i class="bi" [ngClass]="resetHasNumber ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                        <span>Number</span>
+                      </div>
+                      <div *ngIf="passwordPolicy.require_special" class="bc-policyItem" [class.is-met]="resetHasSpecial">
+                        <i class="bi" [ngClass]="resetHasSpecial ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                        <span>Special character</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-5">
+                    <label class="form-label bc-label">Confirm Password <span class="bc-required">*</span></label>
+                    <input type="password" class="form-control bc-input"
+                      [(ngModel)]="resetConfirmPassword" placeholder="Confirm password" autocomplete="new-password"
+                      [class.is-invalid]="resetPasswordMismatch">
+                    <div class="bc-fieldError" *ngIf="resetPasswordMismatch">
+                      Passwords do not match.
+                    </div>
+                  </div>
+                  <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button class="btn btn-sm btn-success bc-btn"
+                      [disabled]="!canResetPassword"
+                      (click)="submitPasswordReset(vm.member!)">
+                      {{ resettingPassword ? 'Saving...' : 'Save' }}
+                    </button>
+                    <button class="btn btn-sm btn-outline-light bc-btnSoft"
+                      (click)="togglePasswordReset()">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="bc-cardInner p-4" *ngIf="!showPasswordReset">
+                <div class="bc-sub">Set a new password for this user.</div>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Engagement Assignments -->
+          <ng-container *ngIf="vm.state === 'ready' && vm.member as member">
+            <div class="bc-card mt-3">
+              <div class="bc-sectionHead">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">Engagement Assignments</h3>
+                  <span class="bc-sub">({{ vm.assignments.length }})</span>
+                </div>
+                <div class="d-flex align-items-center gap-2" *bcHasPermission="['user.update', 'engagement.update']">
+                  <button class="btn btn-sm btn-outline-light bc-iconBtn"
+                    (click)="showAddEngagement = !showAddEngagement"
+                    *ngIf="!showAddEngagement">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Add</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Add form -->
+              <div class="bc-cardInner px-4 py-3 border-bottom border-dark" *ngIf="showAddEngagement">
+                <div class="row g-2 align-items-end">
+                  <div class="col-12 col-md-5">
+                    <label class="form-label bc-label mb-1">Engagement</label>
+                    <select class="form-select form-select-sm bc-select" [(ngModel)]="selectedEngagementId">
+                      <option value="">Select engagement...</option>
+                      <option *ngFor="let e of availableEngagements(vm)" [value]="e.id">
+                        {{ e.name }} ({{ e.status }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label bc-label mb-1">Position</label>
+                    <select class="form-select form-select-sm bc-select" [(ngModel)]="selectedRole">
+                      <option *ngFor="let r of getPositionOptions(member)" [value]="r.value">{{ r.label }}</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-3 d-flex gap-2">
+                    <button class="btn btn-sm bc-btn btn-success"
+                      [disabled]="adding || !selectedEngagementId"
+                      (click)="addEngagement()">
+                      {{ adding ? 'Adding...' : 'Add' }}
+                    </button>
+                    <button class="btn btn-sm btn-outline-light bc-btnSoft"
+                      (click)="showAddEngagement = false; selectedEngagementId = ''; selectedRole = 'observer'">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bc-cardInner" [class.p-4]="vm.assignments.length === 0">
+                <div *ngIf="vm.assignments.length === 0" class="bc-sub">
+                  Not assigned to any engagements.
+                </div>
+
+                <div class="table-responsive" *ngIf="vm.assignments.length > 0">
+                  <table class="table table-sm bc-table mb-0">
+                    <thead>
+                      <tr>
+                        <th>Engagement</th>
+                        <th>Client</th>
+                        <th>Position</th>
+                        <th>Status</th>
+                        <th style="width:48px"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let a of vm.assignments">
+                        <td>
+                          <a class="bc-link" [routerLink]="['/engagements', a.engagement_id]">
+                            {{ a.engagement_name }}
+                          </a>
+                        </td>
+                        <td>{{ a.client_name || '—' }}</td>
+                        <td>{{ prettyStakeholderRole(a.role) }}</td>
+                        <td>
+                          <span class="bc-severityPill bc-status--{{ a.engagement_status }}">
+                            {{ a.engagement_status | titlecase }}
+                          </span>
+                        </td>
+                        <td class="text-end">
+                          <button class="btn btn-sm btn-outline-danger bc-iconBtn"
+                            *bcHasPermission="['user.update', 'engagement.update']"
+                            [disabled]="removingId === a.id"
+                            (click)="removeEngagement(a)"
+                            title="Remove from engagement">
+                            <i class="bi bi-x-lg"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+        </main>
+
+        <!-- Help aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp">
+          <div class="bc-helpHead">
+            <div>
+              <div class="bc-helpKicker">Help</div>
+              <div class="bc-helpTitle">User Details</div>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="bc-helpBody">
+            <div class="bc-sub mb-2">
+              View user details, role, and group memberships.
+            </div>
+            <ul class="bc-helpList">
+              <li><strong>Edit:</strong> Update user details and group assignments.</li>
+              <li><strong>Delete:</strong> Remove the user from this tenant (owners cannot be deleted).</li>
+              <li><strong>Groups:</strong> Shows which permission groups the user belongs to.</li>
+              <li><strong>Promote:</strong> Owners can promote a member to owner (requires your MFA code).</li>
+              <li><strong>Demote:</strong> Owners can demote another owner to member (cannot demote yourself).</li>
+              <li><strong>Reset MFA:</strong> Owners can reset another user's MFA, requiring them to re-enroll on next login.</li>
+              <li><strong>Status:</strong> Shows Active, Locked, or Invited (pending invite acceptance).</li>
+              <li><strong>Engagement Assignments:</strong> Shows which engagements this user is a stakeholder on. Add or remove assignments directly.</li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

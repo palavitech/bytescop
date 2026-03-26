@@ -1,0 +1,8 @@
+.bc-typeBadge {
+  font-size: 0.76rem;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}

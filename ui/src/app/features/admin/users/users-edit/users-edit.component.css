@@ -1,0 +1,23 @@
+/* Password policy checklist */
+.bc-policyChecklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bc-policyItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--bc-muted, #71808e);
+  transition: color 0.2s;
+}
+
+.bc-policyItem .bi {
+  font-size: 0.9rem;
+}
+
+.bc-policyItem.is-met {
+  color: var(--bc-accent, #00ffb3);
+}

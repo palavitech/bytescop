@@ -1,0 +1,196 @@
+.bc-resourceType {
+  font-size: 0.78rem;
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: capitalize;
+  color: var(--bc-blue);
+}
+
+.bc-reprText {
+  font-size: 0.82rem;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Pagination */
+.bc-pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.bc-paginationInner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bc-pageBtn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bc-pageBtn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.bc-pageBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.bc-pageBtnActive {
+  background: rgba(0, 255, 179, 0.15);
+  border-color: var(--bc-green);
+  color: var(--bc-green);
+  box-shadow: 0 0 6px rgba(0, 255, 179, 0.2);
+}
+
+.bc-pageBtnActive:hover:not(:disabled) {
+  background: rgba(0, 255, 179, 0.2);
+  border-color: var(--bc-green);
+  color: var(--bc-green);
+}
+
+.bc-pageEllipsis {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.35);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+}
+
+.bc-pageInfo {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Page size selector */
+.bc-pageSizeLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.bc-pageSizeSelect {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.bc-pageSizeSelect:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.bc-pageSizeSelect:focus {
+  outline: none;
+  border-color: var(--bc-green);
+  box-shadow: 0 0 4px rgba(0, 255, 179, 0.15);
+}
+
+.bc-pageSizeSelect option {
+  background: #0d1117;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Toggle button active state */
+:host ::ng-deep .bc-iconBtnActive.btn-outline-light {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+/* Visualization panel */
+.bc-summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .bc-summaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bc-summaryChart {
+  position: relative;
+  height: 420px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  min-width: 0;
+}
+
+.bc-summaryChart canvas {
+  flex: 1;
+  min-height: 0;
+}
+
+
+.bc-chartLabel {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.bc-chartEmpty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: rgba(201, 212, 255, 0.25);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+}
+
+.bc-chartEmpty .bi {
+  font-size: 1.5rem;
+}
+
+.bc-chartHint {
+  font-size: 0.65rem;
+  color: rgba(201, 212, 255, 0.35);
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0;
+}

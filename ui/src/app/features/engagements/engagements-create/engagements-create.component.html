@@ -1,0 +1,73 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <div class="bc-pageCard mb-3">
+      <div class="bc-pageCardHead">
+        <div class="bc-pageCardTitle">
+          <div class="bc-h1">Create Engagement</div>
+          <div class="bc-sub">Add a new security assessment engagement.</div>
+        </div>
+        <div class="bc-pageCardTools">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+            <i class="bi bi-question-circle"></i>
+            <span>Help</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+      <main>
+
+        <div class="alert alert-danger" *ngIf="serverError$ | async as err">{{ err }}</div>
+
+        <div class="bc-card">
+          <div class="bc-cardInner p-4">
+            <app-engagement-form
+              mode="create"
+              [saving]="(saving$ | async) ?? false"
+              [prefill]="prefill"
+              (formSubmit)="onSubmit($event)"
+              (formCancel)="onCancel()">
+            </app-engagement-form>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Help aside -->
+      <aside class="bc-helpPane" *ngIf="showHelp">
+        <div class="bc-helpHead">
+          <div>
+            <div class="bc-helpKicker">Help</div>
+            <div class="bc-helpTitle">Create Engagement</div>
+          </div>
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="bc-helpBody">
+          <div class="bc-sub mb-2">
+            Create a new engagement to track a security assessment project.
+          </div>
+          <ul class="bc-helpList">
+            <li><strong>Name:</strong> A descriptive name for this engagement (e.g. "Q1 External Pentest").</li>
+            <li><strong>Client:</strong> The client this engagement belongs to.</li>
+            <li><strong>Status:</strong> Current phase — Planned, Active, On Hold, or Completed.</li>
+            <li><strong>Start Date:</strong> When the engagement begins.</li>
+            <li><strong>End Date:</strong> Optional expected completion date.</li>
+            <li><strong>Description:</strong> Scope and objectives for this engagement.</li>
+            <li><strong>Notes:</strong> Internal notes — constraints, delivery details, etc.</li>
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+
+  </div>
+</div>

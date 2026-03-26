@@ -1,0 +1,215 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+          <div class="bc-pageCard mb-3">
+            <div class="bc-pageCardHead">
+              <div class="bc-pageCardTitle">
+                <div class="bc-h1">Asset</div>
+                <div class="bc-sub" *ngIf="vm.asset">
+                  {{ vm.asset.name }}
+                </div>
+                <ng-container *ngIf="vm.state === 'ready' && vm.asset">
+                  <div class="bc-metaBlock mt-3">
+                    <div class="bc-metaRow">
+                      <span class="bc-metaLabel">Client</span>
+                      <span class="bc-metaValue">
+                        <a *ngIf="vm.asset.client_id" class="bc-link"
+                          [routerLink]="['/organizations', vm.asset.client_id]">{{ vm.asset.client_name || '—' }}</a>
+                        <span *ngIf="!vm.asset.client_id">{{ vm.asset.client_name || '—' }}</span>
+                      </span>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+              <div class="bc-pageCardTools">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+                  <i class="bi bi-arrow-left"></i>
+                  <span>Back</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+                  <i class="bi bi-arrow-repeat"></i>
+                  <span>Refresh</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+                  <i class="bi bi-question-circle"></i>
+                  <span>Help</span>
+                </button>
+              </div>
+            </div>
+            <div class="bc-pageCardFoot" *ngIf="vm.state === 'ready' && vm.asset">
+              <div class="bc-pageCardFootLeft">
+                <span class="bc-typeBadge">{{ typeLabel(vm.asset.asset_type) }}</span>
+              </div>
+              <div class="bc-pageCardFootRight">
+                <!-- Delete confirmation -->
+                <div class="bc-deleteConfirm" *ngIf="confirmingDelete$ | async">
+                  <span class="bc-sub me-2">Delete asset?</span>
+                  <button class="btn btn-sm btn-danger bc-btn me-1"
+                    [disabled]="deleting$ | async"
+                    (click)="deleteAsset(vm.asset)">
+                    <i class="bi bi-check-lg me-1"></i>Yes
+                  </button>
+                  <button class="btn btn-sm btn-outline-light bc-btnSoft"
+                    [disabled]="deleting$ | async"
+                    (click)="cancelDelete()">
+                    <i class="bi bi-x-lg me-1"></i>No
+                  </button>
+                </div>
+
+                <ng-container *ngIf="(confirmingDelete$ | async) === false">
+                  <button class="btn btn-outline-danger bc-iconBtn"
+                    *bcHasPermission="'asset.delete'"
+                    (click)="confirmDelete()">
+                    <i class="bi bi-trash3"></i>
+                    <span>Delete</span>
+                  </button>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+        <main>
+
+          <!-- Loading -->
+          <div class="bc-card" *ngIf="vm.state === 'init'">
+            <div class="bc-cardInner p-4">
+              <div class="bc-sub">Loading asset details...</div>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div class="bc-card" *ngIf="vm.state === 'error'">
+            <div class="bc-cardInner p-4">
+              <div class="alert alert-danger mb-0">Could not load asset details.</div>
+            </div>
+          </div>
+
+          <!-- Not found -->
+          <div class="bc-card" *ngIf="vm.state === 'missing'">
+            <div class="bc-cardInner p-4">
+              <div class="alert alert-warning mb-0">Asset not found.</div>
+            </div>
+          </div>
+
+          <!-- Details -->
+          <ng-container *ngIf="vm.state === 'ready' && vm.asset as asset">
+            <div class="bc-card">
+              <div class="bc-sectionHead">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">Details</h3>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <a class="btn btn-sm btn-outline-light bc-iconBtn"
+                    [routerLink]="['/assets', asset.id, 'edit']"
+                    *bcHasPermission="'asset.update'">
+                    <i class="bi bi-pencil"></i>
+                    <span>Edit</span>
+                  </a>
+                </div>
+              </div>
+              <div class="bc-cardInner p-4">
+                <div class="row g-4">
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Name</div>
+                    <div class="mt-1">{{ asset.name }}</div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Client</div>
+                      <div class="mt-1">
+                        <a *ngIf="asset.client_id" class="bc-link" [routerLink]="['/organizations', asset.client_id]">
+                          {{ asset.client_name }}
+                        </a>
+                        <span *ngIf="!asset.client_id">—</span>
+                      </div>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Notes</div>
+                      <div class="mt-1" style="white-space:pre-wrap">{{ asset.notes || '—' }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Type</div>
+                    <div class="mt-1">
+                      <span class="bc-typeBadge">{{ typeLabel(asset.asset_type) }}</span>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Environment</div>
+                      <div class="mt-1">{{ envLabel(asset.environment) }}</div>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Criticality</div>
+                      <div class="mt-1">
+                        <span class="bc-critBadge" [attr.data-crit]="asset.criticality">
+                          {{ critLabel(asset.criticality) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Target</div>
+                    <div class="mt-1">
+                      <span *ngIf="asset.target">{{ asset.target }}</span>
+                      <span *ngIf="!asset.target">—</span>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Created</div>
+                      <div class="mt-1">{{ asset.created_at | bcDate:'datetime' }}</div>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Updated</div>
+                      <div class="mt-1">{{ asset.updated_at | bcDate:'datetime' }}</div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+        </main>
+
+        <!-- Help aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp">
+          <div class="bc-helpHead">
+            <div>
+              <div class="bc-helpKicker">Help</div>
+              <div class="bc-helpTitle">Asset Details</div>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="bc-helpBody">
+            <div class="bc-sub mb-2">
+              View detailed information about this security asset.
+            </div>
+            <ul class="bc-helpList">
+              <li><strong>Edit:</strong> Update the asset's details.</li>
+              <li><strong>Delete:</strong> Permanently remove the asset. Assets that are in scope for an engagement should be removed from scope first.</li>
+              <li><strong>Client:</strong> Click to view the owning client.</li>
+              <li><strong>Type / Environment / Criticality:</strong> Classification details about the asset.</li>
+              <li><strong>Target:</strong> The IP, hostname, or URL being assessed.</li>
+              <li><strong>Notes:</strong> Any additional information about this asset.</li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

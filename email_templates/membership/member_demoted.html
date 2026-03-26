@@ -1,0 +1,36 @@
+{% extends "shells/branded.html" %}
+{% block title %}Role changed — {{ tenant_name | default('BytesCop', true) }}{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                Your role on <strong style="color:#e6edf3;">{{ tenant_name | default('BytesCop', true) }}</strong> has been changed from <strong style="color:#ff3b7a;">Owner</strong> to <strong style="color:#e6edf3;">Member</strong>{% if demoted_by %} by <strong style="color:#e6edf3;">{{ demoted_by }}</strong>{% endif %}.
+              </p>
+
+              <!-- What this means box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(0,183,255,0.06); border:1px solid rgba(0,183,255,0.12); border-radius:6px;">
+                    <p style="margin:0 0 8px; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      <strong style="color:#00b7ff;">What this means:</strong>
+                    </p>
+                    <p style="margin:0; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      Your access is now governed by the groups and permissions assigned to your account. You no longer have owner-level administrative privileges.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Didn't expect this -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(139,148,158,0.06); border:1px solid rgba(139,148,158,0.12); border-radius:6px;">
+                    <p style="margin:0; font-size:14px; color:#8b949e; line-height:1.7;">
+                      If you believe this was done in error, please contact your organization administrator.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+{% endblock %}
+{% block sub_footer %}You received this email because your role was changed on {{ tenant_name | default('BytesCop', true) }}.{% endblock %}

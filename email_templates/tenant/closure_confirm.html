@@ -1,0 +1,75 @@
+{% extends "shells/branded.html" %}
+{% block title %}Confirm Tenant Closure{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                You have requested to permanently close your BytesCop tenant <strong style="color:#e6edf3;">{{ tenant_name }}</strong>. Please review the details below carefully.
+              </p>
+
+              <!-- Warning box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:16px 20px; background-color:rgba(255,59,122,0.06); border:1px solid rgba(255,59,122,0.2); border-radius:6px;">
+                    <p style="margin:0 0 12px; font-size:15px; font-weight:700; color:#ff3b7a; line-height:1.5;">
+                      What will be permanently deleted
+                    </p>
+                    <ul style="margin:0; padding-left:20px; font-size:14px; color:#c9d1d9; line-height:1.8;">
+                      <li>All engagements, findings, and evidence</li>
+                      <li>All clients and assets</li>
+                      <li>All user accounts and group memberships</li>
+                      <li>All uploaded attachments and files</li>
+                      <li>All tenant settings and audit logs</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Data export choice -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:16px 20px; background-color:rgba(0,183,255,0.06); border:1px solid rgba(0,183,255,0.15); border-radius:6px;">
+                    <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#8b949e; letter-spacing:1px; text-transform:uppercase;">
+                      Your data export selection
+                    </p>
+                    <p style="margin:0; font-size:15px; color:#e6edf3; line-height:1.6;">
+                      {{ data_export_choice }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Confirmation code -->
+              <p style="margin:0 0 12px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                To confirm this closure, enter the following code in BytesCop:
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td align="center" style="padding:20px; background-color:rgba(0,255,179,0.04); border:1px solid rgba(0,255,179,0.15); border-radius:6px;">
+                    <p style="margin:0; font-size:32px; font-weight:700; color:#00ffb3; letter-spacing:6px; font-family:'Courier New', Courier, monospace;">
+                      {{ confirmation_code }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 24px; font-size:14px; color:#8b949e; line-height:1.6;">
+                This code expires in <strong style="color:#e6edf3;">24 hours</strong>. If you did not request this, no action is needed &mdash; your tenant will remain active.
+              </p>
+
+              <!-- Legal notice -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0;">
+                <tr>
+                  <td style="padding:16px 20px; background-color:rgba(139,148,158,0.06); border:1px solid rgba(139,148,158,0.15); border-radius:6px;">
+                    <p style="margin:0; font-size:13px; color:#8b949e; line-height:1.7;">
+                      By entering this code, you acknowledge that all data associated with
+                      <strong style="color:#c9d1d9;">{{ tenant_name }}</strong> will be permanently
+                      deleted. This action cannot be undone. BytesCop will not retain any of your
+                      tenant data after the closure is complete. A record of this closure request,
+                      including your acknowledgment, will be retained for compliance purposes.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+{% endblock %}

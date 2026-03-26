@@ -1,0 +1,84 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <div class="bc-pageCard mb-3">
+      <div class="bc-pageCardHead">
+        <div class="bc-pageCardTitle">
+          <div class="bc-h1">Edit Asset</div>
+          <div class="bc-sub">Update asset details.</div>
+        </div>
+        <div class="bc-pageCardTools">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+            <i class="bi bi-question-circle"></i>
+            <span>Help</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+      <main>
+
+        <!-- Loading state -->
+        <div class="bc-card" *ngIf="loading$ | async">
+          <div class="bc-cardInner p-4">
+            <div class="bc-sub">Loading asset details...</div>
+          </div>
+        </div>
+
+        <!-- Edit form -->
+        <ng-container *ngIf="(loading$ | async) === false && asset$ | async as asset">
+          <div class="alert alert-danger" *ngIf="serverError$ | async as err">{{ err }}</div>
+
+          <div class="bc-card">
+            <div class="bc-cardInner p-4">
+              <app-asset-form
+                mode="edit"
+                [asset]="asset"
+                [organizations]="(organizations$ | async) ?? []"
+                [saving]="(saving$ | async) ?? false"
+                (formSubmit)="onSubmit($event)"
+                (formCancel)="onCancel()">
+              </app-asset-form>
+            </div>
+          </div>
+        </ng-container>
+
+      </main>
+
+      <!-- Help aside -->
+      <aside class="bc-helpPane" *ngIf="showHelp">
+        <div class="bc-helpHead">
+          <div>
+            <div class="bc-helpKicker">Help</div>
+            <div class="bc-helpTitle">Edit Asset</div>
+          </div>
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="bc-helpBody">
+          <div class="bc-sub mb-2">
+            Update the asset's details including name, type, client, and target information.
+          </div>
+          <ul class="bc-helpList">
+            <li><strong>Name:</strong> Update the asset's display name.</li>
+            <li><strong>Client:</strong> Change the owning client or set to none.</li>
+            <li><strong>Type:</strong> Update the asset classification (Host, WebApp, API, Cloud, etc.).</li>
+            <li><strong>Environment:</strong> Prod, Staging, Dev, or Lab.</li>
+            <li><strong>Criticality:</strong> Low, Medium, or High — indicates business impact.</li>
+            <li><strong>Target:</strong> The IP, hostname, or URL to assess.</li>
+            <li><strong>Notes:</strong> Any additional information about this asset.</li>
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+
+  </div>
+</div>

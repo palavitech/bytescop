@@ -1,0 +1,502 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+          <div class="bc-pageCard mb-3">
+            <div class="bc-pageCardHead">
+              <div class="bc-pageCardTitle">
+                <div class="bc-h1">Engagement</div>
+                <div class="bc-sub" *ngIf="vm.engagement">
+                  {{ vm.engagement.name }}
+                </div>
+                <ng-container *ngIf="vm.state === 'ready' && vm.engagement">
+                  <div class="bc-metaBlock mt-3">
+                    <div class="bc-metaRow">
+                      <span class="bc-metaLabel">Client</span>
+                      <span class="bc-metaValue">
+                        <a *ngIf="vm.engagement.client_id" class="bc-link"
+                          [routerLink]="['/organizations', vm.engagement.client_id]">{{ vm.engagement.client_name || '—' }}</a>
+                        <span *ngIf="!vm.engagement.client_id">{{ vm.engagement.client_name || '—' }}</span>
+                      </span>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+              <div class="bc-pageCardTools">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+                  <i class="bi bi-arrow-left"></i>
+                  <span>Back</span>
+                </button>
+                <ng-container *bcHasPermission="'finding.view'">
+                  <a class="btn btn-outline-light bc-iconBtn"
+                    *ngIf="vm.engagement"
+                    [routerLink]="['/engagements', vm.engagement.id, 'findings']">
+                    <i class="bi bi-shield-exclamation"></i>
+                    <span>Findings</span>
+                  </a>
+                  <button class="btn btn-outline-light bc-iconBtn" type="button"
+                    [class.bc-iconBtnActive]="showSummary" (click)="toggleSummary()">
+                    <i class="bi bi-bar-chart"></i>
+                    <span>Visualize</span>
+                  </button>
+                  <button class="btn btn-outline-light bc-iconBtn" type="button"
+                    *ngIf="vm.engagement"
+                    [disabled]="generatingReport"
+                    (click)="generateReport(vm.engagement)">
+                    <i class="bi" [class.bi-file-earmark-pdf]="!generatingReport"
+                      [class.bi-hourglass-split]="generatingReport"></i>
+                    <span>{{ generatingReport ? 'Generating...' : 'Report' }}</span>
+                  </button>
+                </ng-container>
+                <ng-container *bcHasPermission="'engagement_settings.view'">
+                  <a class="btn btn-outline-light bc-iconBtn"
+                    *ngIf="vm.engagement"
+                    [routerLink]="['/engagements', vm.engagement.id, 'settings']">
+                    <i class="bi bi-gear"></i>
+                    <span>Settings</span>
+                  </a>
+                </ng-container>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+                  <i class="bi bi-arrow-repeat"></i>
+                  <span>Refresh</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+                  <i class="bi bi-question-circle"></i>
+                  <span>Help</span>
+                </button>
+              </div>
+            </div>
+            <div class="bc-pageCardFoot" *ngIf="vm.state === 'ready' && vm.engagement">
+              <div class="bc-pageCardFootLeft">
+                <span class="bc-statusEngagement" [ngClass]="statusClass(vm.engagement.status)">
+                  <span class="bc-statusDot"></span>
+                  <span>{{ prettyStatus(vm.engagement.status) }}</span>
+                </span>
+                <span class="bc-pillStatus">
+                  <span class="bc-pillDot"></span>
+                  <span>{{ daysRemaining(vm.engagement.start_date, vm.engagement.end_date) }}</span>
+                </span>
+              </div>
+              <div class="bc-pageCardFootRight">
+                <!-- Delete confirmation -->
+                <div class="bc-deleteConfirm" *ngIf="confirmingDelete$ | async">
+                  <span class="bc-sub me-2">Delete engagement?</span>
+                  <button class="btn btn-sm btn-danger bc-btn me-1"
+                    [disabled]="deleting$ | async"
+                    (click)="deleteEngagement(vm.engagement)">
+                    <i class="bi bi-check-lg me-1"></i>Yes
+                  </button>
+                  <button class="btn btn-sm btn-outline-light bc-btnSoft"
+                    [disabled]="deleting$ | async"
+                    (click)="cancelDelete()">
+                    <i class="bi bi-x-lg me-1"></i>No
+                  </button>
+                </div>
+
+                <ng-container *ngIf="(confirmingDelete$ | async) === false">
+                  <button class="btn btn-outline-danger bc-iconBtn"
+                    *bcHasPermission="'engagement.delete'"
+                    (click)="confirmDelete()">
+                    <i class="bi bi-trash3"></i>
+                    <span>Delete</span>
+                  </button>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+        <main>
+
+          <!-- Loading -->
+          <div class="bc-card" *ngIf="vm.state === 'init'">
+            <div class="bc-cardInner p-4">
+              <div class="bc-sub">Loading engagement details...</div>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div class="bc-card" *ngIf="vm.state === 'error'">
+            <div class="bc-cardInner p-4">
+              <div class="alert alert-danger mb-0">Could not load engagement details.</div>
+            </div>
+          </div>
+
+          <!-- Not found -->
+          <div class="bc-card" *ngIf="vm.state === 'missing'">
+            <div class="bc-cardInner p-4">
+              <div class="alert alert-warning mb-0">Engagement not found.</div>
+            </div>
+          </div>
+
+          <!-- Visualization card -->
+          <div class="bc-card mb-3" *ngIf="showSummary && vm.state === 'ready'">
+            <div class="bc-sectionHead">
+              <div class="d-flex align-items-center gap-2">
+                <h3 class="bc-sectionLabel mb-0">Visualization</h3>
+                <span class="bc-sub" *ngIf="summaryTotal > 0">({{ summaryTotal }} findings)</span>
+              </div>
+              <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleSummary()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+            <div class="bc-cardInner p-3">
+              <!-- Timeline histogram -->
+              <div class="bc-timelineChart mb-3" *ngIf="summaryTotal > 0">
+                <div class="bc-chartLabel">Findings Over Time</div>
+                <canvas #timelineChart></canvas>
+              </div>
+
+              <div class="bc-summaryGrid" *ngIf="summaryTotal > 0">
+                <div class="bc-card">
+                  <div class="bc-cardInner p-3">
+                    <h6 class="bc-widgetTitle mb-3">Findings by Severity</h6>
+                    <div class="bc-chartWrap">
+                      <canvas #sevChart></canvas>
+                    </div>
+                  </div>
+                </div>
+                <div class="bc-card">
+                  <div class="bc-cardInner p-3">
+                    <h6 class="bc-widgetTitle mb-3">Findings by Status</h6>
+                    <div class="bc-chartWrap">
+                      <canvas #statChart></canvas>
+                    </div>
+                  </div>
+                </div>
+                <div class="bc-card">
+                  <div class="bc-cardInner p-3">
+                    <h6 class="bc-widgetTitle mb-3">Assets by Severity</h6>
+                    <div class="bc-chartWrap">
+                      <canvas #assetChart></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bc-summaryGrid mt-3" *ngIf="summaryTotal > 0">
+                <div class="bc-card">
+                  <div class="bc-cardInner p-3">
+                    <h6 class="bc-widgetTitle mb-3">Findings by CWE</h6>
+                    <div class="bc-chartWrap">
+                      <canvas #cweChart></canvas>
+                    </div>
+                  </div>
+                </div>
+                <div class="bc-card">
+                  <div class="bc-cardInner p-3">
+                    <h6 class="bc-widgetTitle mb-3">Findings by Assessment Area</h6>
+                    <div class="bc-chartWrap">
+                      <canvas #areaChart></canvas>
+                    </div>
+                  </div>
+                </div>
+                <div class="bc-card">
+                  <div class="bc-cardInner p-3">
+                    <h6 class="bc-widgetTitle mb-3">Findings by OWASP Top 10</h6>
+                    <div class="bc-chartWrap">
+                      <canvas #owaspChart></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bc-summaryGrid mt-3" *ngIf="summaryTotal > 0">
+                <div class="bc-card">
+                  <div class="bc-cardInner p-3">
+                    <h6 class="bc-widgetTitle mb-3">Assets by Finding Status</h6>
+                    <div class="bc-chartWrap" [style.height.px]="assetStatusChartHeight">
+                      <canvas #assetStatusChart></canvas>
+                    </div>
+                  </div>
+                </div>
+                <div class="bc-card">
+                  <div class="bc-cardInner p-3">
+                    <h6 class="bc-widgetTitle mb-3">Asset Type Distribution</h6>
+                    <div class="bc-chartWrap">
+                      <canvas #assetTypeChart></canvas>
+                    </div>
+                  </div>
+                </div>
+                <div class="bc-card">
+                  <div class="bc-cardInner p-3">
+                    <h6 class="bc-widgetTitle mb-3">Asset Criticality vs Findings</h6>
+                    <div class="bc-chartWrap">
+                      <canvas #assetCritChart></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bc-chartEmpty" *ngIf="summaryTotal === 0">
+                <i class="bi bi-bar-chart"></i>
+                <span>No findings to visualize</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Details -->
+          <ng-container *ngIf="vm.state === 'ready' && vm.engagement as eng">
+            <div class="bc-card mb-3">
+              <div class="bc-sectionHead">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">Details</h3>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <a class="btn btn-sm btn-outline-light bc-iconBtn"
+                    [routerLink]="['/engagements', eng.id, 'edit']"
+                    *bcHasPermission="'engagement.update'">
+                    <i class="bi bi-pencil"></i>
+                    <span>Edit</span>
+                  </a>
+                </div>
+              </div>
+              <div class="bc-cardInner p-4">
+                <div class="row g-4">
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Name</div>
+                    <div class="mt-1">{{ eng.name }}</div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Description</div>
+                      <div class="mt-1" style="white-space:pre-wrap">{{ eng.description || '—' }}</div>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Notes</div>
+                      <div class="mt-1" style="white-space:pre-wrap">{{ eng.notes || '—' }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Start Date</div>
+                    <div class="mt-1">{{ eng.start_date | bcDate }}</div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">End Date</div>
+                      <div class="mt-1">{{ eng.end_date | bcDate }}</div>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Timeline</div>
+                      <div class="mt-1">{{ daysRemaining(eng.start_date, eng.end_date) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Client</div>
+                    <div class="mt-1">
+                      <a *ngIf="eng.client_id" class="bc-link"
+                        [routerLink]="['/organizations', eng.client_id]">{{ eng.client_name || '—' }}</a>
+                      <span *ngIf="!eng.client_id">{{ eng.client_name || '—' }}</span>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Created</div>
+                      <div class="mt-1">{{ eng.created_at | bcDate:'datetime' }}</div>
+                    </div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Updated</div>
+                      <div class="mt-1">{{ eng.updated_at | bcDate:'datetime' }}</div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Statement of Work section -->
+          <ng-container *ngIf="vm.state === 'ready' && vm.engagement as eng">
+            <div class="bc-card" *bcHasPermission="'sow.view'">
+              <div class="bc-sectionHead">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">Statement of Work</h3>
+                  <ng-container *ngIf="sowVm$ | async as svm">
+                    <span class="bc-badge" *ngIf="svm.state === 'ready' && svm.sow">
+                      <span class="bc-dot"></span>
+                      <span>{{ prettySowStatus(svm.sow.status) }}</span>
+                    </span>
+                  </ng-container>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <ng-container *ngIf="sowVm$ | async as svm">
+                    <ng-container *ngIf="svm.state === 'ready' && svm.sow">
+                      <a class="btn btn-sm btn-outline-light bc-iconBtn"
+                        [routerLink]="['/engagements', eng.id, 'sow', 'edit']"
+                        *bcHasPermission="'sow.update'">
+                        <i class="bi bi-pencil"></i>
+                        <span>Edit SoW</span>
+                      </a>
+                    </ng-container>
+                  </ng-container>
+                  <button class="btn btn-sm btn-outline-light bc-iconBtn" type="button" (click)="refreshSow()">
+                    <i class="bi bi-arrow-repeat"></i>
+                  </button>
+                </div>
+              </div>
+
+              <ng-container *ngIf="sowVm$ | async as svm">
+                <!-- Loading -->
+                <div class="bc-cardInner p-4" *ngIf="svm.state === 'init'">
+                  <div class="bc-sub">Loading statement of work...</div>
+                </div>
+
+                <!-- Error -->
+                <div class="bc-cardInner p-4" *ngIf="svm.state === 'error'">
+                  <div class="alert alert-danger mb-0">Could not load statement of work.</div>
+                </div>
+
+                <!-- Empty — no SoW yet (should not occur — SoW is auto-created) -->
+                <div class="bc-cardInner p-4" *ngIf="svm.state === 'empty'">
+                  <div class="bc-sub">No statement of work found.</div>
+                </div>
+
+                <!-- Ready — SoW exists -->
+                <ng-container *ngIf="svm.state === 'ready' && svm.sow as sow">
+                  <div class="bc-cardInner p-4">
+                    <div class="row g-4">
+
+                      <div class="col-12 col-lg-4">
+                        <div class="bc-sub">Title</div>
+                        <div class="mt-1">{{ sow.title || '—' }}</div>
+                      </div>
+
+                      <div class="col-12 col-lg-4">
+                        <div class="bc-sub">Created</div>
+                        <div class="mt-1">{{ sow.created_at | bcDate:'datetime' }}</div>
+                      </div>
+
+                      <div class="col-12 col-lg-4">
+                        <div class="bc-sub">Updated</div>
+                        <div class="mt-1">{{ sow.updated_at | bcDate:'datetime' }}</div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <!-- Scope Assets (nested inside SoW card) -->
+                  <ng-container *bcHasPermission="'scope.view'">
+                    <div class="bc-scopeHead">
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="bc-sub fw-semibold">Scope Assets</span>
+                        <ng-container *ngIf="scopeVm$ | async as svm">
+                          <span class="badge bg-secondary" *ngIf="svm.state === 'ready'">{{ svm.total }}</span>
+                        </ng-container>
+                      </div>
+                    </div>
+
+                    <ng-container *ngIf="scopeVm$ | async as svm">
+                      <!-- Loading -->
+                      <div class="p-4" *ngIf="svm.state === 'init'">
+                        <div class="bc-sub">Loading scope assets...</div>
+                      </div>
+
+                      <!-- Error -->
+                      <div class="p-4" *ngIf="svm.state === 'error'">
+                        <div class="bc-sub text-danger">Failed to load scope assets.</div>
+                      </div>
+
+                      <!-- Ready -->
+                      <ng-container *ngIf="svm.state === 'ready'">
+                        <!-- Empty -->
+                        <div class="p-4" *ngIf="svm.assets.length === 0">
+                          <div class="bc-sub">No assets in scope yet.</div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="table-responsive" *ngIf="svm.assets.length > 0">
+                          <table class="table bc-table mb-0">
+                            <thead>
+                              <tr>
+                                <th>Asset</th>
+                                <th>Type</th>
+                                <th>Environment</th>
+                                <th>Criticality</th>
+                                <th>Target</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let asset of svm.assets">
+                                <td>
+                                  <a class="bc-link" [routerLink]="['/assets', asset.id]">{{ asset.name }}</a>
+                                </td>
+                                <td><span class="bc-typeBadge">{{ typeLabels[asset.asset_type] }}</span></td>
+                                <td>{{ envLabels[asset.environment] }}</td>
+                                <td>
+                                  <span class="bc-critBadge" [attr.data-crit]="asset.criticality">
+                                    {{ critLabels[asset.criticality] }}
+                                  </span>
+                                </td>
+                                <td>
+                                  <span class="bc-target" *ngIf="asset.target">{{ asset.target }}</span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </ng-container>
+                    </ng-container>
+                  </ng-container>
+
+                </ng-container>
+              </ng-container>
+            </div>
+          </ng-container>
+
+          <!-- Discussion / Comments -->
+          <ng-container *ngIf="vm.state === 'ready' && vm.engagement as eng">
+            <div class="bc-card mt-3" *bcHasPermission="'engagement.view'">
+              <bc-comments
+                targetType="engagement"
+                [targetId]="eng.id"
+              ></bc-comments>
+            </div>
+          </ng-container>
+
+        </main>
+
+        <!-- Help aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp">
+          <div class="bc-helpHead">
+            <div>
+              <div class="bc-helpKicker">Help</div>
+              <div class="bc-helpTitle">Engagement Details</div>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="bc-helpBody">
+            <div class="bc-sub mb-2">
+              View engagement details and manage the assessment.
+            </div>
+            <ul class="bc-helpList">
+              <li><strong>Client:</strong> The client this engagement belongs to.</li>
+              <li><strong>Status:</strong> Current phase — Planned, Active, On Hold, or Completed.</li>
+              <li><strong>Timeline:</strong> Shows days remaining or overdue based on start/end dates.</li>
+              <li><strong>Description:</strong> Summary of the engagement scope and objectives.</li>
+              <li><strong>Notes:</strong> Internal notes for the team.</li>
+              <li><strong>Findings:</strong> View and manage security findings for this engagement.</li>
+              <li><strong>Visualize:</strong> Toggles a chart card showing findings by severity, status, and asset breakdown.</li>
+              <li><strong>Report:</strong> Generate a PDF report of the engagement and its findings.</li>
+              <li><strong>Settings:</strong> Configure engagement-level settings, team members, and stakeholders.</li>
+              <li><strong>Edit:</strong> Update the engagement details.</li>
+              <li><strong>Delete:</strong> Permanently remove the engagement and its findings.</li>
+              <li><strong>Statement of Work:</strong> The SoW is auto-created with the engagement. Edit it to set a title, approve it to lock scope, and manage in-scope assets.</li>
+            </ul>
+          </div>
+        </aside>
+
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

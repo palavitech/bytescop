@@ -1,0 +1,32 @@
+.bc-groupPill {
+  font-size: 0.72rem;
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(0, 183, 255, 0.1);
+  border: 1px solid rgba(0, 183, 255, 0.2);
+  color: var(--bc-blue);
+  white-space: nowrap;
+}
+
+.bc-avatarInline {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(0, 255, 179, .35), transparent 60%),
+    linear-gradient(135deg, rgba(0, 183, 255, .18), rgba(0, 255, 179, .10));
+  border: 1px solid rgba(0, 183, 255, .22);
+}
+
+.bc-avatarInlineInitials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: .5px;
+  color: var(--bc-text, #e0e6ed);
+}

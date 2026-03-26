@@ -1,0 +1,244 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+      <div class="bc-pageCard mb-3">
+        <div class="bc-pageCardHead">
+          <div class="bc-pageCardTitle">
+            <div class="bc-h1">Audit Entry</div>
+            <div class="bc-sub" *ngIf="vm.entry">
+              #{{ vm.entry.id }} &mdash; {{ getActionLabel(vm.entry.action) }} {{ vm.entry.resource_type }}
+            </div>
+          </div>
+          <div class="bc-pageCardTools">
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+              <i class="bi bi-arrow-left"></i>
+              <span>Back</span>
+            </button>
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+              <i class="bi bi-arrow-repeat"></i>
+              <span>Refresh</span>
+            </button>
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+              <i class="bi bi-question-circle"></i>
+              <span>Help</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+        <main>
+
+          <!-- Loading -->
+          <div class="bc-card" *ngIf="vm.state === 'init'">
+            <div class="bc-cardInner p-4">
+              <div class="bc-sub">Loading audit entry...</div>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div class="bc-card" *ngIf="vm.state === 'error'">
+            <div class="bc-cardInner p-4">
+              <div class="alert alert-danger mb-0">Could not load audit entry.</div>
+            </div>
+          </div>
+
+          <!-- Not found -->
+          <div class="bc-card" *ngIf="vm.state === 'missing'">
+            <div class="bc-cardInner p-4">
+              <div class="alert alert-warning mb-0">Audit entry not found.</div>
+            </div>
+          </div>
+
+          <!-- Details -->
+          <ng-container *ngIf="vm.state === 'ready' && vm.entry as entry">
+
+            <!-- Detail grid -->
+            <div class="bc-card mb-3">
+              <div class="bc-sectionHead">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">Details</h3>
+                </div>
+              </div>
+              <div class="bc-cardInner p-4">
+                <div class="row g-4">
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Timestamp</div>
+                    <div class="mt-1">{{ entry.timestamp | bcDate:'datetime' }}</div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Action</div>
+                      <div class="mt-1">
+                        <span class="badge bc-actionBadge"
+                          [class.bg-success]="getActionColor(entry.action) === 'success'"
+                          [class.bg-info]="getActionColor(entry.action) === 'info'"
+                          [class.bg-danger]="getActionColor(entry.action) === 'danger'"
+                          [class.bg-warning]="getActionColor(entry.action) === 'warning'"
+                          [class.bg-orange]="getActionColor(entry.action) === 'orange'"
+                          [class.bg-secondary]="getActionColor(entry.action) === 'secondary'"
+                          [class.bg-primary]="getActionColor(entry.action) === 'primary'">
+                          {{ getActionLabel(entry.action) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Resource Type</div>
+                    <div class="mt-1 bc-resourceType">{{ entry.resource_type }}</div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Resource ID</div>
+                      <div class="mt-1 bc-mono">{{ entry.resource_id || '\u2014' }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">User</div>
+                    <div class="mt-1">{{ entry.actor_email || '\u2014' }}</div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">IP Address</div>
+                      <div class="mt-1 bc-mono">{{ entry.ip_address || '\u2014' }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="bc-sub">Description</div>
+                    <div class="mt-1">{{ entry.resource_repr || '\u2014' }}</div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Request Path</div>
+                    <div class="mt-1 bc-mono">{{ entry.request_path || '\u2014' }}</div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Request ID</div>
+                    <div class="mt-1 bc-mono">{{ entry.request_id || '\u2014' }}</div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">User Agent</div>
+                    <div class="mt-1 bc-userAgent">{{ entry.user_agent || '\u2014' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Diff section (for updates) -->
+            <div class="bc-card mb-3" *ngIf="entry.diff && getDiffKeys(entry.diff).length > 0">
+              <div class="bc-sectionHead">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">Changes</h3>
+                </div>
+              </div>
+              <div class="bc-cardInner p-0">
+                <div class="table-responsive">
+                  <table class="table table-dark mb-0 align-middle bc-table">
+                    <thead>
+                      <tr>
+                        <th style="min-width:150px">Field</th>
+                        <th style="min-width:200px">Old Value</th>
+                        <th style="min-width:200px">New Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let key of getDiffKeys(entry.diff)">
+                        <td class="bc-mono">{{ key }}</td>
+                        <td>
+                          <span class="bc-diffOld">{{ formatValue(entry.diff![key].old) }}</span>
+                        </td>
+                        <td>
+                          <span class="bc-diffNew">{{ formatValue(entry.diff![key].new) }}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Before snapshot -->
+            <div class="bc-card mb-3" *ngIf="entry.before">
+              <div class="bc-sectionHead bc-collapsible" (click)="toggleBefore()">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">Before Snapshot</h3>
+                </div>
+                <button class="btn btn-sm btn-outline-light bc-btnSoft">
+                  <i class="bi" [ngClass]="showBefore ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                </button>
+              </div>
+              <div class="bc-cardInner p-3" *ngIf="showBefore">
+                <ng-container *ngIf="entry.diff && beforeLines.length; else beforePlain">
+                  <pre class="bc-json bc-diffJson mb-0"><ng-container
+                    *ngFor="let line of beforeLines"><span class="bc-jsonLine"
+                    [class.bc-jsonDel]="line.highlighted">{{ line.text }}
+</span></ng-container></pre>
+                </ng-container>
+                <ng-template #beforePlain>
+                  <pre class="bc-json mb-0">{{ formatJson(entry.before) }}</pre>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- After snapshot -->
+            <div class="bc-card mb-3" *ngIf="entry.after">
+              <div class="bc-sectionHead bc-collapsible" (click)="toggleAfter()">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">After Snapshot</h3>
+                </div>
+                <button class="btn btn-sm btn-outline-light bc-btnSoft">
+                  <i class="bi" [ngClass]="showAfter ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                </button>
+              </div>
+              <div class="bc-cardInner p-3" *ngIf="showAfter">
+                <ng-container *ngIf="entry.diff && afterLines.length; else afterPlain">
+                  <pre class="bc-json bc-diffJson mb-0"><ng-container
+                    *ngFor="let line of afterLines"><span class="bc-jsonLine"
+                    [class.bc-jsonAdd]="line.highlighted">{{ line.text }}
+</span></ng-container></pre>
+                </ng-container>
+                <ng-template #afterPlain>
+                  <pre class="bc-json mb-0">{{ formatJson(entry.after) }}</pre>
+                </ng-template>
+              </div>
+            </div>
+
+          </ng-container>
+
+        </main>
+
+        <!-- Help aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp">
+          <div class="bc-helpHead">
+            <div>
+              <div class="bc-helpKicker">Help</div>
+              <div class="bc-helpTitle">Audit Entry</div>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="bc-helpBody">
+            <div class="bc-sub mb-2">
+              Full details of a single audit log entry.
+            </div>
+            <ul class="bc-helpList">
+              <li><strong>Details:</strong> Metadata about the action — timestamp, action type, resource, user, IP address, request path, request ID, and user agent.</li>
+              <li><strong>Changes:</strong> For update actions, shows a diff table with which fields changed, including old and new values side by side.</li>
+              <li><strong>Snapshots:</strong> Collapsible before/after JSON snapshots of the resource state. Changed fields are highlighted (red for removed, green for added).</li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

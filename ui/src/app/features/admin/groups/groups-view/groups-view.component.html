@@ -1,0 +1,229 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+          <div class="bc-pageCard mb-3">
+            <div class="bc-pageCardHead">
+              <div class="bc-pageCardTitle">
+                <div class="bc-h1">Group</div>
+                <div class="bc-sub" *ngIf="vm.group">{{ vm.group.name }}</div>
+              </div>
+              <div class="bc-pageCardTools">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+                  <i class="bi bi-arrow-left"></i>
+                  <span>Back</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+                  <i class="bi bi-arrow-repeat"></i>
+                  <span>Refresh</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+                  <i class="bi bi-question-circle"></i>
+                  <span>Help</span>
+                </button>
+              </div>
+            </div>
+            <div class="bc-pageCardFoot" *ngIf="vm.state === 'ready' && vm.group">
+              <div class="bc-pageCardFootLeft">
+                <span class="bc-typeBadge" [class.bc-typeBadge--default]="vm.group.is_default">
+                  {{ vm.group.is_default ? 'Default' : 'Custom' }}
+                </span>
+              </div>
+              <div class="bc-pageCardFootRight">
+                <!-- Delete confirmation -->
+                <div class="bc-deleteConfirm" *ngIf="confirmingDelete$ | async">
+                  <span class="bc-sub me-2">Delete group?</span>
+                  <button class="btn btn-sm btn-danger bc-btn me-1"
+                    [disabled]="deleting$ | async"
+                    (click)="deleteGroup(vm.group)">
+                    <i class="bi bi-check-lg me-1"></i>Yes
+                  </button>
+                  <button class="btn btn-sm btn-outline-light bc-btnSoft"
+                    [disabled]="deleting$ | async"
+                    (click)="cancelDelete()">
+                    <i class="bi bi-x-lg me-1"></i>No
+                  </button>
+                </div>
+
+                <ng-container *ngIf="(confirmingDelete$ | async) === false">
+                  <button class="btn btn-outline-danger bc-iconBtn"
+                    *bcHasPermission="'group.delete'"
+                    (click)="confirmDelete()"
+                    [disabled]="vm.group.is_default">
+                    <i class="bi bi-trash3"></i>
+                    <span>Delete</span>
+                  </button>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+        <main>
+
+          <!-- Loading -->
+          <div class="bc-card" *ngIf="vm.state === 'init'">
+            <div class="bc-cardInner p-4">
+              <div class="bc-sub">Loading group details...</div>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div class="bc-card" *ngIf="vm.state === 'error'">
+            <div class="bc-cardInner p-4">
+              <div class="alert alert-danger mb-0">Could not load group details.</div>
+            </div>
+          </div>
+
+          <!-- Not found -->
+          <div class="bc-card" *ngIf="vm.state === 'missing'">
+            <div class="bc-cardInner p-4">
+              <div class="alert alert-warning mb-0">Group not found.</div>
+            </div>
+          </div>
+
+          <!-- Details -->
+          <ng-container *ngIf="vm.state === 'ready' && vm.group as group">
+
+            <!-- Group info -->
+            <div class="bc-card mb-3">
+              <div class="bc-sectionHead">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">Details</h3>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <a class="btn btn-sm btn-outline-light bc-iconBtn"
+                    [routerLink]="['/admin/groups', group.id, 'edit']"
+                    *bcHasPermission="'group.update'">
+                    <i class="bi bi-pencil"></i>
+                    <span>Edit</span>
+                  </a>
+                </div>
+              </div>
+              <div class="bc-cardInner p-4">
+                <div class="row g-4">
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Name</div>
+                    <div class="mt-1">{{ group.name }}</div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Type</div>
+                      <div class="mt-1">
+                        <span class="bc-typeBadge" [class.bc-typeBadge--default]="group.is_default">
+                          {{ group.is_default ? 'Default' : 'Custom' }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-4">
+                    <div class="bc-sub">Created</div>
+                    <div class="mt-1">{{ group.created_at | bcDate:'datetime' }}</div>
+
+                    <div class="mt-4">
+                      <div class="bc-sub">Updated</div>
+                      <div class="mt-1">{{ group.updated_at | bcDate:'datetime' }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="bc-sub">Description</div>
+                    <div class="mt-1" style="white-space:pre-wrap">{{ group.description || '—' }}</div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <!-- Permissions -->
+            <div class="bc-card mb-3">
+              <div class="bc-cardInner p-4">
+                <h3 class="bc-h3 mb-3">Permissions <span class="bc-sub ms-1">({{ group.permissions.length }})</span></h3>
+
+                <div *ngIf="group.permissions.length === 0" class="bc-sub">
+                  No permissions assigned.
+                </div>
+
+                <div class="bc-permGrid" *ngIf="group.permissions.length > 0">
+                  <div class="bc-permResource" *ngFor="let res of groupPermissionsByResource(group.permissions)">
+                    <div class="bc-permResourceName">{{ res.resource }}</div>
+                    <div class="d-flex flex-wrap gap-1">
+                      <span class="bc-permPill" *ngFor="let p of res.permissions">{{ p.name }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Members -->
+            <div class="bc-card">
+              <div class="bc-cardInner p-4">
+                <h3 class="bc-h3 mb-3">Members <span class="bc-sub ms-1">({{ vm.members.length }})</span></h3>
+
+                <div *ngIf="vm.members.length === 0" class="bc-sub">
+                  No members in this group.
+                </div>
+
+                <div class="table-responsive" *ngIf="vm.members.length > 0">
+                  <table class="table table-dark mb-0 align-middle bc-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let m of vm.members">
+                        <td>
+                          <a class="bc-rowLink" [routerLink]="['/admin/users', m.id]">
+                            {{ m.user.first_name }} {{ m.user.last_name }}
+                          </a>
+                        </td>
+                        <td>{{ m.user.email }}</td>
+                        <td class="text-capitalize">{{ m.role }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </ng-container>
+
+        </main>
+
+        <!-- Help aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp">
+          <div class="bc-helpHead">
+            <div>
+              <div class="bc-helpKicker">Help</div>
+              <div class="bc-helpTitle">Group Details</div>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="bc-helpBody">
+            <div class="bc-sub mb-2">
+              View group configuration, assigned permissions, and current members.
+            </div>
+            <ul class="bc-helpList">
+              <li><strong>Edit:</strong> Modify group permissions and manage members.</li>
+              <li><strong>Delete:</strong> Remove the group (default groups cannot be deleted).</li>
+              <li><strong>Permissions:</strong> Shows which actions this group grants, organized by resource.</li>
+              <li><strong>Members:</strong> Lists users currently assigned to this group.</li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

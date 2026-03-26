@@ -1,0 +1,74 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <label for="assetName" class="form-label bc-label">Name <span class="bc-required">*</span></label>
+      <input id="assetName" type="text" class="form-control bc-input" formControlName="name"
+        placeholder="Asset name">
+      <div class="bc-fieldError"
+        *ngIf="form.get('name')?.touched && form.get('name')?.hasError('required')">
+        Name is required.
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <label for="assetOrg" class="form-label bc-label">Client</label>
+      <select id="assetOrg" class="form-select bc-input" formControlName="client_id">
+        <option [ngValue]="null">— None —</option>
+        <option *ngFor="let org of organizations" [ngValue]="org.id">{{ org.name }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <label for="assetType" class="form-label bc-label">Type</label>
+      <select id="assetType" class="form-select bc-input" formControlName="asset_type">
+        <option *ngFor="let opt of typeOptions" [value]="opt[0]">{{ opt[1] }}</option>
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label for="assetEnv" class="form-label bc-label">Environment</label>
+      <select id="assetEnv" class="form-select bc-input" formControlName="environment">
+        <option *ngFor="let opt of envOptions" [value]="opt[0]">{{ opt[1] }}</option>
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label for="assetCrit" class="form-label bc-label">Criticality</label>
+      <select id="assetCrit" class="form-select bc-input" formControlName="criticality">
+        <option *ngFor="let opt of critOptions" [value]="opt[0]">{{ opt[1] }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-12">
+      <label for="assetTarget" class="form-label bc-label">Target</label>
+      <input id="assetTarget" type="text" class="form-control bc-input" formControlName="target"
+        placeholder="IP address, hostname, URL, etc.">
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-12">
+      <label for="assetNotes" class="form-label bc-label">Notes</label>
+      <textarea id="assetNotes" class="form-control bc-input" formControlName="notes" rows="3"
+        placeholder="Optional notes about this asset"></textarea>
+    </div>
+  </div>
+
+  <div class="bc-formFoot">
+    <button type="button" class="btn btn-outline-light bc-iconBtn" (click)="onCancel()">
+      <i class="bi bi-x-lg"></i>
+      <span>Cancel</span>
+    </button>
+    <button type="submit" class="btn btn-success bc-btn" [disabled]="saving">
+      <span *ngIf="saving" class="spinner-border spinner-border-sm me-1" role="status"></span>
+      <i class="bi me-1" *ngIf="!saving" [ngClass]="mode === 'create' ? 'bi-plus-circle' : 'bi-check-lg'"></i>
+      {{ mode === 'create' ? 'Create Asset' : 'Save Changes' }}
+    </button>
+  </div>
+
+</form>

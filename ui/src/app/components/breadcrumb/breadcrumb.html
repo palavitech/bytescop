@@ -1,0 +1,8 @@
+<nav class="bc-crumbBar" *ngIf="crumbs.length" aria-label="Breadcrumb">
+    <ul class="bc-crumbList">
+        <li class="bc-crumbItem" *ngFor="let c of crumbs; let last = last">
+            <a *ngIf="!last" class="bc-crumbLink" [routerLink]="c.url">{{ c.label }}</a>
+            <span *ngIf="last" class="bc-crumbCurrent" aria-current="page">{{ c.label }}</span>
+        </li>
+    </ul>
+</nav>

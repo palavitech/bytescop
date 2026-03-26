@@ -1,0 +1,138 @@
+/* --- Single comment --- */
+.bc-comment {
+  display: flex;
+  gap: 14px;
+  padding: 16px 0;
+}
+
+.bc-commentReply {
+  padding: 12px 0;
+}
+
+/* --- Avatar --- */
+.bc-commentAvatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-top: 2px;
+}
+
+.bc-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.bc-avatarFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 183, 255, 0.15);
+  color: var(--bc-accentBlue, #00b7ff);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* --- Body --- */
+.bc-commentBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.bc-commentMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.bc-commentAuthor {
+  color: rgba(201, 212, 255, 0.9);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.bc-commentTime {
+  color: rgba(201, 212, 255, 0.4);
+  font-size: 11px;
+}
+
+.bc-commentEdited {
+  color: rgba(201, 212, 255, 0.35);
+  font-size: 11px;
+  font-style: italic;
+}
+
+.bc-commentText {
+  color: rgba(201, 212, 255, 0.75);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* --- Actions --- */
+.bc-commentActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+:host {
+  display: block;
+}
+
+.bc-btnGhost {
+  background: rgba(201, 212, 255, 0.04);
+  border: 1px solid rgba(201, 212, 255, 0.15);
+  color: rgba(201, 212, 255, 0.75);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.bc-btnGhost:hover {
+  color: rgba(201, 212, 255, 0.85);
+  background: rgba(201, 212, 255, 0.06);
+  border-color: rgba(201, 212, 255, 0.2);
+}
+
+.bc-btnGhostDanger:hover {
+  color: var(--bc-danger, #ff3b7a);
+  background: rgba(255, 59, 122, 0.08);
+  border-color: rgba(255, 59, 122, 0.2);
+}
+
+/* --- Replies indentation --- */
+.bc-replies {
+  margin-top: 12px;
+  margin-left: 12px;
+  border-left: 2px solid rgba(0, 255, 179, 0.1);
+  padding-left: 12px;
+}
+
+/* --- Scroll-to highlight animation (applied via JS from parent) --- */
+.bc-commentHighlight {
+  animation: commentFlash 3s ease-out;
+}
+
+@keyframes commentFlash {
+  0%   { background: rgba(0, 255, 179, 0.12); }
+  100% { background: transparent; }
+}
+
+/* --- Mention highlight --- */
+:host ::ng-deep .bc-mention {
+  color: var(--bc-accentBlue, #00b7ff);
+  font-weight: 600;
+  background: rgba(0, 183, 255, 0.08);
+  padding: 1px 4px;
+  border-radius: 3px;
+}

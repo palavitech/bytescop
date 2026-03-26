@@ -1,0 +1,730 @@
+/* =========================
+BytesCop Milkdown theme
+Applies to: .bc-editorShell + any Milkdown instance rendered inside .editorHost
+Updated: cleaned up duplicates, fixed upload strip/button to avoid overkill
+========================= */
+
+/* Override Crepe theme font variables to use IBM Plex Mono consistently */
+.editorHost {
+--crepe-font-default: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+--crepe-font-title: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+--crepe-font-code: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* Outer shell you already have in create.html */
+.bc-editorShell {
+background: rgba(10, 16, 24, .65);
+border: 1px solid rgba(64, 255, 204, .22);
+border-radius: 14px;
+box-shadow: 0 0 0 1px rgba(0, 0, 0, .55) inset, 0 18px 40px rgba(0, 0, 0, .45);
+padding: 12px;
+position: relative;
+overflow: visible;
+}
+
+/* Subtle neon edge glow */
+.bc-editorShell::before {
+content: "";
+position: absolute;
+inset: -2px;
+border-radius: 16px;
+pointer-events: none;
+background:
+radial-gradient(800px 260px at 20% -10%, rgba(64, 255, 204, .14), transparent 60%),
+radial-gradient(700px 240px at 80% 0%, rgba(120, 180, 255, .12), transparent 60%);
+filter: blur(0px);
+}
+
+/* Host div used by your component (#editorRef, #editorRef2) */
+.editorHost {
+position: relative;
+border-radius: 10px;
+background: rgba(8, 12, 18, .85);
+border: 1px solid rgba(255, 255, 255, .10);
+min-height: 520px; /* ~ 35 to 45 lines depending on font/zoom */
+max-height: 560px;
+overflow: auto;
+}
+
+/* Focus ring when editor is active */
+.bc-editorShell:focus-within {
+border-color: rgba(64, 255, 204, .45);
+box-shadow: 0 0 0 3px rgba(64, 255, 204, .14), 0 18px 40px rgba(0, 0, 0, .45);
+}
+
+/* Make Milkdown fill host */
+.editorHost .milkdown,
+.editorHost .editor,
+.editorHost .milkdown-root {
+min-height: 520px;
+}
+
+/* Force dark surface for Milkdown internal layers (some themes set white bg) */
+.editorHost,
+.editorHost .milkdown,
+.editorHost .editor,
+.editorHost .milkdown-root,
+.editorHost .ProseMirror {
+background: rgba(8, 12, 18, .85) !important;
+}
+
+/* Some themes set a "surface" or "container" background */
+.editorHost [class*="surface"],
+.editorHost [class*="container"],
+.editorHost [data-milkdown-root] {
+background: transparent !important;
+}
+
+/* ProseMirror core */
+.editorHost .ProseMirror {
+min-height: 520px;
+padding: 16px 18px;
+padding-left: 84px; /* space for side controls (+ / drag handle) */
+outline: none;
+color: rgba(235, 245, 255, .92) !important;
+font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace !important;
+font-size: 14px;
+font-weight: 400;
+line-height: 1.65;
+letter-spacing: .1px;
+caret-color: rgba(64, 255, 204, .95);
+}
+
+/* Optional: nicer selection */
+.editorHost .ProseMirror ::selection {
+background: rgba(64, 255, 204, .22);
+}
+
+/* Placeholder */
+.editorHost .ProseMirror p.is-empty:first-child::before,
+.editorHost .ProseMirror .is-empty::before,
+.editorHost .ProseMirror p[data-placeholder]::before {
+content: attr(data-placeholder);
+float: left;
+height: 0;
+pointer-events: none;
+color: rgba(180, 200, 220, .45);
+}
+
+/* Headings */
+.editorHost .ProseMirror h1,
+.editorHost .ProseMirror h2,
+.editorHost .ProseMirror h3 {
+color: rgba(235, 245, 255, .96);
+margin: 14px 0 10px;
+font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace !important;
+font-weight: 700;
+}
+
+.editorHost .ProseMirror h1 { font-size: 22px; }
+.editorHost .ProseMirror h2 { font-size: 18px; }
+.editorHost .ProseMirror h3 { font-size: 16px; }
+
+/* Links */
+.editorHost .ProseMirror a {
+color: rgba(120, 180, 255, .95);
+text-decoration: none;
+border-bottom: 1px dashed rgba(120, 180, 255, .45);
+}
+
+.editorHost .ProseMirror a:hover {
+border-bottom-color: rgba(120, 180, 255, .85);
+}
+
+/* Blockquote */
+.editorHost .ProseMirror blockquote {
+margin: 10px 0;
+padding: 10px 12px;
+border-left: 3px solid rgba(64, 255, 204, .55);
+background: rgba(255, 255, 255, .04);
+border-radius: 10px;
+color: rgba(220, 235, 255, .88);
+}
+
+/* Inline code */
+.editorHost .ProseMirror code {
+font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace !important;
+font-size: 14px;
+padding: 2px 6px;
+border-radius: 8px;
+background: rgba(255, 255, 255, .06);
+border: 1px solid rgba(255, 255, 255, .08);
+color: rgba(255, 255, 255, .92);
+}
+
+/* Code blocks */
+.editorHost .ProseMirror pre {
+margin: 12px 0;
+padding: 12px 14px;
+border-radius: 12px;
+background: rgba(0, 0, 0, .35);
+border: 1px solid rgba(64, 255, 204, .16);
+overflow: auto;
+}
+
+.editorHost .ProseMirror pre code {
+background: transparent;
+border: none;
+padding: 0;
+}
+
+/* Lists */
+.editorHost .ProseMirror ul,
+.editorHost .ProseMirror ol {
+padding-left: 22px;
+margin: 10px 0;
+}
+
+.editorHost .ProseMirror li {
+margin: 4px 0;
+}
+
+/* Horizontal rule */
+.editorHost .ProseMirror hr {
+border: none;
+height: 1px;
+background: linear-gradient(to right, transparent, rgba(64, 255, 204, .35), transparent);
+margin: 14px 0;
+}
+
+/* Images */
+.editorHost .ProseMirror img {
+max-width: 100%;
+height: auto;
+border-radius: 12px;
+border: 1px solid rgba(255, 255, 255, .10);
+box-shadow: 0 10px 24px rgba(0, 0, 0, .35);
+}
+
+/* Tables */
+.editorHost .ProseMirror table {
+border-collapse: separate;
+border-spacing: 0;
+width: 100%;
+margin: 12px 0;
+overflow: hidden;
+border-radius: 12px;
+border: 1px solid rgba(255, 255, 255, .10);
+background: rgba(255, 255, 255, .03);
+}
+
+.editorHost .ProseMirror th,
+.editorHost .ProseMirror td {
+padding: 10px 12px;
+border-bottom: 1px solid rgba(255, 255, 255, .08);
+border-right: 1px solid rgba(255, 255, 255, .06);
+}
+
+.editorHost .ProseMirror th {
+color: rgba(235, 245, 255, .96);
+background: rgba(0, 0, 0, .22);
+font-weight: 700;
+}
+
+.editorHost .ProseMirror tr:last-child td { border-bottom: none; }
+.editorHost .ProseMirror td:last-child,
+.editorHost .ProseMirror th:last-child { border-right: none; }
+
+/* Scrollbar (Chrome/Edge) */
+.editorHost::-webkit-scrollbar { width: 10px; height: 10px; }
+
+.editorHost::-webkit-scrollbar-thumb {
+background: rgba(120, 180, 255, .18);
+border: 1px solid rgba(255, 255, 255, .08);
+border-radius: 999px;
+}
+
+.editorHost::-webkit-scrollbar-thumb:hover {
+background: rgba(120, 180, 255, .28);
+}
+
+.editorHost::-webkit-scrollbar-track {
+background: rgba(0, 0, 0, .15);
+}
+
+/* Toolbar (optional) */
+.editorHost .milkdown-menu,
+.editorHost .crepe-toolbar,
+.editorHost .toolbar {
+background: rgba(8, 12, 18, .92);
+border-bottom: 1px solid rgba(255, 255, 255, .10);
+backdrop-filter: blur(10px);
+}
+
+.editorHost .milkdown-menu button,
+.editorHost .crepe-toolbar button,
+.editorHost .toolbar button {
+color: rgba(235, 245, 255, .85);
+border-radius: 10px;
+}
+
+.editorHost .milkdown-menu button:hover,
+.editorHost .crepe-toolbar button:hover,
+.editorHost .toolbar button:hover {
+background: rgba(64, 255, 204, .10);
+color: rgba(235, 245, 255, .96);
+}
+
+/* =========================
+Image placeholder strip (Upload file / paste link)
+Goal:
+- Dark strip (no white)
+- "Upload file" looks like a small button
+- "or paste link" stays muted
+- Avoid the "overkill" large pill
+========================= */
+
+/* Wrapper reset */
+.editorHost .ProseMirror [data-type="image"],
+.editorHost .ProseMirror [data-node-type="image"],
+.editorHost .ProseMirror [class*="image-block"],
+.editorHost .ProseMirror [class*="imageBlock"] {
+border: 0 !important;
+background: transparent !important;
+padding: 0 !important;
+margin: 10px 0 !important;
+}
+
+/* Strip container */
+.editorHost .ProseMirror [data-type="image"] > div,
+.editorHost .ProseMirror [data-node-type="image"] > div,
+.editorHost .ProseMirror [class*="image-block"] > div,
+.editorHost .ProseMirror [class*="imageBlock"] > div {
+display: flex;
+align-items: center;
+gap: 10px;
+width: 100%;
+background: rgba(8, 12, 18, .55) !important;
+border: 1px solid rgba(255, 255, 255, .08) !important;
+border-radius: 10px !important;
+padding: 10px 12px !important;
+box-shadow: 0 0 0 1px rgba(0, 0, 0, .55) inset !important;
+}
+
+/* Icon */
+.editorHost .ProseMirror [data-type="image"] svg,
+.editorHost .ProseMirror [data-node-type="image"] svg,
+.editorHost .ProseMirror [class*="image-block"] svg,
+.editorHost .ProseMirror [class*="imageBlock"] svg {
+width: 18px;
+height: 18px;
+color: rgba(180, 200, 220, .55) !important;
+fill: currentColor !important;
+opacity: 1 !important;
+}
+
+/* Reset all immediate children to avoid accidental giant pill styling */
+.editorHost .ProseMirror [data-type="image"] > div > *,
+.editorHost .ProseMirror [data-node-type="image"] > div > *,
+.editorHost .ProseMirror [class*="image-block"] > div > *,
+.editorHost .ProseMirror [class*="imageBlock"] > div > * {
+background: transparent !important;
+border: 0 !important;
+box-shadow: none !important;
+padding: 0 !important;
+margin: 0 !important;
+border-radius: 0 !important;
+opacity: 1 !important;
+}
+
+/* If Milkdown uses a real <button>, style it as the small button */
+.editorHost .ProseMirror [data-type="image"] button,
+.editorHost .ProseMirror [data-node-type="image"] button,
+.editorHost .ProseMirror [class*="image-block"] button,
+.editorHost .ProseMirror [class*="imageBlock"] button {
+display: inline-flex;
+align-items: center;
+background: linear-gradient(180deg, rgba(64, 255, 204, .20), rgba(64, 255, 204, .08)) !important;
+border: 1px solid rgba(64, 255, 204, .28) !important;
+color: rgba(235, 245, 255, .90) !important;
+padding: 6px 10px !important;
+border-radius: 10px !important;
+font-weight: 700 !important;
+letter-spacing: .15px;
+cursor: pointer;
+user-select: none;
+}
+
+/* If Milkdown does NOT use a button, style the first text-like item AFTER the icon */
+.editorHost .ProseMirror [data-type="image"] > div > :is(a,label,span,div):nth-child(2):not(:has(input)),
+.editorHost .ProseMirror [data-node-type="image"] > div > :is(a,label,span,div):nth-child(2):not(:has(input)),
+.editorHost .ProseMirror [class*="image-block"] > div > :is(a,label,span,div):nth-child(2):not(:has(input)),
+.editorHost .ProseMirror [class*="imageBlock"] > div > :is(a,label,span,div):nth-child(2):not(:has(input)) {
+display: inline-flex;
+align-items: center;
+background: linear-gradient(180deg, rgba(64, 255, 204, .20), rgba(64, 255, 204, .08)) !important;
+border: 1px solid rgba(64, 255, 204, .28) !important;
+color: rgba(235, 245, 255, .90) !important;
+padding: 6px 10px !important;
+border-radius: 10px !important;
+font-weight: 700 !important;
+letter-spacing: .15px;
+cursor: pointer;
+user-select: none;
+}
+
+/* Hover */
+.editorHost .ProseMirror [data-type="image"] button:hover,
+.editorHost .ProseMirror [data-node-type="image"] button:hover,
+.editorHost .ProseMirror [class*="image-block"] button:hover,
+.editorHost .ProseMirror [class*="imageBlock"] button:hover,
+.editorHost .ProseMirror [data-type="image"] > div > :is(a,label,span,div):nth-child(2):not(:has(input)):hover,
+.editorHost .ProseMirror [data-node-type="image"] > div > :is(a,label,span,div):nth-child(2):not(:has(input)):hover,
+.editorHost .ProseMirror [class*="image-block"] > div > :is(a,label,span,div):nth-child(2):not(:has(input)):hover,
+.editorHost .ProseMirror [class*="imageBlock"] > div > :is(a,label,span,div):nth-child(2):not(:has(input)):hover {
+border-color: rgba(64, 255, 204, .42) !important;
+box-shadow: 0 0 0 3px rgba(64, 255, 204, .10) !important;
+}
+
+/* Hint text */
+.editorHost .ProseMirror [data-type="image"] span,
+.editorHost .ProseMirror [data-node-type="image"] span,
+.editorHost .ProseMirror [class*="image-block"] span,
+.editorHost .ProseMirror [class*="imageBlock"] span {
+color: rgba(180, 200, 220, .50) !important;
+}
+
+/* Inputs (paste link) */
+.editorHost .ProseMirror [data-type="image"] input[type="text"],
+.editorHost .ProseMirror [data-type="image"] input[type="url"],
+.editorHost .ProseMirror [data-node-type="image"] input[type="text"],
+.editorHost .ProseMirror [data-node-type="image"] input[type="url"] {
+background: transparent !important;
+border: 0 !important;
+outline: none !important;
+box-shadow: none !important;
+padding: 0 !important;
+margin: 0 !important;
+color: rgba(235, 245, 255, .72) !important;
+min-width: 180px;
+}
+
+.editorHost .ProseMirror [data-type="image"] input::placeholder,
+.editorHost .ProseMirror [data-node-type="image"] input::placeholder {
+color: rgba(180, 200, 220, .45) !important;
+}
+
+/* Strip hover */
+.editorHost .ProseMirror [data-type="image"] > div:hover,
+.editorHost .ProseMirror [data-node-type="image"] > div:hover,
+.editorHost .ProseMirror [class*="image-block"] > div:hover,
+.editorHost .ProseMirror [class*="imageBlock"] > div:hover {
+border-color: rgba(64, 255, 204, .18) !important;
+background: rgba(8, 12, 18, .62) !important;
+}
+
+/* Selected node: clean neon focus ring */
+.editorHost .ProseMirror [data-type="image"].ProseMirror-selectednode > div,
+.editorHost .ProseMirror [data-node-type="image"].ProseMirror-selectednode > div,
+.editorHost .ProseMirror [class*="image-block"].ProseMirror-selectednode > div,
+.editorHost .ProseMirror [class*="imageBlock"].ProseMirror-selectednode > div {
+border-color: rgba(64, 255, 204, .30) !important;
+box-shadow: 0 0 0 3px rgba(64, 255, 204, .12), 0 0 0 1px rgba(0, 0, 0, .55) inset !important;
+background: rgba(8, 12, 18, .62) !important;
+}
+
+
+/* =========================
+Milkdown image placeholder (exact selectors from your DOM)
+Goal:
+- Dark strip
+- "Upload file" looks like a button or link
+- Better selected state
+========================= */
+
+/* Base image block strip */
+.editorHost .milkdown-image-block{
+margin:10px 0;
+}
+
+.editorHost .milkdown-image-block .image-edit{
+display:flex;
+align-items:center;
+gap:10px;
+width:100%;
+
+background:rgba(8,12,18,.55);
+border:1px solid rgba(255,255,255,.08);
+border-radius:10px;
+
+padding:10px 12px;
+box-shadow:0 0 0 1px rgba(0,0,0,.55) inset;
+}
+
+/* Remove the big grey "selected" wash and replace with BytesCop ring */
+.editorHost .milkdown-image-block.selected .image-edit,
+.editorHost .milkdown-image-block.ProseMirror-selectednode .image-edit{
+background:rgba(8,12,18,.62);
+border-color:rgba(64,255,204,.28);
+box-shadow:0 0 0 3px rgba(64,255,204,.12), 0 0 0 1px rgba(0,0,0,.55) inset;
+}
+
+/* Icon at far left */
+.editorHost .milkdown-image-block .milkdown-icon.image-icon{
+width:18px;
+height:18px;
+color:rgba(180,200,220,.55);
+}
+
+/* Paste link input should be subtle and dark */
+.editorHost .milkdown-image-block .link-importer{
+display:flex;
+align-items:center;
+gap:10px;
+flex:1;
+min-width:0;
+}
+
+.editorHost .milkdown-image-block .link-input-area{
+background:transparent;
+border:0;
+outline:none;
+box-shadow:none;
+color:rgba(235,245,255,.72);
+min-width:0;
+}
+
+/* Placeholder row */
+.editorHost .milkdown-image-block .placeholder{
+display:flex;
+align-items:center;
+gap:10px;
+min-width:0;
+}
+
+/* Make "Upload file" a proper button (label is the clickable control) */
+.editorHost .milkdown-image-block label.uploader{
+display:inline-flex;
+align-items:center;
+gap:8px;
+
+background:linear-gradient(180deg, rgba(64,255,204,.20), rgba(64,255,204,.08));
+border:1px solid rgba(64,255,204,.28);
+color:rgba(235,245,255,.90);
+
+padding:6px 10px;
+border-radius:10px;
+font-weight:700;
+letter-spacing:.15px;
+
+cursor:pointer;
+user-select:none;
+}
+
+/* Hover/focus */
+.editorHost .milkdown-image-block label.uploader:hover{
+border-color:rgba(64,255,204,.42);
+box-shadow:0 0 0 3px rgba(64,255,204,.10);
+}
+
+.editorHost .milkdown-image-block label.uploader:active{
+transform:translateY(1px);
+}
+
+/* The span currently has class "milkdown icon" but it's just text here.
+Ensure it doesn't inherit odd icon styles. */
+.editorHost .milkdown-image-block label.uploader > span.milkdown.icon{
+display:inline;
+background:transparent;
+border:0;
+padding:0;
+margin:0;
+color:inherit;
+}
+
+/* "or paste link" hint */
+.editorHost .milkdown-image-block .placeholder > span.text{
+color:rgba(180,200,220,.50);
+white-space:nowrap;
+}
+
+/* If you prefer LINK style instead of BUTTON, swap to this:
+(keep commented unless you want link-look)
+*/
+/*
+.editorHost .milkdown-image-block label.uploader{
+background:transparent;
+border:0;
+padding:0;
+border-radius:0;
+color:rgba(120,180,255,.92);
+font-weight:700;
+text-decoration:underline;
+text-decoration-style:dashed;
+text-underline-offset:3px;
+}
+.editorHost .milkdown-image-block label.uploader:hover{
+color:rgba(64,255,204,.85);
+text-decoration-color:rgba(64,255,204,.55);
+box-shadow:none;
+}
+*/
+
+
+
+/* =========================
+Fix grey selected background for image block
+========================= */
+
+/* The selected wrapper itself (some themes paint it grey) */
+.editorHost .milkdown-image-block.selected,
+.editorHost .milkdown-image-block.ProseMirror-selectednode{
+background:transparent !important;
+}
+
+/* The actual strip row */
+.editorHost .milkdown-image-block .image-edit{
+background:rgba(8,12,18,.55) !important;
+border:1px solid rgba(255,255,255,.08) !important;
+}
+
+/* Selected state: dark + subtle neon, NOT grey */
+.editorHost .milkdown-image-block.selected .image-edit,
+.editorHost .milkdown-image-block.ProseMirror-selectednode .image-edit{
+background:rgba(8,12,18,.66) !important;
+border-color:rgba(64,255,204,.22) !important;
+box-shadow:0 0 0 2px rgba(64,255,204,.10), 0 0 0 1px rgba(0,0,0,.55) inset !important;
+}
+
+/* Also fix any theme overlay on inner containers */
+.editorHost .milkdown-image-block.selected .link-importer,
+.editorHost .milkdown-image-block.selected .placeholder{
+background:transparent !important;
+}
+
+
+/* =========================
+Kill grey click/selected overlay for image block (incl ::before overlays)
+========================= */
+
+/* Some themes paint the whole selected node grey */
+.editorHost .milkdown-image-block.selected,
+.editorHost .milkdown-image-block.ProseMirror-selectednode{
+background:transparent !important;
+filter:none !important;
+}
+
+/* Some themes add an overlay via pseudo elements */
+.editorHost .milkdown-image-block.selected::before,
+.editorHost .milkdown-image-block.selected::after,
+.editorHost .milkdown-image-block .image-edit::before,
+.editorHost .milkdown-image-block .image-edit::after{
+content:none !important;
+display:none !important;
+background:transparent !important;
+}
+
+/* The strip should stay BytesCop-dark always */
+.editorHost .milkdown-image-block .image-edit{
+background:rgba(8,12,18,.55) !important;
+border:1px solid rgba(255,255,255,.08) !important;
+}
+
+/* Clicked/selected state: subtle neon ring, no grey fill */
+.editorHost .milkdown-image-block.selected .image-edit,
+.editorHost .milkdown-image-block.ProseMirror-selectednode .image-edit{
+background:rgba(8,12,18,.62) !important;
+border-color:rgba(64,255,204,.26) !important;
+box-shadow:0 0 0 2px rgba(64,255,204,.10), 0 0 0 1px rgba(0,0,0,.55) inset !important;
+}
+
+/* Ensure inner containers don't bring their own grey bg */
+.editorHost .milkdown-image-block.selected .link-importer,
+.editorHost .milkdown-image-block.selected .placeholder,
+.editorHost .milkdown-image-block.selected .link-input-area{
+background:transparent !important;
+}
+
+
+
+
+/* =========================
+Fix: "paste link" input text not visible
+========================= */
+
+/* Ensure the paste-link input is readable */
+.editorHost .milkdown-image-block .link-input-area{
+color:rgba(235,245,255,.92) !important;
+caret-color:rgba(64,255,204,.95) !important;
+background:rgba(0,0,0,.22) !important;
+border:1px solid rgba(255,255,255,.10) !important;
+border-radius:10px !important;
+padding:8px 10px !important;
+outline:none !important;
+min-width:240px;
+}
+
+/* Focus ring */
+.editorHost .milkdown-image-block .link-input-area:focus{
+border-color:rgba(64,255,204,.30) !important;
+box-shadow:0 0 0 3px rgba(64,255,204,.12) !important;
+}
+
+/* Placeholder inside the input */
+.editorHost .milkdown-image-block .link-input-area::placeholder{
+color:rgba(180,200,220,.45) !important;
+}
+
+/* Caption input */
+.editorHost .milkdown-image-block .caption-input{
+display:block;
+width:100%;
+background:transparent;
+border:0;
+border-top:1px solid rgba(255,255,255,.08);
+color:rgba(235,245,255,.85);
+caret-color:rgba(64,255,204,.95);
+font-family:inherit;
+font-size:.85em;
+text-align:center;
+padding:.45em .75em;
+outline:none;
+}
+.editorHost .milkdown-image-block .caption-input::placeholder{
+color:rgba(180,200,220,.40);
+}
+
+/* Some themes lower opacity on selected nodes */
+.editorHost .milkdown-image-block.selected,
+.editorHost .milkdown-image-block.selected *{
+opacity:1 !important;
+filter:none !important;
+}
+
+
+
+/* Subtle hover glow for the Upload file button (label.uploader) */
+.editorHost .milkdown-image-block label.uploader{
+transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease, background .18s ease;
+}
+
+.editorHost .milkdown-image-block label.uploader:hover{
+border-color: rgba(64,255,204,.48) !important;
+/* subtle inner + outer glow */
+box-shadow:
+0 0 0 1px rgba(0,0,0,.55) inset,
+0 0 0 3px rgba(64,255,204,.10),
+0 10px 22px rgba(64,255,204,.08) !important;
+background: linear-gradient(180deg, rgba(64,255,204,.24), rgba(64,255,204,.10)) !important;
+}
+
+/* Optional: tiny lift for "premium" feel */
+.editorHost .milkdown-image-block label.uploader:hover{
+transform: translateY(-1px);
+}
+
+
+/* Force brighter "Upload file" text (exact DOM selectors) */
+.editorHost .milkdown-image-block .image-edit .placeholder label.uploader{
+color:rgba(245,250,255,.96) !important;
+opacity:1 !important;
+filter:none !important;
+}
+
+.editorHost .milkdown-image-block .image-edit .placeholder label.uploader > span.milkdown.icon{
+color:rgba(245,250,255,.96) !important;
+opacity:1 !important;
+filter:none !important;
+text-shadow:0 0 10px rgba(64,255,204,.10);
+}
+

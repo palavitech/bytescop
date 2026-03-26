@@ -1,0 +1,58 @@
+<div class="bc-authWrap">
+  <div class="bc-authCard">
+    <div class="bc-authInner">
+
+      <div class="bc-authBrand">
+        <div class="bc-logoMark"></div>
+        <div class="bc-brandText">
+          <strong>BytesCop</strong>
+          <span>security findings vault</span>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <ng-container *ngIf="state === 'loading'">
+        <h1 class="bc-authTitle">Verifying Email</h1>
+        <p class="bc-authSub">Please wait while we verify your email address...</p>
+      </ng-container>
+
+      <!-- Success -->
+      <ng-container *ngIf="state === 'success'">
+        <div class="bc-emailSentIcon bc-emailSentIcon--success">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <h1 class="bc-authTitle">Email Verified</h1>
+        <p class="bc-authSub">{{ message }}</p>
+        <a routerLink="/login" class="bc-authSubmit" style="display: block; text-align: center; text-decoration: none;">
+          Continue to Login
+        </a>
+      </ng-container>
+
+      <!-- Expired -->
+      <ng-container *ngIf="state === 'expired'">
+        <div class="bc-emailSentIcon bc-emailSentIcon--warning">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <h1 class="bc-authTitle">Link Expired</h1>
+        <p class="bc-authSub">{{ message }}</p>
+        <p class="bc-authSub">Log in to request a new verification email.</p>
+        <a routerLink="/login" class="bc-authSubmit" style="display: block; text-align: center; text-decoration: none;">
+          Go to Login
+        </a>
+      </ng-container>
+
+      <!-- Error -->
+      <ng-container *ngIf="state === 'error'">
+        <div class="bc-emailSentIcon bc-emailSentIcon--error">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <h1 class="bc-authTitle">Verification Failed</h1>
+        <p class="bc-authSub">{{ message }}</p>
+        <a routerLink="/login" class="bc-authSubmit" style="display: block; text-align: center; text-decoration: none;">
+          Go to Login
+        </a>
+      </ng-container>
+
+    </div>
+  </div>
+</div>

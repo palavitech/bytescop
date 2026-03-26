@@ -1,0 +1,80 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <div class="bc-pageCard mb-3">
+      <div class="bc-pageCardHead">
+        <div class="bc-pageCardTitle">
+          <div class="bc-h1">Edit User</div>
+          <div class="bc-sub">Update user details and group memberships.</div>
+        </div>
+        <div class="bc-pageCardTools">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+            <i class="bi bi-question-circle"></i>
+            <span>Help</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+      <main>
+
+        <!-- Loading state -->
+        <div class="bc-card" *ngIf="loading$ | async">
+          <div class="bc-cardInner p-4">
+            <div class="bc-sub">Loading user details...</div>
+          </div>
+        </div>
+
+        <!-- Edit form -->
+        <ng-container *ngIf="(loading$ | async) === false && member$ | async as member">
+          <div class="alert alert-danger" *ngIf="serverError$ | async as err">{{ err }}</div>
+
+          <div class="bc-card mb-3">
+            <div class="bc-cardInner p-4">
+              <app-user-form
+                mode="edit"
+                [member]="member"
+                [availableGroups]="(groups$ | async) ?? []"
+                [saving]="(saving$ | async) ?? false"
+                (formSubmit)="onSubmit($event)"
+                (formCancel)="onCancel()">
+              </app-user-form>
+            </div>
+          </div>
+        </ng-container>
+
+      </main>
+
+      <!-- Help aside -->
+      <aside class="bc-helpPane" *ngIf="showHelp">
+        <div class="bc-helpHead">
+          <div>
+            <div class="bc-helpKicker">Help</div>
+            <div class="bc-helpTitle">Edit User</div>
+          </div>
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="bc-helpBody">
+          <div class="bc-sub mb-2">
+            Update user details or assign them to different permission groups.
+          </div>
+          <ul class="bc-helpList">
+            <li><strong>Name:</strong> Update the user's first and last name.</li>
+            <li><strong>Groups:</strong> Toggle group memberships to control permissions.</li>
+            <li><strong>Password:</strong> Users can reset their own password via the "Forgot password" link on the login page.</li>
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+
+  </div>
+</div>

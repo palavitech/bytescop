@@ -1,0 +1,77 @@
+{% extends "shells/branded.html" %}
+{% block title %}Welcome to BytesCop{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Welcome aboard, <strong style="color:#00ffb3;">{{ name }}</strong>.{% else %}Welcome aboard.{% endif %}
+              </p>
+
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                You're now part of <strong style="color:#e6edf3;">{{ tenant_name | default('BytesCop', true) }}</strong> &mdash; and we're glad to have you here.
+              </p>
+
+              <!-- Divider accent -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 28px;">
+                <tr>
+                  <td style="height:1px; background:linear-gradient(to right, #00ffb3, #00b7ff); font-size:0; line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                BytesCop is your team's secure workspace for managing security assessments, tracking findings, and collaborating on remediation &mdash; all in one place.
+              </p>
+
+              <!-- What you can do -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 28px;">
+                <tr>
+                  <td style="padding:20px 24px; background-color:rgba(0,255,179,0.04); border:1px solid rgba(0,255,179,0.12); border-radius:6px;">
+                    <p style="margin:0 0 12px; font-size:14px; font-weight:700; color:#00ffb3; text-transform:uppercase; letter-spacing:1.5px;">
+                      Here's what's waiting for you
+                    </p>
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td style="padding:6px 0; font-size:15px; color:#c9d1d9; line-height:1.6;">
+                          &#9656;&ensp;Manage engagements and define scope
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0; font-size:15px; color:#c9d1d9; line-height:1.6;">
+                          &#9656;&ensp;Document and track security findings
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0; font-size:15px; color:#c9d1d9; line-height:1.6;">
+                          &#9656;&ensp;Attach evidence and collaborate with your team
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0; font-size:15px; color:#c9d1d9; line-height:1.6;">
+                          &#9656;&ensp;Monitor progress across your security posture
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA button -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 28px;">
+                <tr>
+                  <td align="center" style="padding:0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center" style="background-color:#00ffb3; border-radius:6px;">
+                          <a href="{{ login_url }}" target="_blank" style="display:inline-block; padding:14px 40px; font-size:16px; font-weight:700; color:#070a0f; text-decoration:none; letter-spacing:1px; font-family:'Courier New', Courier, monospace;">
+                            GET STARTED
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0; font-size:15px; color:#c9d1d9; line-height:1.7;">
+                We're building BytesCop to make security work simpler and more transparent. If you ever need anything, don't hesitate to reach out &mdash; we'd love to hear from you.
+              </p>
+{% endblock %}
+{% block sub_footer %}You received this email because you joined {{ tenant_name | default('BytesCop', true) }}. For any inquiries, reach us at <a href="mailto:team@bytescop.com" style="color:#00b7ff; text-decoration:none;">team@bytescop.com</a>.{% endblock %}

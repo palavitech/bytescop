@@ -1,0 +1,69 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <div class="bc-pageCard mb-3">
+      <div class="bc-pageCardHead">
+        <div class="bc-pageCardTitle">
+          <div class="bc-h1">Create Client</div>
+          <div class="bc-sub">Add a new client.</div>
+        </div>
+        <div class="bc-pageCardTools">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+            <i class="bi bi-question-circle"></i>
+            <span>Help</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+      <main>
+
+        <div class="alert alert-danger" *ngIf="serverError$ | async as err">{{ err }}</div>
+
+        <div class="bc-card">
+          <div class="bc-cardInner p-4">
+            <app-organization-form
+              mode="create"
+              [saving]="(saving$ | async) ?? false"
+              (formSubmit)="onSubmit($event)"
+              (formCancel)="onCancel()">
+            </app-organization-form>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- Help aside -->
+      <aside class="bc-helpPane" *ngIf="showHelp">
+        <div class="bc-helpHead">
+          <div>
+            <div class="bc-helpKicker">Help</div>
+            <div class="bc-helpTitle">Create Client</div>
+          </div>
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="bc-helpBody">
+          <div class="bc-sub mb-2">
+            Create a new client to group engagements and assets.
+          </div>
+          <ul class="bc-helpList">
+            <li><strong>Name:</strong> The display name for this client.</li>
+            <li><strong>Website:</strong> Optional URL for the client's website.</li>
+            <li><strong>Status:</strong> Active or inactive. Inactive clients are archived.</li>
+            <li><strong>Notes:</strong> Any additional information about this client.</li>
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+
+  </div>
+</div>

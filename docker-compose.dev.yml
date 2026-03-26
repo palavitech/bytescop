@@ -1,0 +1,18 @@
+# Dev override — exposes infra ports, disables services run locally.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  # Disable services we run locally
+  api:
+    profiles: ["disabled"]
+  ui:
+    profiles: ["disabled"]
+  nginx:
+    profiles: ["disabled"]

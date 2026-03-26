@@ -1,0 +1,65 @@
+<div class="bc-helpHead">
+  <span class="bc-helpTitle">Widget Library</span>
+</div>
+<div class="bc-helpBody">
+  <p class="bc-sub" style="font-size: 0.8rem;">
+    Click <strong>Add</strong> to place a widget on your dashboard.
+  </p>
+
+  @if (stats.length > 0) {
+    <div class="bc-catalogSection">
+      <h4 class="bc-catalogHead"><i class="bi bi-hash me-2"></i>Stats</h4>
+      @for (w of stats; track w.id) {
+        <div class="bc-catalogItem" [class.bc-catalogItemActive]="isActive(w.id)">
+          <div class="bc-catalogInfo">
+            <span class="bc-catalogTitle">{{ w.title }}</span>
+            <span class="bc-catalogDesc">{{ w.description }}</span>
+          </div>
+          <button class="btn btn-sm bc-btnPrimary bc-catalogAdd" type="button"
+            [disabled]="isActive(w.id)"
+            (click)="addWidget.emit(w)">
+            {{ isActive(w.id) ? 'Added' : 'Add' }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  @if (charts.length > 0) {
+    <div class="bc-catalogSection">
+      <h4 class="bc-catalogHead"><i class="bi bi-pie-chart me-2"></i>Charts</h4>
+      @for (w of charts; track w.id) {
+        <div class="bc-catalogItem" [class.bc-catalogItemActive]="isActive(w.id)">
+          <div class="bc-catalogInfo">
+            <span class="bc-catalogTitle">{{ w.title }}</span>
+            <span class="bc-catalogDesc">{{ w.description }}</span>
+          </div>
+          <button class="btn btn-sm bc-btnPrimary bc-catalogAdd" type="button"
+            [disabled]="isActive(w.id)"
+            (click)="addWidget.emit(w)">
+            {{ isActive(w.id) ? 'Added' : 'Add' }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  @if (tables.length > 0) {
+    <div class="bc-catalogSection">
+      <h4 class="bc-catalogHead"><i class="bi bi-table me-2"></i>Tables</h4>
+      @for (w of tables; track w.id) {
+        <div class="bc-catalogItem" [class.bc-catalogItemActive]="isActive(w.id)">
+          <div class="bc-catalogInfo">
+            <span class="bc-catalogTitle">{{ w.title }}</span>
+            <span class="bc-catalogDesc">{{ w.description }}</span>
+          </div>
+          <button class="btn btn-sm bc-btnPrimary bc-catalogAdd" type="button"
+            [disabled]="isActive(w.id)"
+            (click)="addWidget.emit(w)">
+            {{ isActive(w.id) ? 'Added' : 'Add' }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

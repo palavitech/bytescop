@@ -1,0 +1,168 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+          <div class="bc-pageCard mb-3">
+            <div class="bc-pageCardHead">
+              <div class="bc-pageCardTitle">
+                <div class="bc-h1">Clients</div>
+                <div class="bc-sub">Manage clients for engagements and assets.</div>
+              </div>
+              <div class="bc-pageCardTools">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+                  <i class="bi bi-arrow-left"></i>
+                  <span>Back</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+                  <i class="bi bi-arrow-repeat"></i>
+                  <span>Refresh</span>
+                </button>
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+                  <i class="bi bi-question-circle"></i>
+                  <span>Help</span>
+                </button>
+              </div>
+            </div>
+            <div class="bc-pageCardFoot">
+              <div class="bc-pageCardFootLeft">
+                <div class="bc-badge" *ngIf="vm.state === 'ready'">
+                  <span class="bc-dot"></span>
+                  <span>Total: {{ vm.total }}</span>
+                </div>
+              </div>
+              <div class="bc-pageCardFootRight">
+                <div class="dropdown bc-footDropdown">
+                  <button class="btn btn-outline-light bc-iconBtn dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical"></i>
+                    <span>Actions</span>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <button class="dropdown-item" type="button" (click)="exportCsv(vm.organizations)">
+                        <i class="bi bi-filetype-csv"></i> Export CSV
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+                <button class="btn btn-success bc-btn bc-btnCtaFoot" type="button"
+                  (click)="createOrganization()" *bcHasPermission="'client.create'">
+                  <i class="bi bi-plus-circle"></i>
+                  <span class="ms-2">New Client</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+        <main>
+
+          <!-- Table -->
+          <div class="bc-card">
+            <div class="bc-cardInner p-0">
+              <div class="table-responsive">
+                <table class="table table-dark mb-0 align-middle bc-table">
+                  <thead>
+                    <tr>
+                      <th style="min-width:220px">Name</th>
+                      <th style="min-width:200px">Website</th>
+                      <th style="min-width:100px">Status</th>
+                      <th style="min-width:120px">Created</th>
+                      <th class="text-end" style="min-width:160px">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+
+                    <!-- Loading -->
+                    <tr *ngIf="vm.state === 'init'">
+                      <td colspan="5" class="p-4">
+                        <div class="bc-sub">Fetching clients...</div>
+                      </td>
+                    </tr>
+
+                    <!-- Error -->
+                    <tr *ngIf="vm.state === 'error'">
+                      <td colspan="5" class="p-4">
+                        <div class="alert alert-danger mb-0">Could not load clients.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Empty -->
+                    <tr *ngIf="vm.state === 'ready' && vm.organizations.length === 0">
+                      <td colspan="5" class="p-4">
+                        <div class="bc-sub">No clients found.</div>
+                      </td>
+                    </tr>
+
+                    <!-- Data rows -->
+                    <ng-container *ngIf="vm.state === 'ready'">
+                      <tr *ngFor="let org of vm.organizations">
+                        <td>
+                          <a class="bc-rowLink" [routerLink]="['/organizations', org.id]">
+                            {{ org.name }}
+                          </a>
+                        </td>
+                        <td>
+                          <span *ngIf="org.website" class="bc-sub">{{ org.website }}</span>
+                          <span *ngIf="!org.website" class="bc-sub">—</span>
+                        </td>
+                        <td>
+                          <span class="bc-pillStatus" [class.is-inactive]="org.status === 'inactive'">
+                            <span class="bc-pillDot"></span>
+                            <span>{{ org.status === 'active' ? 'Active' : 'Inactive' }}</span>
+                          </span>
+                        </td>
+                        <td class="bc-sub">{{ org.created_at | bcDate }}</td>
+                        <td class="text-end">
+                          <a class="btn btn-sm btn-outline-light bc-btnSoft bc-tableActionBtn"
+                            [routerLink]="['/engagements']"
+                            [queryParams]="{ client: org.id, status: 'active' }"
+                            title="Engagements">
+                            <i class="bi bi-briefcase"></i>
+                            <span class="ms-1">Engagements</span>
+                          </a>
+                        </td>
+                      </tr>
+                    </ng-container>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- Help aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp">
+          <div class="bc-helpHead">
+            <div>
+              <div class="bc-helpKicker">Help</div>
+              <div class="bc-helpTitle">Clients</div>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="bc-helpBody">
+            <div class="bc-sub mb-2">
+              Clients represent your customers. Engagements and assets are grouped under clients.
+            </div>
+            <ul class="bc-helpList">
+              <li><strong>Create:</strong> Add a new client with name, website, and notes.</li>
+              <li><strong>Status:</strong> Active clients can have new engagements. Inactive ones are archived.</li>
+              <li><strong>Engagements:</strong> Click the Engagements button on a row to view that client's active engagements.</li>
+              <li><strong>Export:</strong> Use the Actions menu to export the list as CSV.</li>
+            </ul>
+          </div>
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>

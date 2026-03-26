@@ -1,0 +1,88 @@
+<div class="bc-mfaCard">
+  <div class="bc-mfaCardInner">
+    <div class="bc-sub mb-3">{{ subtitle }}</div>
+
+    <!-- QR + Manual key -->
+    <div class="bc-mfaSetupWrap" *ngIf="qrCode">
+      <div class="bc-mfaQr">
+        <img [src]="qrCode" alt="TOTP QR Code" class="bc-mfaQrImg">
+      </div>
+      <div class="bc-mfaManualKey">
+        <span class="bc-mfaManualLabel">Manual entry key:</span>
+        <code class="bc-mfaSecret">{{ secret }}</code>
+      </div>
+    </div>
+
+    <!-- Backup codes -->
+    <div class="bc-mfaBackupSection" *ngIf="backupCodes.length > 0">
+      <div class="bc-mfaBackupLabel">Save your backup codes. Each code can only be used once.</div>
+      <div class="bc-mfaBackupGrid">
+        <code *ngFor="let c of backupCodes" class="bc-mfaBackupCode">{{ c }}</code>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-light bc-iconBtn mt-2" (click)="onDownload()">
+        <i class="bi bi-download"></i>
+        <span>Download Codes</span>
+      </button>
+    </div>
+
+    <!-- Display-only mode -->
+    <ng-container *ngIf="displayOnly">
+      <div *ngIf="requireDownload && backupCodes.length > 0 && !codesDownloaded" class="bc-mfaDownloadPrompt mt-2">
+        <i class="bi bi-info-circle"></i>
+        <span>Download your backup codes before closing.</span>
+      </div>
+      <div class="mt-3" *ngIf="!requireDownload || codesDownloaded || backupCodes.length === 0">
+        <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="onCancel()">
+          <i class="bi bi-check-lg"></i>
+          <span>Done</span>
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- Interactive mode -->
+    <ng-container *ngIf="!displayOnly">
+
+      <!-- Code input (hidden until codes downloaded if requireDownload) -->
+      <ng-container *ngIf="showCodeInput">
+        <div class="mb-3">
+          <label class="bc-sub bc-mfaInputLabel" for="mfaSetupCardCode">{{ codeLabel }}</label>
+          <input id="mfaSetupCardCode" type="text"
+                 class="form-control bc-mfaCodeInput"
+                 [(ngModel)]="code"
+                 [maxlength]="codeMaxLength"
+                 placeholder="******"
+                 autocomplete="one-time-code">
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex gap-2">
+          <button class="btn btn-success bc-btn" type="button"
+                  (click)="onConfirm()"
+                  [disabled]="code.length < codeMinLength || loading">
+            <i class="bi bi-check-lg"></i>
+            <span>{{ loading ? confirmLoadingLabel : confirmLabel }}</span>
+          </button>
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="onCancel()">
+            <i class="bi bi-x-lg"></i>
+            <span>Cancel</span>
+          </button>
+        </div>
+      </ng-container>
+
+      <!-- Download prompt (when download required but not yet done) -->
+      <ng-container *ngIf="!showCodeInput">
+        <div class="bc-mfaDownloadPrompt">
+          <i class="bi bi-info-circle"></i>
+          <span>Download your backup codes to continue.</span>
+        </div>
+        <div class="mt-3">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="onCancel()">
+            <i class="bi bi-x-lg"></i>
+            <span>Cancel</span>
+          </button>
+        </div>
+      </ng-container>
+
+    </ng-container>
+  </div>
+</div>

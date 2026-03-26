@@ -1,0 +1,6 @@
+.bc-typeBadge {
+  font-size: 0.78rem;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.5px;
+  color: var(--bc-blue);
+}

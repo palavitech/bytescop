@@ -1,0 +1,70 @@
+{% extends "shells/base.html" %}
+{% block title %}Tenant Data Permanently Deleted{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                The closure of your tenant <strong style="color:#e6edf3;">{{ tenant_name }}</strong> is now complete. All associated data has been permanently deleted from our systems.
+              </p>
+
+              <!-- Completion box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:16px 20px; background-color:rgba(139,148,158,0.06); border:1px solid rgba(139,148,158,0.15); border-radius:6px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td width="50%" style="padding:0 0 12px;">
+                          <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#8b949e; letter-spacing:1px; text-transform:uppercase;">Tenant</p>
+                          <p style="margin:0; font-size:15px; color:#e6edf3;">{{ tenant_name }}</p>
+                        </td>
+                        <td width="50%" style="padding:0 0 12px;">
+                          <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#8b949e; letter-spacing:1px; text-transform:uppercase;">Status</p>
+                          <p style="margin:0; font-size:15px; color:#e6edf3;">Closed</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td width="50%">
+                          <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#8b949e; letter-spacing:1px; text-transform:uppercase;">Closed on</p>
+                          <p style="margin:0; font-size:15px; color:#e6edf3;">{{ closed_date }}</p>
+                        </td>
+                        <td width="50%">
+                          <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#8b949e; letter-spacing:1px; text-transform:uppercase;">Data export</p>
+                          <p style="margin:0; font-size:15px; color:#e6edf3;">{{ data_export_choice }}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 20px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                The following data has been removed:
+              </p>
+              <ul style="margin:0 0 24px; padding-left:20px; font-size:15px; color:#c9d1d9; line-height:2;">
+                <li>All engagements, findings, and evidence</li>
+                <li>All clients and assets</li>
+                <li>All user accounts and group memberships</li>
+                <li>All uploaded files and attachments</li>
+                <li>All tenant settings and audit logs</li>
+              </ul>
+
+              <!-- Legal notice -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:16px 20px; background-color:rgba(139,148,158,0.06); border:1px solid rgba(139,148,158,0.15); border-radius:6px;">
+                    <p style="margin:0; font-size:13px; color:#8b949e; line-height:1.7;">
+                      BytesCop does not retain any of your tenant data after closure. A record of
+                      this closure request, including your acknowledgment and the choices you made
+                      regarding data export, has been retained for compliance purposes only. This
+                      record does not contain any of your tenant data.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                Thank you for using BytesCop. If you wish to use our platform again in the future, you are welcome to create a new account at any time.
+              </p>
+{% endblock %}
+{% block sub_footer %}This is the final communication regarding the closure of your organization on BytesCop. No further emails will be sent.{% endblock %}

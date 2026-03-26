@@ -1,0 +1,16 @@
+[run]
+source = .
+omit =
+    */migrations/*
+    manage.py
+    bytescop/wsgi.py
+    bytescop/asgi.py
+    bytescop/settings/*
+    .venv/*
+
+[report]
+show_missing = True
+skip_covered = False
+
+[html]
+directory = htmlcov

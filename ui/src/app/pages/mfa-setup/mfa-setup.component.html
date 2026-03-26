@@ -1,0 +1,101 @@
+<div class="bc-authWrap">
+  <div class="bc-authCard">
+    <div class="bc-authInner">
+
+      <div class="bc-authBrand">
+        <div class="bc-logoMark"></div>
+        <div class="bc-brandText">
+          <strong>BytesCop</strong>
+          <span>security findings vault</span>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <ng-container *ngIf="step === 'loading'">
+        <h1 class="bc-authTitle">Setting Up MFA</h1>
+        <p class="bc-authSub">Preparing your authenticator enrollment...</p>
+      </ng-container>
+
+      <!-- Enroll: QR + Backup Codes -->
+      <ng-container *ngIf="step === 'enroll'">
+        <h1 class="bc-authTitle">Set Up MFA</h1>
+        <p class="bc-authSub">Multi-factor authentication is required for your account. Scan the QR code with your authenticator app.</p>
+
+        <div class="bc-authError" *ngIf="apiError">{{ apiError }}</div>
+
+        <div class="bc-mfaSetupWrap" *ngIf="qrCode">
+          <!-- QR Code -->
+          <div class="bc-mfaQr">
+            <img [src]="qrCode" alt="TOTP QR Code" class="bc-mfaQrImg">
+          </div>
+
+          <!-- Manual entry key -->
+          <div class="bc-mfaManualKey">
+            <span class="bc-sub" style="color: var(--bc-muted); font-size: 12px;">Manual entry key:</span>
+            <code class="bc-mfaSecret">{{ secret }}</code>
+          </div>
+
+          <!-- Backup codes -->
+          <div class="bc-mfaBackupSection">
+            <div class="bc-sub mb-2" style="color: var(--bc-muted); font-size: 12px;">Save your backup codes. Each code can only be used once.</div>
+            <div class="bc-mfaBackupGrid">
+              <code *ngFor="let c of backupCodes" class="bc-mfaBackupCode">{{ c }}</code>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-light bc-iconBtn mt-2" (click)="downloadBackupCodes()">
+              <i class="bi bi-download"></i>
+              <span>Download Codes</span>
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="bc-authSubmit" (click)="proceedToConfirm()"
+          [disabled]="!backupDownloaded">
+          {{ backupDownloaded ? 'Continue' : 'Download codes to continue' }}
+        </button>
+
+        <button type="button" class="bc-authSubmit mt-2"
+          style="background: transparent; border-color: rgba(255,59,122,.35); color: rgba(255,59,122,.85);"
+          (click)="onLogout()">
+          Log Out
+        </button>
+      </ng-container>
+
+      <!-- Confirm: Enter TOTP code -->
+      <ng-container *ngIf="step === 'confirm'">
+        <h1 class="bc-authTitle">Verify Setup</h1>
+        <p class="bc-authSub">Enter the 6-digit code from your authenticator app to confirm setup.</p>
+
+        <div class="bc-authError" *ngIf="apiError">{{ apiError }}</div>
+
+        <form (ngSubmit)="onConfirm()" autocomplete="off">
+          <div class="bc-authField">
+            <label for="mfaSetupCode">Code <span class="bc-required">*</span></label>
+            <input id="mfaSetupCode" type="text" class="form-control bc-mfaCodeInput"
+              [(ngModel)]="code" name="mfaSetupCode"
+              placeholder="******"
+              maxlength="6"
+              autocomplete="one-time-code"
+              required>
+          </div>
+
+          <button type="submit" class="bc-authSubmit" [disabled]="!canSubmitConfirm">
+            {{ submitting ? 'Confirming...' : 'Confirm & Continue' }}
+          </button>
+        </form>
+
+        <button type="button" class="bc-authSubmit mt-2"
+          style="background: transparent; border-color: rgba(255,59,122,.35); color: rgba(255,59,122,.85);"
+          (click)="onLogout()" [disabled]="submitting">
+          Log Out
+        </button>
+      </ng-container>
+
+      <!-- Done -->
+      <ng-container *ngIf="step === 'done'">
+        <h1 class="bc-authTitle">MFA Enabled</h1>
+        <p class="bc-authSub">Multi-factor authentication has been set up successfully. Redirecting to dashboard...</p>
+      </ng-container>
+
+    </div>
+  </div>
+</div>

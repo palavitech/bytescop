@@ -1,0 +1,40 @@
+{% extends "shells/branded.html" %}
+{% block title %}Promoted to Owner — {{ tenant_name | default('BytesCop', true) }}{% endblock %}
+{% block content %}
+              <p style="margin:0 0 20px; font-size:18px; color:#e6edf3; line-height:1.6;">
+                {% if name %}Hi <strong>{{ name }}</strong>,{% else %}Hi,{% endif %}
+              </p>
+              <p style="margin:0 0 24px; font-size:16px; color:#c9d1d9; line-height:1.7;">
+                You've been promoted to <strong style="color:#00ffb3;">Owner</strong> on <strong style="color:#e6edf3;">{{ tenant_name | default('BytesCop', true) }}</strong>{% if promoted_by %} by <strong style="color:#e6edf3;">{{ promoted_by }}</strong>{% endif %}.
+              </p>
+
+              <!-- What this means box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(0,255,179,0.06); border:1px solid rgba(0,255,179,0.12); border-radius:6px;">
+                    <p style="margin:0 0 8px; font-size:14px; color:#c9d1d9; line-height:1.7;">
+                      <strong style="color:#00ffb3;">As an owner, you have full administrative control including:</strong>
+                    </p>
+                    <ul style="margin:0; padding:0 0 0 20px; font-size:14px; color:#c9d1d9; line-height:2;">
+                      <li>Manage users and invitations</li>
+                      <li>Manage groups and permissions</li>
+                      <li>Approve Statements of Work</li>
+                      <li>Export organization data</li>
+                      <li>Close the organization</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Didn't expect this -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 24px;">
+                <tr>
+                  <td style="padding:14px 20px; background-color:rgba(139,148,158,0.06); border:1px solid rgba(139,148,158,0.12); border-radius:6px;">
+                    <p style="margin:0; font-size:14px; color:#8b949e; line-height:1.7;">
+                      If you believe this was done in error, please contact your organization administrator.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+{% endblock %}
+{% block sub_footer %}You received this email because your role was changed on {{ tenant_name | default('BytesCop', true) }}.{% endblock %}

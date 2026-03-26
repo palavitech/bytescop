@@ -1,0 +1,63 @@
+:host {
+  display: block;
+}
+
+.bc-catalogSection {
+  margin-bottom: 1.25rem;
+}
+
+.bc-catalogHead {
+  font-family: var(--bc-fontHead, 'Orbitron', sans-serif);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bc-catalogItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.bc-catalogItem:last-child {
+  border-bottom: none;
+}
+
+.bc-catalogItemActive {
+  opacity: 0.5;
+}
+
+.bc-catalogInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bc-catalogTitle {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bc-catalogDesc {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.3;
+}
+
+.bc-catalogAdd {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  padding: 2px 10px;
+}

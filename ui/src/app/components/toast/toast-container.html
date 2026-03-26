@@ -1,0 +1,40 @@
+<div class="bc-toastHost" aria-live="polite" aria-atomic="true">
+  <div class="bc-toast"
+    *ngFor="let t of (toasts$ | async); trackBy: trackById"
+    [class.bc-toast--success]="t.kind === 'success'"
+    [class.bc-toast--info]="t.kind === 'info'"
+    [class.bc-toast--warning]="t.kind === 'warning'"
+    [class.bc-toast--error]="t.kind === 'error'"
+    [class.bc-toast--exit]="isExiting(t.id)"
+    role="status">
+
+    <!-- Left accent bar -->
+    <div class="bc-toastAccent" aria-hidden="true"></div>
+
+    <!-- Scanline overlay -->
+    <div class="bc-toastScanlines" aria-hidden="true"></div>
+
+    <div class="bc-toastRow">
+      <div class="bc-toastIcon" aria-hidden="true">
+        <span class="bc-toastIconGlyph">
+          <ng-container *ngIf="t.kind === 'success'">&#x2713;</ng-container>
+          <ng-container *ngIf="t.kind === 'info'">i</ng-container>
+          <ng-container *ngIf="t.kind === 'warning'">&#x26A0;</ng-container>
+          <ng-container *ngIf="t.kind === 'error'">&#x2716;</ng-container>
+        </span>
+      </div>
+      <div class="bc-toastBody">
+        <div class="bc-toastTitle" *ngIf="t.title">{{t.title}}</div>
+        <div class="bc-toastMsg">{{t.message}}</div>
+      </div>
+      <button class="bc-toastClose" type="button" (click)="dismiss(t.id)" *ngIf="t.dismissible" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+
+    <!-- Auto-dismiss progress bar -->
+    <div class="bc-toastProgress" *ngIf="t.durationMs > 0" aria-hidden="true">
+      <div class="bc-toastProgressBar" [style.animation-duration.ms]="t.durationMs"></div>
+    </div>
+  </div>
+</div>

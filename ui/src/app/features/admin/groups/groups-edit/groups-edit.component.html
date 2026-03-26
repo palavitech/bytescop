@@ -1,0 +1,144 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <div class="bc-pageCard mb-3">
+      <div class="bc-pageCardHead">
+        <div class="bc-pageCardTitle">
+          <div class="bc-h1">Edit Group</div>
+          <div class="bc-sub">Update group permissions and manage members.</div>
+        </div>
+        <div class="bc-pageCardTools">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+            <i class="bi bi-question-circle"></i>
+            <span>Help</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+
+      <main>
+
+        <!-- Loading state -->
+        <div class="bc-card" *ngIf="loading$ | async">
+          <div class="bc-cardInner p-4">
+            <div class="bc-sub">Loading group details...</div>
+          </div>
+        </div>
+
+        <ng-container *ngIf="(loading$ | async) === false && group$ | async as group">
+
+          <div class="alert alert-info" *ngIf="group.is_default">
+            <i class="bi bi-info-circle me-1"></i>
+            Default groups cannot be modified. You can still manage members below.
+          </div>
+
+          <div class="alert alert-danger" *ngIf="serverError$ | async as err">{{ err }}</div>
+
+          <!-- Group form -->
+          <div class="bc-card mb-3">
+            <div class="bc-cardInner p-4">
+              <app-group-form
+                mode="edit"
+                [group]="group"
+                [allPermissions]="(allPermissions$ | async) ?? []"
+                [saving]="(saving$ | async) ?? false"
+                [disabled]="group.is_default"
+                (formSubmit)="onSubmit($event)"
+                (formCancel)="onCancel()">
+              </app-group-form>
+            </div>
+          </div>
+
+          <!-- Members section -->
+          <div class="bc-card">
+            <div class="bc-cardInner p-4">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h3 class="bc-h3 mb-0">Members <span class="bc-sub ms-1">({{ (members$ | async)?.length ?? 0 }})</span></h3>
+              </div>
+
+              <!-- Add member -->
+              <div class="d-flex gap-2 mb-3" *bcHasPermission="'group.update'">
+                <select class="form-select bc-input" [(ngModel)]="selectedMemberId" style="max-width:320px">
+                  <option value="">Select a user to add...</option>
+                  <option *ngFor="let m of availableMembers" [value]="m.id">
+                    {{ m.user.first_name }} {{ m.user.last_name }} ({{ m.user.email }})
+                  </option>
+                </select>
+                <button class="btn btn-outline-light bc-btnSoft" (click)="addMember()" [disabled]="!selectedMemberId">
+                  <i class="bi bi-plus"></i> Add
+                </button>
+              </div>
+
+              <!-- Members table -->
+              <div class="table-responsive" *ngIf="(members$ | async) as membersList">
+                <table class="table table-dark mb-0 align-middle bc-table" *ngIf="membersList.length > 0">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let m of membersList">
+                      <td>{{ m.user.first_name }} {{ m.user.last_name }}</td>
+                      <td>{{ m.user.email }}</td>
+                      <td class="text-capitalize">{{ m.role }}</td>
+                      <td class="text-end">
+                        <button class="btn btn-sm btn-outline-danger bc-btnSoft"
+                          *bcHasPermission="'group.update'"
+                          (click)="removeMember(m)"
+                          title="Remove from group">
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="bc-sub py-3" *ngIf="membersList.length === 0">
+                  No members assigned to this group yet.
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </ng-container>
+
+      </main>
+
+      <!-- Help aside -->
+      <aside class="bc-helpPane" *ngIf="showHelp">
+        <div class="bc-helpHead">
+          <div>
+            <div class="bc-helpKicker">Help</div>
+            <div class="bc-helpTitle">Edit Group</div>
+          </div>
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="bc-helpBody">
+          <div class="bc-sub mb-2">
+            Configure which permissions this group grants and manage its members.
+          </div>
+          <ul class="bc-helpList">
+            <li><strong>Permissions:</strong> Check the boxes to grant specific actions per resource.</li>
+            <li><strong>Toggle All:</strong> Click a resource name to select/deselect all its permissions.</li>
+            <li><strong>Members:</strong> Add or remove users from this group below the form.</li>
+            <li><strong>Default groups:</strong> Cannot be renamed or have permissions changed, but members can be managed.</li>
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+
+  </div>
+</div>

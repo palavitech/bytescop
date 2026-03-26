@@ -1,0 +1,242 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Header card -->
+      <div class="bc-pageCard mb-3">
+        <div class="bc-pageCardHead">
+          <div class="bc-pageCardTitle">
+            <div class="bc-h1">Findings</div>
+            <div class="bc-sub">Track vulnerabilities with consistent severity, status, and traceability to assets.</div>
+
+            <ng-container *ngIf="vm.state === 'ready' && vm.engagement as e">
+              <div class="bc-metaBlock mt-3">
+                <div class="bc-metaRow">
+                  <span class="bc-metaLabel">Client</span>
+                  <span class="bc-metaValue">
+                    <a *ngIf="e.client_id" class="bc-link"
+                      [routerLink]="['/organizations', e.client_id]">{{ e.client_name || '—' }}</a>
+                    <span *ngIf="!e.client_id">{{ e.client_name || '—' }}</span>
+                  </span>
+                </div>
+
+                <div class="bc-metaRow">
+                  <span class="bc-metaLabel">Engagement</span>
+                  <span class="bc-metaValue">
+                    <a class="bc-link" [routerLink]="['/engagements', e.id]">{{ e.name }}</a>
+                  </span>
+                </div>
+              </div>
+
+              <div class="bc-timeBar mt-3" *ngIf="vm.timeBar as tb">
+                <div class="bc-timeBarTrack">
+                  <div class="bc-timeBarFill"
+                       [style.width.%]="tb.percent"
+                       [style.background]="tb.color">
+                    <span class="bc-timeBarLabel">{{ tb.label }}</span>
+                  </div>
+                  <span class="bc-timeBarLabel bc-timeBarLabelOver" *ngIf="tb.percent < 30">{{ tb.label }}</span>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+
+          <div class="bc-pageCardTools">
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+              <i class="bi bi-arrow-left"></i>
+              <span>Back</span>
+            </button>
+
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleFilters()">
+              <i class="bi bi-funnel"></i>
+              <span>Filter</span>
+            </button>
+
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+              <i class="bi bi-arrow-repeat"></i>
+              <span>Refresh</span>
+            </button>
+
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+              <i class="bi bi-question-circle"></i>
+              <span>Help</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bc-pageCardFoot">
+          <div class="bc-pageCardFootLeft">
+            <div class="bc-badge" *ngIf="vm.state === 'ready'">
+              <span class="bc-dot"></span>
+              <span>Total: {{ vm.total }}</span>
+            </div>
+          </div>
+
+          <div class="bc-pageCardFootRight">
+            <button class="btn btn-success bc-btn bc-btnCtaFoot"
+              type="button"
+              *bcHasPermission="'finding.create'"
+              (click)="goToCreate(vm.engagement)"
+              [disabled]="!vm.engagement">
+              <i class="bi bi-plus-circle"></i>
+              <span class="ms-2">New Finding</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp || showFilters">
+        <main>
+
+          <!-- Table -->
+          <div class="bc-card">
+            <div class="bc-cardInner p-0">
+              <div class="table-responsive">
+                <table class="table table-dark mb-0 align-middle bc-table">
+
+                  <thead>
+                    <tr>
+                      <th style="min-width:260px">Title</th>
+                      <th style="min-width:140px">Asset</th>
+                      <th style="min-width:140px">Severity</th>
+                      <th style="min-width:140px">Status</th>
+                      <th style="min-width:180px">Updated</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+
+                    <tr *ngIf="vm.state === 'init'">
+                      <td colspan="5" class="p-4">
+                        <div class="bc-sub">Fetching findings...</div>
+                      </td>
+                    </tr>
+
+                    <tr *ngIf="vm.state === 'error'">
+                      <td colspan="5" class="p-4">
+                        <div class="alert alert-danger mb-0">Could not load findings.</div>
+                      </td>
+                    </tr>
+
+                    <tr *ngIf="vm.state === 'ready' && vm.items.length === 0">
+                      <td colspan="5" class="p-4">
+                        <div class="bc-sub">No findings yet. Create one and link it to an asset to start building reports.</div>
+                      </td>
+                    </tr>
+
+                    <ng-container *ngIf="vm.state === 'ready' && vm.engagement as e">
+                      <tr *ngFor="let f of vm.items" class="bc-tableRow">
+                        <td>
+                          <a class="bc-rowLink" [routerLink]="['/engagements', e.id, 'findings', f.id]">{{ f.title }}</a>
+                          <span class="bc-draftBadge ms-2" *ngIf="f.is_draft">Draft</span>
+                        </td>
+                        <td>{{ f.asset_name || '—' }}</td>
+                        <td><span class="bc-severityPill bc-severityPill--{{ f.severity }}">{{ prettySeverity(f.severity) }}</span></td>
+                        <td>{{ prettyStatus(f.status) }}</td>
+                        <td>{{ f.updated_at | bcDate }}</td>
+                      </tr>
+                    </ng-container>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- Help / Filters aside -->
+        <aside class="bc-helpPane" *ngIf="showHelp || showFilters">
+
+          <!-- Filters pane -->
+          <ng-container *ngIf="showFilters">
+            <div class="bc-helpHead">
+              <div>
+                <div class="bc-helpKicker">Filters</div>
+                <div class="bc-helpTitle">Findings</div>
+              </div>
+              <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleFilters()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <div class="bc-helpBody">
+              <div class="d-grid gap-3" aria-label="Finding filters">
+
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">Severity</span>
+                  <select class="form-select form-select-sm bc-filterSelect"
+                    [value]="vm.filter.severity"
+                    (change)="onSeverityFilterChange($any($event.target).value)">
+                    <option value="">Any severity</option>
+                    <option value="critical">Critical</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                    <option value="info">Info</option>
+                  </select>
+                </label>
+
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">Status</span>
+                  <select class="form-select form-select-sm bc-filterSelect"
+                    [value]="vm.filter.status"
+                    (change)="onStatusFilterChange($any($event.target).value)">
+                    <option value="">Any status</option>
+                    <option value="open">Open</option>
+                    <option value="triage">Triage</option>
+                    <option value="accepted">Accepted</option>
+                    <option value="fixed">Fixed</option>
+                    <option value="false_positive">False Positive</option>
+                  </select>
+                </label>
+
+                <button class="btn btn-outline-light bc-btnSoft bc-btnSm"
+                  type="button"
+                  (click)="clearAllFilters()"
+                  [disabled]="!vm.filter.severity && !vm.filter.status">
+                  <i class="bi bi-eraser"></i>
+                  <span class="ms-2">Clear</span>
+                </button>
+
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Help pane -->
+          <ng-container *ngIf="showHelp">
+            <div class="bc-helpHead">
+              <div>
+                <div class="bc-helpKicker">Help</div>
+                <div class="bc-helpTitle">Findings</div>
+              </div>
+              <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <div class="bc-helpBody">
+              <div class="bc-sub mb-2">
+                Findings represent issues discovered during testing. Keep severity and status consistent for reporting.
+              </div>
+
+              <ul class="bc-helpList">
+                <li><strong>Timeline:</strong> The progress bar shows the engagement's time remaining based on start and end dates.</li>
+                <li><strong>Draft:</strong> Findings saved as draft are marked with a "Draft" badge. They can be published later from the edit screen.</li>
+                <li><strong>Filters:</strong> Narrow by severity and status using the Filter pane.</li>
+                <li><strong>Assets:</strong> Each finding is linked to an in-scope asset for traceability.</li>
+                <li><strong>Updated:</strong> Track recency for remediation follow-ups.</li>
+                <li><strong>New Finding:</strong> Create a finding linked to an in-scope asset. The SoW must be approved before findings can be created.</li>
+              </ul>
+            </div>
+          </ng-container>
+
+        </aside>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</div>
