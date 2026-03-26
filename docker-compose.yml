@@ -26,7 +26,10 @@ services:
       retries: 5
 
   api:
-    build: ./api
+    build:
+      context: ./api
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
     restart: unless-stopped
     env_file: .env
     environment:
@@ -104,7 +107,10 @@ services:
       - ./logs:/app/logs
 
   ui:
-    build: ./ui
+    build:
+      context: ./ui
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
     restart: "no"
     volumes:
       - ui_dist:/app/ui

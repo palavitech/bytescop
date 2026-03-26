@@ -87,6 +87,12 @@ fi
 # Create host-mounted directories
 mkdir -p ./logs ./data/postgres
 
+# Read version
+APP_VERSION=$(cat VERSION 2>/dev/null || echo "dev")
+export APP_VERSION
+echo "[*] Installing BytesCop v${APP_VERSION}"
+echo
+
 # Build and start
 echo "[*] Building Docker images (this may take a few minutes)..."
 docker compose build
@@ -117,7 +123,7 @@ docker compose exec -T api python manage.py ensure_install_state
 
 echo
 echo "========================================="
-echo "  [+] BytesCop is running!"
+echo "  [+] BytesCop v${APP_VERSION} is running!"
 echo "========================================="
 echo
 echo "  Open https://localhost in your browser."

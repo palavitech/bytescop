@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  test-api:
+    name: API Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: python manage.py test --settings=bytescop.settings.test -v 2
+
+  test-ui:
+    name: UI Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+
+  release:
+    name: Create GitHub Release
+    needs: [test-api, test-ui]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history for changelog generation
+
+      - name: Read VERSION
+        id: version
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tag matches VERSION file
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          FILE_VERSION="${{ steps.version.outputs.version }}"
+          if [ "$TAG_VERSION" != "$FILE_VERSION" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match VERSION file (${FILE_VERSION})"
+            exit 1
+          fi
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Find the previous tag
+          PREV_TAG=$(git tag -l 'v*' --sort=-version:refname | sed -n '2p')
+          if [ -z "$PREV_TAG" ]; then
+            # First release — log everything
+            CHANGES=$(git log --pretty=format:"- %s (%h)" HEAD)
+          else
+            CHANGES=$(git log --pretty=format:"- %s (%h)" "${PREV_TAG}..HEAD")
+          fi
+          # Write to file for the release body
+          {
+            echo "## What's Changed"
+            echo ""
+            echo "$CHANGES"
+            echo ""
+            echo "## Installation"
+            echo ""
+            echo '```bash'
+            echo "git clone https://github.com/${{ github.repository }}.git"
+            echo "cd bytescop"
+            echo "git checkout ${{ github.ref_name }}"
+            echo "./install.sh"
+            echo '```'
+            echo ""
+            echo "## Upgrade from previous version"
+            echo ""
+            echo '```bash'
+            echo "./update.sh ${{ github.ref_name }}"
+            echo '```'
+          } > release_notes.md
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: BytesCop ${{ github.ref_name }}
+          body_path: release_notes.md
+          generate_release_notes: false
+          make_latest: true
