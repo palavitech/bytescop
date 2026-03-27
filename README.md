@@ -79,14 +79,20 @@ Edit `.env` to configure:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `POSTGRES_DB` | `bytescop` | Database name |
+| `POSTGRES_USER` | `bytescop` | Database user |
 | `POSTGRES_PASSWORD` | (generated) | Database password |
 | `DJANGO_SECRET_KEY` | (generated) | Django secret key |
 | `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1` | Comma-separated allowed hostnames |
+| `DJANGO_DEBUG` | `False` | Enable debug mode (never in production) |
 | `BC_PORT` | `80` | Port to expose the application |
+| `BYTESCOP_LOG_LEVEL` | `INFO` | API log level |
+| `DJANGO_LOG_LEVEL` | `WARNING` | Django framework log level |
 | `EMAIL_HOST` | _(optional)_ | SMTP server for email notifications |
 | `EMAIL_PORT` | `587` | SMTP port |
 | `EMAIL_HOST_USER` | _(optional)_ | SMTP username |
 | `EMAIL_HOST_PASSWORD` | _(optional)_ | SMTP password |
+| `EMAIL_USE_TLS` | `True` | Use TLS for SMTP |
 | `DEFAULT_FROM_EMAIL` | _(optional)_ | Sender address for emails |
 | `BC_LICENSE_KEY` | _(optional)_ | Enterprise license key |
 
@@ -131,7 +137,7 @@ HTTP (port 80) automatically redirects to HTTPS (port 443).
 | Users per workspace | 3 |
 | Clients | 5 |
 | Assets | 10 |
-| Engagements | 5 |
+| Engagements | 3 |
 | Findings per engagement | 20 |
 | Images per finding | 5 |
 
@@ -285,7 +291,7 @@ All settings inherit from `base.py`. Dev and production are **independent** — 
 | `base.py` | _(none)_ | — | Shared config (all environments) |
 | `dev.py` | PostgreSQL (localhost) | Docker workers | Local development (`manage.py runserver`) |
 | `test.py` | SQLite in-memory | Fake (no Redis) | Unit tests — no Docker needed |
-| `e2e.py` | PostgreSQL (localhost) | Docker workers | End-to-end tests — full stack |
+| `e2e.py` | PostgreSQL (localhost) | Docker workers | End-to-end tests — inherits from `dev.py` |
 | `production.py` | PostgreSQL (Docker) | Docker workers | On-prem deployment |
 
 **`dev.py`** relaxes HTTPS cookie requirements (`Secure=False`, `SameSite=Lax`) and adds CORS origins for the Angular dev server. It does **not** change middleware, auth flow, or any business logic.
