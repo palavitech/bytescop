@@ -4,6 +4,14 @@ All notable changes to BytesCop will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-03-27
+
+### Changed
+- CI: also run on push to main (8265037)
+- CI: only run on pull requests, not on every push (9eda2a8)
+- CI: only run on development push and PRs, not main push (314260d)
+- Docs: update README environment variables table and community limits
+
 ## [1.0.1] - 2026-03-26
 
 ### Fixed
