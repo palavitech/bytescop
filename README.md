@@ -1,6 +1,8 @@
 # BytesCop
 
+
 ![BytesCop](bytescop.png)
+[Illustrative image only. Features shown are conceptual and may not reflect the current product.]
 
 **Security findings management platform** — consolidate pen tests, vulnerability scans, and manual assessments into a single source of truth.
 
