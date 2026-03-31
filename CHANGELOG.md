@@ -4,6 +4,29 @@ All notable changes to BytesCop will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-03-31
+
+### Added
+- Engagement type selection screen before wizard (b25d099)
+- Engagement type shown in wizard header footer (29fa8a7)
+- Malware sample upload in engagement wizard with drag-over highlight (d0a7bd3, 30aff64)
+- Separate BC_MAX_SAMPLE_BYTES setting for malware uploads (2f84980)
+- Analysis type field (static/dynamic) on malware findings (b8f238d)
+- Composed findings list tables and finding forms per engagement type (e220b54, 60006bf)
+- Automated static analysis for malware samples (26d9e65)
+- Executable finding placeholders — per-finding Execute button replaces batch analysis (4421b93)
+- Initialize Analysis button to seed analysis checks idempotently (4421b93)
+- Per-row delete with inline Yes/No confirmation on malware findings table (7c6b315)
+- Engagement-type-specific report titles for Open/Closed reports (cfca8b3)
+
+### Changed
+- Production config updated for 200 MB malware sample uploads (0512944)
+- Static analysis runs in background thread for real-time progress (2ead752)
+- CI: remove push-to-main trigger, rely on release workflow for tag-based testing (5a9c8a6)
+
+### Fixed
+- KeyError when JobService returns 'job_id' not 'id' (c394ba4, bd40c40, 5aeaaa6)
+
 ## [1.0.2] - 2026-03-27
 
 ### Changed
