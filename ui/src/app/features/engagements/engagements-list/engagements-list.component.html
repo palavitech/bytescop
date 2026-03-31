@@ -102,6 +102,7 @@
                   <thead>
                     <tr>
                       <th style="min-width:220px">Name</th>
+                      <th style="min-width:160px">Type</th>
                       <th style="min-width:180px">Client</th>
                       <th style="min-width:120px">Status</th>
                       <th style="min-width:140px" class="text-center">Summary</th>
@@ -114,21 +115,21 @@
 
                     <!-- Loading -->
                     <tr *ngIf="vm.state === 'init'">
-                      <td colspan="7" class="p-4">
+                      <td colspan="8" class="p-4">
                         <div class="bc-sub">Fetching engagements...</div>
                       </td>
                     </tr>
 
                     <!-- Error -->
                     <tr *ngIf="vm.state === 'error'">
-                      <td colspan="7" class="p-4">
+                      <td colspan="8" class="p-4">
                         <div class="alert alert-danger mb-0">Could not load engagements.</div>
                       </td>
                     </tr>
 
                     <!-- Empty -->
                     <tr *ngIf="vm.state === 'ready' && vm.engagements.length === 0">
-                      <td colspan="7" class="p-4">
+                      <td colspan="8" class="p-4">
                         <div class="bc-sub">No engagements yet. Create your first engagement to begin tracking work.</div>
                       </td>
                     </tr>
@@ -141,6 +142,7 @@
                             {{ eng.name }}
                           </a>
                         </td>
+                        <td class="bc-sub">{{ prettyType(eng.engagement_type) }}</td>
                         <td>
                           <span *ngIf="eng.client_name" class="bc-sub">{{ eng.client_name }}</span>
                           <span *ngIf="!eng.client_name" class="bc-sub">—</span>

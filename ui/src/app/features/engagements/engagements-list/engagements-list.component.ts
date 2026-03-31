@@ -4,7 +4,7 @@ import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, combineLatest, catchError, map, of, switchMap } from 'rxjs';
 import { EngagementsService } from '../services/engagements.service';
-import { Engagement, EngagementStatus, ENGAGEMENT_STATUS_LABELS } from '../models/engagement.model';
+import { Engagement, EngagementStatus, EngagementType, ENGAGEMENT_STATUS_LABELS, ENGAGEMENT_TYPE_LABELS } from '../models/engagement.model';
 import { OrganizationsService } from '../../organizations/services/organizations.service';
 import { OrganizationRef } from '../../organizations/models/organization.model';
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
@@ -168,6 +168,10 @@ export class EngagementsListComponent implements OnInit {
 
   prettyStatus(status: string): string {
     return ENGAGEMENT_STATUS_LABELS[status as EngagementStatus] ?? status;
+  }
+
+  prettyType(type: string): string {
+    return ENGAGEMENT_TYPE_LABELS[type as EngagementType] ?? type;
   }
 
   statusClass(status: string): string {

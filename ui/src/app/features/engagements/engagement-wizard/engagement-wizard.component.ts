@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -10,7 +10,7 @@ import { AssetsService } from '../../assets/services/assets.service';
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { OrganizationRef, Organization } from '../../organizations/models/organization.model';
 import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS, AssetType, AssetEnvironment, AssetCriticality } from '../../assets/models/asset.model';
-import { Engagement, Sow } from '../models/engagement.model';
+import { Engagement, Sow, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
 
 export type WizardStep = 'org' | 'assets' | 'details' | 'sow' | 'review';
 
@@ -37,6 +37,7 @@ export class EngagementWizardComponent {
   private readonly assetService = inject(AssetsService);
   private readonly notify = inject(NotificationService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly location = inject(Location);
   private readonly fb = inject(FormBuilder);
 
@@ -81,10 +82,19 @@ export class EngagementWizardComponent {
   readonly createdEngagement = signal<Engagement | null>(null);
   readonly createdSow = signal<Sow | null>(null);
 
+  // -- Engagement type --
+  readonly engagementType = signal<EngagementType>('general');
+  readonly engagementTypeLabel = computed(() => ENGAGEMENT_TYPE_LABELS[this.engagementType()]);
+  readonly engagementTypeIcon = computed(() => {
+    const meta = ENGAGEMENT_TYPE_META.find(m => m.key === this.engagementType());
+    return meta?.icon ?? 'bi-clipboard-check';
+  });
+
   // -- Help --
   showHelp = false;
 
   constructor() {
+    this.initEngagementType();
     this.initOrgForm();
     this.initAssetForm();
     this.initEngForm();
@@ -92,6 +102,16 @@ export class EngagementWizardComponent {
   }
 
   // ── Initialization ─────────────────────────────────────────────────
+
+  private initEngagementType(): void {
+    const typeParam = this.route.snapshot.queryParamMap.get('type');
+    const validTypes = ENGAGEMENT_TYPE_META.map(m => m.key) as string[];
+    if (typeParam && validTypes.includes(typeParam)) {
+      this.engagementType.set(typeParam as EngagementType);
+    } else {
+      this.router.navigate(['/engagements/create']);
+    }
+  }
 
   private initOrgForm(): void {
     this.orgForm = this.fb.group({
@@ -334,6 +354,7 @@ export class EngagementWizardComponent {
     const payload = {
       ...formVal,
       client_id: this.selectedOrgId(),
+      engagement_type: this.engagementType(),
       status: 'planned',
     };
 

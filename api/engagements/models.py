@@ -4,6 +4,20 @@ from django.db import models
 from core.models import TimeStampedModel
 
 
+class EngagementType(models.TextChoices):
+    WEB_APP_PENTEST = 'web_app_pentest', 'Web App Pen Testing'
+    EXTERNAL_PENTEST = 'external_pentest', 'External Pen Testing'
+    MOBILE_PENTEST = 'mobile_pentest', 'Mobile Pen Testing'
+    INTERNAL_PENTEST = 'internal_pentest', 'Internal Pen Testing'
+    WIFI = 'wifi', 'WiFi Assessment'
+    MALWARE_ANALYSIS = 'malware_analysis', 'Malware Analysis'
+    DIGITAL_FORENSICS = 'digital_forensics', 'Digital Forensics'
+    ACTIVE_DIRECTORY = 'active_directory', 'Active Directory'
+    LINUX_AUDIT = 'linux_audit', 'Linux Server Audit'
+    WINDOWS_AUDIT = 'windows_audit', 'Windows Audit'
+    GENERAL = 'general', 'General / Other'
+
+
 class EngagementStatus(models.TextChoices):
     PLANNED = 'planned', 'Planned'
     ACTIVE = 'active', 'Active'
@@ -23,6 +37,11 @@ class Engagement(TimeStampedModel):
         related_name='engagements',
     )
     name = models.CharField(max_length=200)
+    engagement_type = models.CharField(
+        max_length=30,
+        choices=EngagementType.choices,
+        default=EngagementType.GENERAL,
+    )
     client = models.ForeignKey(
         'clients.Client',
         on_delete=models.SET_NULL,

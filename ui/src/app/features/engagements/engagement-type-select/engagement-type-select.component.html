@@ -1,0 +1,39 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <!-- Header -->
+    <div class="bc-pageCard mb-3">
+      <div class="bc-pageCardHead">
+        <div class="bc-pageCardTitle">
+          <div class="bc-h1">New Engagement</div>
+          <div class="bc-sub">Select the type of security engagement you want to create.</div>
+        </div>
+        <div class="bc-pageCardTools">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Type Cards Grid -->
+    <div class="et-grid">
+      @for (t of types; track t.key) {
+        <div class="et-card" (click)="selectType(t)">
+          <div class="et-cardIcon">
+            <i class="bi {{ t.icon }}"></i>
+          </div>
+          <h3 class="et-cardTitle">{{ t.label }}</h3>
+          <p class="et-cardDesc">{{ t.description }}</p>
+          <div class="et-cardFooter">
+            <span class="et-select">
+              Select <i class="bi bi-arrow-right"></i>
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+
+  </div>
+</div>

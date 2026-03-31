@@ -1,0 +1,94 @@
+:host {
+  display: block;
+}
+
+/* ─── Grid ─── */
+
+.et-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+/* ─── Card ─── */
+
+.et-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bc-panel, #0b1220);
+  border: 1px solid var(--bc-border, rgba(0, 255, 179, .22));
+  border-radius: var(--bc-radius, 14px);
+  padding: 28px 24px 20px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+}
+
+.et-card:hover {
+  border-color: var(--bc-accent, #00ffb3);
+  box-shadow: 0 0 24px rgba(0, 255, 179, .12);
+  transform: translateY(-3px);
+}
+
+/* ─── Icon ─── */
+
+.et-cardIcon {
+  font-size: 2rem;
+  color: var(--bc-accent2, #00b7ff);
+  margin-bottom: 16px;
+  transition: color 0.25s;
+}
+
+.et-card:hover .et-cardIcon {
+  color: var(--bc-accent, #00ffb3);
+}
+
+/* ─── Title ─── */
+
+.et-cardTitle {
+  font-family: 'Orbitron', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bc-text, #e2eafc);
+  margin: 0 0 10px;
+  line-height: 1.4;
+  letter-spacing: 0.3px;
+}
+
+.et-card:hover .et-cardTitle {
+  color: var(--bc-accent, #00ffb3);
+}
+
+/* ─── Description ─── */
+
+.et-cardDesc {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--bc-muted, #8ea0d7);
+  margin: 0;
+  flex: 1;
+}
+
+/* ─── Footer ─── */
+
+.et-cardFooter {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bc-border, rgba(0, 255, 179, .22));
+}
+
+.et-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bc-accent, #00ffb3);
+  letter-spacing: 0.5px;
+  transition: gap 0.2s;
+}
+
+.et-card:hover .et-select {
+  gap: 10px;
+}

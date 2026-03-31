@@ -14,6 +14,10 @@
                 <ng-container *ngIf="vm.state === 'ready' && vm.engagement">
                   <div class="bc-metaBlock mt-3">
                     <div class="bc-metaRow">
+                      <span class="bc-metaLabel">Type</span>
+                      <span class="bc-metaValue">{{ prettyType(vm.engagement.engagement_type) }}</span>
+                    </div>
+                    <div class="bc-metaRow">
                       <span class="bc-metaLabel">Client</span>
                       <span class="bc-metaValue">
                         <a *ngIf="vm.engagement.client_id" class="bc-link"
