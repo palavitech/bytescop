@@ -791,20 +791,11 @@ class EngagementViewSet(AuditedModelViewSet):
         )
         payload = {**job['params'], 'job_id': job_id}
 
-        # Dispatch to Celery (fall back to synchronous if broker unavailable)
-        try:
-            from bytescop.celery import app as celery_app
-            celery_app.send_task(
-                'bytescop.tasks.process_job',
-                args=[payload],
-                queue='jobs',
-            )
-        except Exception:
-            logger.warning('Celery unavailable — running static analysis synchronously')
-            from job_processor.handlers import get_handler
-            handler = get_handler('malware_analysis', 'static_analysis')
-            if handler:
-                handler.process(payload)
+        # Run analysis synchronously (Celery dispatch for production TBD)
+        from job_processor.handlers import get_handler
+        handler = get_handler('malware_analysis', 'static_analysis')
+        if handler:
+            handler.process(payload)
 
         log_audit(
             request=request, action=AuditAction.CREATE,
