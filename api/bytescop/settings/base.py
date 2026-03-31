@@ -237,6 +237,7 @@ MEDIA_URL = os.environ.get('DJANGO_MEDIA_URL', '/media/')
 MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT', str(BASE_DIR / 'media'))
 
 BC_MAX_UPLOAD_BYTES = int(os.environ.get('BC_MAX_UPLOAD_BYTES', str(10 * 1024 * 1024)))
+BC_MAX_SAMPLE_BYTES = int(os.environ.get('BC_MAX_SAMPLE_BYTES', str(200 * 1024 * 1024)))
 
 # Contact-us recipient — where anonymous inquiries are forwarded
 BC_CONTACT_EMAIL = os.environ.get('BC_CONTACT_EMAIL', 'team@bytescop.com')

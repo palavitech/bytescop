@@ -40,7 +40,7 @@ class MalwareSampleUploadService:
         if not file_obj:
             raise serializers.ValidationError({'file': 'Missing file.'})
 
-        max_bytes = getattr(settings, 'BC_MAX_UPLOAD_BYTES', 10 * 1024 * 1024)
+        max_bytes = getattr(settings, 'BC_MAX_SAMPLE_BYTES', 200 * 1024 * 1024)
         size = getattr(file_obj, 'size', 0) or 0
         if size and size > max_bytes:
             logger.warning("Sample upload rejected (size exceeded) size=%d max=%d", size, max_bytes)
