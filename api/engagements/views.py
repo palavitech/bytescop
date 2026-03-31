@@ -79,6 +79,7 @@ class EngagementViewSet(AuditedModelViewSet):
         'samples_list': ['engagement.view'],
         'upload_sample': ['engagement.update'],
         'delete_sample': ['engagement.update'],
+        'analyze_static': ['engagement.update'],
         'stakeholders': ['engagement.view'],
         'stakeholders_list': ['engagement.view'],
         'stakeholders_create': ['engagement.update'],
@@ -735,6 +736,72 @@ class EngagementViewSet(AuditedModelViewSet):
         )
         sample.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # ------------------------------------------------------------------
+    # Static Analysis: POST /api/engagements/<pk>/analyze-static/
+    # ------------------------------------------------------------------
+
+    @action(detail=True, methods=['post'], url_path='analyze-static')
+    def analyze_static(self, request, pk=None):
+        self.action = 'analyze_static'
+        self.check_permissions(request)
+        engagement = self.get_object()
+        tenant = request.tenant
+        tenant_id = str(tenant.id)
+
+        sample_id = request.data.get('sample_id')
+        if not sample_id:
+            return Response(
+                {'detail': 'sample_id is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate sample belongs to this engagement + tenant
+        if not MalwareSample.objects.filter(
+            id=sample_id, tenant=tenant, engagement=engagement,
+        ).exists():
+            return Response(
+                {'detail': 'Sample not found for this engagement.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Create background job
+        from jobs.service import JobService
+        svc = JobService()
+        job = svc.create_job(
+            tenant_id=tenant_id,
+            job_type='static_analysis',
+            created_by=request.user,
+            params={
+                'event_area': 'malware_analysis',
+                'event_type': 'static_analysis',
+                'tenant_id': tenant_id,
+                'engagement_id': str(engagement.id),
+                'sample_id': str(sample_id),
+                'user_id': str(request.user.id) if request.user else None,
+            },
+        )
+
+        # Dispatch to Celery
+        from bytescop.celery import app as celery_app
+        celery_app.send_task(
+            'bytescop.tasks.process_job',
+            args=[job['params']],
+            kwargs={'job_id': str(job['id'])},
+            queue='jobs',
+        )
+
+        log_audit(
+            request=request, action=AuditAction.CREATE,
+            resource_type='static_analysis_job', resource_id=job['id'],
+            resource_repr=f'Static analysis on sample {sample_id}',
+        )
+        logger.info(
+            'Static analysis triggered: job=%s sample=%s engagement=%s',
+            job['id'], sample_id, pk,
+        )
+
+        return Response({'job_id': str(job['id'])}, status=status.HTTP_202_ACCEPTED)
 
     # ------------------------------------------------------------------
     # Stakeholders: /api/engagements/<pk>/stakeholders/

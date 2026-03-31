@@ -74,6 +74,14 @@
           </div>
 
           <div class="bc-pageCardFootRight">
+            <button class="btn btn-outline-light bc-btn bc-btnCtaFoot"
+              type="button"
+              *ngIf="vm.engagement?.engagement_type === 'malware_analysis'"
+              (click)="openSamplePicker(vm.engagement)"
+              [disabled]="!vm.engagement || analysisRunning">
+              <i class="bi bi-cpu"></i>
+              <span class="ms-2">Do Static Analysis</span>
+            </button>
             <button class="btn btn-success bc-btn bc-btnCtaFoot"
               type="button"
               *bcHasPermission="'finding.create'"
@@ -217,6 +225,37 @@
       </div>
 
     </ng-container>
+
+    <!-- Sample Picker Modal -->
+    <div class="ap-overlay" *ngIf="showSamplePicker" (click)="cancelSamplePicker()">
+      <div class="ap-pickerCard" (click)="$event.stopPropagation()">
+        <div class="ap-pickerTitle">Select sample to analyze</div>
+        <select class="form-select mb-3" [(ngModel)]="selectedSampleId">
+          <option value="" disabled>Choose a sample...</option>
+          <option *ngFor="let s of samples" [value]="s.id">
+            {{ s.original_filename }} ({{ s.sha256 | slice:0:12 }}...)
+          </option>
+        </select>
+        <div class="d-flex justify-content-end gap-2">
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" (click)="cancelSamplePicker()">Cancel</button>
+          <button class="btn btn-sm btn-success bc-btn" [disabled]="!selectedSampleId"
+            (click)="confirmStaticAnalysis()">
+            <i class="bi bi-cpu me-1"></i> Run Analysis
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analysis Progress Overlay -->
+    <app-analysis-progress *ngIf="analysisRunning"
+      [filename]="analysisFilename"
+      [steps]="analysisSteps"
+      [findingsCreated]="analysisFindingsCreated"
+      [totalSteps]="analysisTotalSteps"
+      [status]="analysisStatus"
+      [errorMessage]="analysisError"
+      (dismissed)="dismissAnalysis()">
+    </app-analysis-progress>
 
   </div>
 </div>

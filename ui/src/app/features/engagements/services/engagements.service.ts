@@ -79,6 +79,12 @@ export class EngagementsService {
     return this.http.delete<void>(`${this.baseUrl}/${engId}/samples/${sampleId}/`);
   }
 
+  // -- Static Analysis --
+
+  triggerStaticAnalysis(engId: string, sampleId: string): Observable<{ job_id: string }> {
+    return this.http.post<{ job_id: string }>(`${this.baseUrl}/${engId}/analyze-static/`, { sample_id: sampleId });
+  }
+
   // -- Stakeholders --
 
   listStakeholders(engId: string): Observable<EngagementStakeholder[]> {

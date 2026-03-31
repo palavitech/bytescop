@@ -1,10 +1,11 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, OnDestroy } from '@angular/core';
 import { Location, CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { BehaviorSubject, combineLatest, of } from 'rxjs';
-import { catchError, map, shareReplay, switchMap } from 'rxjs/operators';
+import { FormsModule } from '@angular/forms';
+import { BehaviorSubject, combineLatest, of, Subscription, interval } from 'rxjs';
+import { catchError, map, shareReplay, switchMap, takeWhile, tap } from 'rxjs/operators';
 import { EngagementsService } from '../services/engagements.service';
-import { Engagement } from '../models/engagement.model';
+import { Engagement, MalwareSample } from '../models/engagement.model';
 import { FindingsService } from '../services/findings.service';
 import { Finding, FINDING_SEVERITY_LABELS, FINDING_STATUS_LABELS, FindingSeverity, FindingStatus } from '../models/finding.model';
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
@@ -12,6 +13,8 @@ import { NotificationService } from '../../../services/core/notify/notification.
 import { BcDatePipe } from '../../../components/pipes/bc-date.pipe';
 import { FindingsTableStandardComponent } from './tables/findings-table-standard.component';
 import { FindingsTableMalwareComponent } from './tables/findings-table-malware.component';
+import { AnalysisProgressComponent } from './analysis-progress/analysis-progress.component';
+import { JobsService, AnalysisStep } from '../../../services/core/jobs/jobs.service';
 
 type VmState = 'init' | 'ready' | 'error';
 
@@ -39,20 +42,35 @@ interface ViewModel {
   selector: 'app-engagement-findings-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink, HasPermissionDirective, BcDatePipe, FindingsTableStandardComponent, FindingsTableMalwareComponent],
+  imports: [CommonModule, FormsModule, RouterLink, HasPermissionDirective, BcDatePipe, FindingsTableStandardComponent, FindingsTableMalwareComponent, AnalysisProgressComponent],
   templateUrl: './engagement-findings-list.component.html',
   styleUrl: './engagement-findings-list.component.css',
 })
-export class EngagementFindingsListComponent {
+export class EngagementFindingsListComponent implements OnDestroy {
   private readonly location = inject(Location);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly engagementsService = inject(EngagementsService);
   private readonly findingsService = inject(FindingsService);
+  private readonly jobsService = inject(JobsService);
   private readonly notify = inject(NotificationService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   showHelp = false;
   showFilters = false;
+
+  // -- Static Analysis --
+  showSamplePicker = false;
+  samples: MalwareSample[] = [];
+  selectedSampleId = '';
+  analysisRunning = false;
+  analysisStatus: 'running' | 'done' | 'failed' = 'running';
+  analysisFilename = '';
+  analysisSteps: AnalysisStep[] = [];
+  analysisFindingsCreated = 0;
+  analysisTotalSteps = 0;
+  analysisError = '';
+  private pollSub?: Subscription;
 
   private readonly refresh$ = new BehaviorSubject<number>(0);
   private readonly filter$ = new BehaviorSubject<FilterState>({ severity: '', status: '' });
@@ -150,6 +168,89 @@ export class EngagementFindingsListComponent {
     }
 
     this.router.navigate(['/engagements', engagement.id, 'findings', 'create']);
+  }
+
+  // -- Static Analysis --
+
+  private analysisEngagement: Engagement | null = null;
+
+  openSamplePicker(engagement: Engagement | null): void {
+    if (!engagement) return;
+    this.analysisEngagement = engagement;
+    this.showSamplePicker = true;
+    this.selectedSampleId = '';
+    this.engagementsService.listSamples(engagement.id).subscribe({
+      next: (samples) => { this.samples = samples; this.cdr.markForCheck(); },
+      error: () => this.notify.error('Failed to load samples.'),
+    });
+  }
+
+  cancelSamplePicker(): void {
+    this.showSamplePicker = false;
+  }
+
+  confirmStaticAnalysis(): void {
+    this.startStaticAnalysis(this.analysisEngagement);
+  }
+
+  startStaticAnalysis(engagement: Engagement | null): void {
+    if (!engagement || !this.selectedSampleId) return;
+    this.showSamplePicker = false;
+
+    const sample = this.samples.find(s => s.id === this.selectedSampleId);
+    this.analysisFilename = sample?.original_filename ?? 'unknown';
+    this.analysisRunning = true;
+    this.analysisStatus = 'running';
+    this.analysisSteps = [];
+    this.analysisFindingsCreated = 0;
+    this.analysisTotalSteps = 0;
+    this.analysisError = '';
+    this.cdr.markForCheck();
+
+    this.engagementsService.triggerStaticAnalysis(engagement.id, this.selectedSampleId).subscribe({
+      next: (res) => this.pollJobStatus(res.job_id),
+      error: (err) => {
+        this.analysisRunning = false;
+        this.cdr.markForCheck();
+        this.notify.error(err?.error?.detail || 'Failed to start analysis.');
+      },
+    });
+  }
+
+  private pollJobStatus(jobId: string): void {
+    this.pollSub?.unsubscribe();
+    this.pollSub = interval(2000).pipe(
+      switchMap(() => this.jobsService.getJob(jobId)),
+      tap(job => {
+        const result = job.result as Record<string, unknown> | null;
+        if (result?.['steps']) {
+          this.analysisSteps = result['steps'] as AnalysisStep[];
+          this.analysisFindingsCreated = (result['findings_created'] as number) ?? 0;
+          this.analysisTotalSteps = (result['total_steps'] as number) ?? 0;
+        }
+
+        if (job.status === 'READY') {
+          this.analysisStatus = 'done';
+          this.cdr.markForCheck();
+        } else if (job.status === 'FAILED') {
+          this.analysisStatus = 'failed';
+          this.analysisError = job.error_message;
+          this.cdr.markForCheck();
+        }
+        this.cdr.markForCheck();
+      }),
+      takeWhile(job => job.status === 'PENDING' || job.status === 'PROCESSING', true),
+    ).subscribe();
+  }
+
+  dismissAnalysis(): void {
+    this.analysisRunning = false;
+    this.pollSub?.unsubscribe();
+    this.refresh();
+  }
+
+  ngOnDestroy(): void {
+    this.pollSub?.unsubscribe();
   }
 
   private buildTimeBar(startDate: string | null, endDate: string | null): TimeBar | null {
