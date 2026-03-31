@@ -464,6 +464,7 @@ export class EngagementFindingsCreateComponent implements AfterViewInit, OnDestr
       .create(engagementId, {
         title: payload.title,
         sample_id: payload.sample_id,
+        analysis_type: payload.analysis_type,
         description_md: payload.description_md,
         is_draft: payload.is_draft,
       })

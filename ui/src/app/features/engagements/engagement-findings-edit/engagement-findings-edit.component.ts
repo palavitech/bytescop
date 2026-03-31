@@ -216,6 +216,7 @@ export class EngagementFindingsEditComponent implements OnInit, AfterViewInit, O
         this.malwareInitialData = {
           title: f.title,
           sample_id: f.sample_id,
+          analysis_type: f.analysis_type || 'static',
           description_md: f.description_md,
         };
         this.cdr.markForCheck();
@@ -503,6 +504,7 @@ export class EngagementFindingsEditComponent implements OnInit, AfterViewInit, O
       .update(engagementId, findingId, {
         title: payload.title,
         sample_id: payload.sample_id,
+        analysis_type: payload.analysis_type,
         description_md: payload.description_md,
         is_draft: payload.is_draft,
       })

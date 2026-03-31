@@ -102,7 +102,15 @@ class Finding(TimeStampedModel):
         on_delete=models.SET_NULL, related_name='findings',
     )
 
+    ANALYSIS_TYPES = [
+        ('static', 'Static Analysis'),
+        ('dynamic', 'Dynamic Analysis'),
+    ]
+
     title = models.CharField(max_length=240)
+    analysis_type = models.CharField(
+        max_length=16, choices=ANALYSIS_TYPES, blank=True, default='',
+    )
     severity = models.CharField(max_length=16, choices=SEVERITIES, default='medium')
     assessment_area = models.CharField(max_length=60, blank=True, default='')
     owasp_category = models.CharField(max_length=20, blank=True, default='')

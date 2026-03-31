@@ -31,6 +31,7 @@ class FindingSerializer(serializers.ModelSerializer):
             'sample_id',
             'sample_name',
             'title',
+            'analysis_type',
             'severity',
             'assessment_area',
             'owasp_category',

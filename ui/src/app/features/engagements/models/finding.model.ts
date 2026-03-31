@@ -1,3 +1,10 @@
+export type AnalysisType = 'static' | 'dynamic' | '';
+
+export const ANALYSIS_TYPE_LABELS: Record<string, string> = {
+  static: 'Static Analysis',
+  dynamic: 'Dynamic Analysis',
+};
+
 export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
 export type FindingStatus =
@@ -15,6 +22,7 @@ export interface Finding {
   sample_id: string | null;
   sample_name: string;
   title: string;
+  analysis_type: string;
   severity: FindingSeverity;
   assessment_area: string;
   owasp_category: string;
