@@ -6,7 +6,7 @@ import { catchError, finalize, map, shareReplay, switchMap, take } from 'rxjs/op
 import { BehaviorSubject, Observable, of, firstValueFrom } from 'rxjs';
 
 import { EngagementsService } from '../services/engagements.service';
-import { Engagement } from '../models/engagement.model';
+import { Engagement, MalwareSample } from '../models/engagement.model';
 import { SowService } from '../services/sow.service';
 import { Asset } from '../../assets/models/asset.model';
 import { FindingsService } from '../services/findings.service';
@@ -25,13 +25,14 @@ import { getMarkdown } from '@milkdown/utils';
 import { environment } from '../../../../environments/environment';
 import { wireMilkdownImages, MilkdownImagesDisposer } from './milkdown-images';
 import { DirtyFormComponent, beforeUnloadGuard } from '../../../services/core/guards/dirty-form.guard';
+import { FindingSectionMalwareComponent, MalwareFindingPayload } from './sections/finding-section-malware.component';
 
 @Component({
   selector: 'app-engagement-findings-create',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, ClassificationCardComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, ClassificationCardComponent, FindingSectionMalwareComponent],
   templateUrl: './engagement-findings-create.component.html',
   styleUrl: './engagement-findings-create.component.css',
 })
@@ -131,6 +132,13 @@ export class EngagementFindingsCreateComponent implements AfterViewInit, OnDestr
   sowLoaded = false;
   canApproveSow = false;
 
+  // -- Engagement type branching --
+  isMalwareFlow = false;
+  readonly samples$: Observable<MalwareSample[]> = this.engagementId$.pipe(
+    switchMap(id => id ? this.engagementsService.listSamples(id) : of([] as MalwareSample[])),
+    shareReplay(1),
+  );
+
   form = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(180)]],
     assessment_area: ['application_security'],
@@ -145,6 +153,13 @@ export class EngagementFindingsCreateComponent implements AfterViewInit, OnDestr
 
   ngAfterViewInit(): void {
     this.viewReady = true;
+
+    // Determine engagement type for section branching
+    this.engagement$.pipe(take(1)).subscribe(eng => {
+      this.isMalwareFlow = eng?.engagement_type === 'malware_analysis';
+      this.cdr.markForCheck();
+    });
+
     this.tryInitDescEditor();
     this.tryInitRecEditor();
 
@@ -436,6 +451,41 @@ export class EngagementFindingsCreateComponent implements AfterViewInit, OnDestr
         this.notify.error(e?.message || 'Editor not ready.');
       }
     });
+  }
+
+  onMalwareFindingSubmitted(payload: MalwareFindingPayload): void {
+    const engagementId = this.route.snapshot.paramMap.get('id');
+    if (!engagementId) return;
+
+    this.busy = true;
+    this.cdr.markForCheck();
+
+    this.findingsService
+      .create(engagementId, {
+        title: payload.title,
+        sample_id: payload.sample_id,
+        analysis_type: payload.analysis_type,
+        description_md: payload.description_md,
+        is_draft: payload.is_draft,
+      })
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.saved = true;
+          this.router.navigate(['/engagements', engagementId, 'findings']);
+        },
+        error: (e) => {
+          this.busy = false;
+          this.cdr.markForCheck();
+          if (e?.status !== 402) {
+            this.notify.error(e?.error?.message || e?.error?.detail || 'Create failed.');
+          }
+        },
+      });
+  }
+
+  onMalwareDirtyChange(dirty: boolean): void {
+    if (dirty) this.form.markAsDirty();
   }
 
   cancel(): void {

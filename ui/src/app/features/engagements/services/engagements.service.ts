@@ -79,6 +79,16 @@ export class EngagementsService {
     return this.http.delete<void>(`${this.baseUrl}/${engId}/samples/${sampleId}/`);
   }
 
+  // -- Analysis Checks --
+
+  initializeAnalysis(engId: string): Observable<{ created: number }> {
+    return this.http.post<{ created: number }>(`${this.baseUrl}/${engId}/initialize-analysis/`, {});
+  }
+
+  executeFinding(engId: string, findingId: string): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.baseUrl}/${engId}/findings/${findingId}/execute/`, {});
+  }
+
   // -- Stakeholders --
 
   listStakeholders(engId: string): Observable<EngagementStakeholder[]> {

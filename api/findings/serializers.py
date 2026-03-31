@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from assets.models import Asset
+from evidence.models import MalwareSample
 from .models import ClassificationEntry, Finding
 
 
@@ -12,6 +13,13 @@ class FindingSerializer(serializers.ModelSerializer):
         required=False,
     )
     asset_name = serializers.SerializerMethodField()
+    sample_id = serializers.PrimaryKeyRelatedField(
+        source='sample',
+        queryset=MalwareSample.objects.none(),
+        allow_null=True,
+        required=False,
+    )
+    sample_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Finding
@@ -20,7 +28,10 @@ class FindingSerializer(serializers.ModelSerializer):
             'engagement_id',
             'asset_id',
             'asset_name',
+            'sample_id',
+            'sample_name',
             'title',
+            'analysis_type',
             'severity',
             'assessment_area',
             'owasp_category',
@@ -29,6 +40,8 @@ class FindingSerializer(serializers.ModelSerializer):
             'description_md',
             'recommendation_md',
             'is_draft',
+            'analysis_check_key',
+            'execution_status',
             'created_at',
             'updated_at',
         ]
@@ -36,6 +49,9 @@ class FindingSerializer(serializers.ModelSerializer):
             'id',
             'engagement_id',
             'asset_name',
+            'sample_name',
+            'analysis_check_key',
+            'execution_status',
             'created_at',
             'updated_at',
         ]
@@ -46,12 +62,28 @@ class FindingSerializer(serializers.ModelSerializer):
         tenant = getattr(request, 'tenant', None) if request else None
         if tenant:
             self.fields['asset_id'].queryset = Asset.objects.filter(tenant=tenant)
+            self.fields['sample_id'].queryset = MalwareSample.objects.filter(tenant=tenant)
 
     def get_asset_name(self, obj):
         try:
             return obj.asset.name if obj.asset_id else ''
         except Exception:
             return ''
+
+    def get_sample_name(self, obj):
+        try:
+            return obj.sample.original_filename if obj.sample_id else ''
+        except Exception:
+            return ''
+
+    def validate(self, data):
+        asset = data.get('asset')
+        sample = data.get('sample')
+        if asset and sample:
+            raise serializers.ValidationError(
+                'A finding cannot reference both an asset and a malware sample.'
+            )
+        return data
 
     def validate_assessment_area(self, value):
         if value and not ClassificationEntry.objects.filter(

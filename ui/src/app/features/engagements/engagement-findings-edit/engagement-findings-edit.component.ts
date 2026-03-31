@@ -19,7 +19,7 @@ import { finalize, map, shareReplay, switchMap, take } from 'rxjs/operators';
 import { BehaviorSubject, Observable, of, firstValueFrom, Subscription } from 'rxjs';
 
 import { EngagementsService } from '../services/engagements.service';
-import { Engagement } from '../models/engagement.model';
+import { Engagement, MalwareSample } from '../models/engagement.model';
 import { SowService } from '../services/sow.service';
 import { Asset } from '../../assets/models/asset.model';
 import { FindingsService } from '../services/findings.service';
@@ -35,13 +35,14 @@ import { getMarkdown } from '@milkdown/utils';
 import { environment } from '../../../../environments/environment';
 import { wireMilkdownImages, MilkdownImagesDisposer } from '../engagement-findings-create/milkdown-images';
 import { DirtyFormComponent, beforeUnloadGuard } from '../../../services/core/guards/dirty-form.guard';
+import { FindingSectionMalwareComponent, MalwareFindingPayload } from '../engagement-findings-create/sections/finding-section-malware.component';
 
 @Component({
   selector: 'app-engagement-findings-edit',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, ClassificationCardComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, ClassificationCardComponent, FindingSectionMalwareComponent],
   templateUrl: './engagement-findings-edit.component.html',
   styleUrl: './engagement-findings-edit.component.css',
 })
@@ -152,6 +153,14 @@ export class EngagementFindingsEditComponent implements OnInit, AfterViewInit, O
     shareReplay(1),
   );
 
+  // -- Engagement type branching --
+  isMalwareFlow = false;
+  malwareInitialData: Partial<MalwareFindingPayload> | null = null;
+  readonly samples$: Observable<MalwareSample[]> = this.engagementId$.pipe(
+    switchMap(id => id ? this.engagementsService.listSamples(id) : of([] as MalwareSample[])),
+    shareReplay(1),
+  );
+
   form = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(180)]],
     assessment_area: [''],
@@ -194,6 +203,26 @@ export class EngagementFindingsEditComponent implements OnInit, AfterViewInit, O
 
   ngAfterViewInit(): void {
     this.viewReady = true;
+
+    // Determine engagement type for section branching
+    this.engagement$.pipe(take(1)).subscribe(eng => {
+      this.isMalwareFlow = eng?.engagement_type === 'malware_analysis';
+      this.cdr.markForCheck();
+    });
+
+    // Populate malware initial data from loaded finding
+    this.finding$.pipe(take(1)).subscribe(f => {
+      if (f && f.sample_id) {
+        this.malwareInitialData = {
+          title: f.title,
+          sample_id: f.sample_id,
+          analysis_type: f.analysis_type || 'static',
+          description_md: f.description_md,
+        };
+        this.cdr.markForCheck();
+      }
+    });
+
     this.tryInitDescEditor();
     this.tryInitRecEditor();
 
@@ -461,6 +490,42 @@ export class EngagementFindingsEditComponent implements OnInit, AfterViewInit, O
         this.notify.error(e?.message || 'Editor not ready.');
       }
     });
+  }
+
+  onMalwareFindingSubmitted(payload: MalwareFindingPayload): void {
+    const engagementId = this.route.snapshot.paramMap.get('id');
+    const findingId = this.route.snapshot.paramMap.get('findingId');
+    if (!engagementId || !findingId) return;
+
+    this.busy = true;
+    this.cdr.markForCheck();
+
+    this.findingsService
+      .update(engagementId, findingId, {
+        title: payload.title,
+        sample_id: payload.sample_id,
+        analysis_type: payload.analysis_type,
+        description_md: payload.description_md,
+        is_draft: payload.is_draft,
+      })
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.saved = true;
+          this.router.navigate(['/engagements', engagementId, 'findings', findingId]);
+        },
+        error: (e) => {
+          this.busy = false;
+          this.cdr.markForCheck();
+          if (e?.status !== 402) {
+            this.notify.error(e?.error?.message || e?.error?.detail || 'Update failed.');
+          }
+        },
+      });
+  }
+
+  onMalwareDirtyChange(dirty: boolean): void {
+    if (dirty) this.form.markAsDirty();
   }
 
   cancel(): void {

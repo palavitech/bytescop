@@ -1,3 +1,35 @@
+/* ===== Sample Picker Modal ===== */
+
+.ap-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 10, 15, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.ap-pickerCard {
+  width: 400px;
+  max-width: 90vw;
+  background: var(--bc-panel, #0b1220);
+  border: 1px solid var(--bc-border, rgba(0, 255, 179, .22));
+  border-radius: var(--bc-radius, 14px);
+  padding: 24px;
+  box-shadow: 0 0 30px rgba(0, 255, 179, .08);
+}
+
+.ap-pickerTitle {
+  font-family: 'Orbitron', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--bc-text, #e2eafc);
+  margin-bottom: 16px;
+}
+
 /* ===== Time-Remaining Bar ===== */
 
 .bc-timeBar {

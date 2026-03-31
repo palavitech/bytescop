@@ -97,8 +97,20 @@ class Finding(TimeStampedModel):
         'assets.Asset', null=True, blank=True,
         on_delete=models.SET_NULL, related_name='findings',
     )
+    sample = models.ForeignKey(
+        'evidence.MalwareSample', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='findings',
+    )
+
+    ANALYSIS_TYPES = [
+        ('static', 'Static Analysis'),
+        ('dynamic', 'Dynamic Analysis'),
+    ]
 
     title = models.CharField(max_length=240)
+    analysis_type = models.CharField(
+        max_length=16, choices=ANALYSIS_TYPES, blank=True, default='',
+    )
     severity = models.CharField(max_length=16, choices=SEVERITIES, default='medium')
     assessment_area = models.CharField(max_length=60, blank=True, default='')
     owasp_category = models.CharField(max_length=20, blank=True, default='')
@@ -107,6 +119,23 @@ class Finding(TimeStampedModel):
     description_md = models.TextField(blank=True, default='')
     recommendation_md = models.TextField(blank=True, default='')
     is_draft = models.BooleanField(default=False)
+
+    analysis_check_key = models.CharField(
+        max_length=60, blank=True, default='',
+        help_text='Links to an analysis check definition. Empty for manual findings.',
+    )
+
+    EXECUTION_STATUSES = [
+        ('', 'N/A'),
+        ('pending', 'Pending'),
+        ('running', 'Running'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+    execution_status = models.CharField(
+        max_length=16, choices=EXECUTION_STATUSES, blank=True, default='',
+        help_text='Execution lifecycle for analysis check findings. Empty for manual findings.',
+    )
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True,
@@ -120,6 +149,7 @@ class Finding(TimeStampedModel):
             models.Index(fields=['tenant', 'status']),
             models.Index(fields=['tenant', '-created_at']),
             models.Index(fields=['tenant', 'assessment_area']),
+            models.Index(fields=['tenant', 'engagement', 'analysis_check_key']),
         ]
 
     def __str__(self) -> str:
