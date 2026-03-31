@@ -349,8 +349,11 @@
 
                 <!-- Drop zone -->
                 <div class="bc-sampleDropZone mb-3"
+                  [class.bc-sampleDropZoneActive]="sampleDragOver()"
                   (drop)="onSampleDrop($event)"
-                  (dragover)="onSampleDragOver($event)">
+                  (dragover)="onSampleDragOver($event)"
+                  (dragenter)="onSampleDragEnter($event)"
+                  (dragleave)="onSampleDragLeave($event)">
                   <i class="bi bi-cloud-arrow-up bc-sampleDropIcon"></i>
                   <p class="bc-sub mb-2">Drag and drop files here, or</p>
                   <label class="btn btn-sm btn-outline-light bc-btnSoft">

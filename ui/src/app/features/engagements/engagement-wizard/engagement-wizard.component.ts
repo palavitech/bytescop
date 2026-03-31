@@ -87,6 +87,7 @@ export class EngagementWizardComponent {
   // -- Step 2b: Malware Samples (replaces assets for malware_analysis) --
   readonly uploadedSamples = signal<MalwareSample[]>([]);
   readonly sampleUploading = signal(false);
+  readonly sampleDragOver = signal(false);
 
   // -- Step 3: Engagement details --
   engForm!: FormGroup;
@@ -367,6 +368,7 @@ export class EngagementWizardComponent {
 
   onSampleDrop(event: DragEvent): void {
     event.preventDefault();
+    this.sampleDragOver.set(false);
     const files = event.dataTransfer?.files;
     if (!files || files.length === 0) return;
     for (let i = 0; i < files.length; i++) {
@@ -376,6 +378,16 @@ export class EngagementWizardComponent {
 
   onSampleDragOver(event: DragEvent): void {
     event.preventDefault();
+  }
+
+  onSampleDragEnter(event: DragEvent): void {
+    event.preventDefault();
+    this.sampleDragOver.set(true);
+  }
+
+  onSampleDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.sampleDragOver.set(false);
   }
 
   private uploadSampleFile(file: File): void {

@@ -13,10 +13,20 @@
   cursor: pointer;
 }
 
-.bc-sampleDropZone:hover,
-.bc-sampleDropZone.dragover {
+.bc-sampleDropZone:hover {
   border-color: var(--bc-accent, #00ffb3);
   background: rgba(0, 255, 179, .05);
+}
+
+.bc-sampleDropZoneActive {
+  border-color: var(--bc-accent, #00ffb3);
+  background: rgba(0, 255, 179, .08);
+  box-shadow: 0 0 24px rgba(0, 255, 179, .15);
+}
+
+.bc-sampleDropZoneActive .bc-sampleDropIcon {
+  color: var(--bc-accent, #00ffb3);
+  opacity: 1;
 }
 
 .bc-sampleDropIcon {
