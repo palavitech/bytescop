@@ -791,11 +791,21 @@ class EngagementViewSet(AuditedModelViewSet):
         )
         payload = {**job['params'], 'job_id': job_id}
 
-        # Run analysis synchronously (Celery dispatch for production TBD)
+        # Run analysis in background thread so the response returns
+        # immediately and the frontend can poll for step-by-step progress.
+        import threading
         from job_processor.handlers import get_handler
-        handler = get_handler('malware_analysis', 'static_analysis')
-        if handler:
-            handler.process(payload)
+
+        def _run_analysis():
+            from django.db import connection
+            try:
+                h = get_handler('malware_analysis', 'static_analysis')
+                if h:
+                    h.process(payload)
+            finally:
+                connection.close()
+
+        threading.Thread(target=_run_analysis, daemon=True).start()
 
         log_audit(
             request=request, action=AuditAction.CREATE,
