@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 
 from audit.models import AuditAction
 from audit.service import log_audit
-from .models import Attachment
-from .signing import verify_attachment_sig
+from .models import Attachment, MalwareSample
+from .signing import verify_attachment_sig, verify_sample_sig
 from .storage.factory import get_attachment_storage
 
 logger = logging.getLogger("bytescop.evidence")
@@ -59,6 +59,52 @@ class AttachmentContentView(APIView):
         logger.debug("Attachment served (stream) id=%s", pk)
         resp = FileResponse(f, content_type=ct)
         resp["Content-Disposition"] = f'inline; filename="{att.filename}"'
+        resp["X-Content-Type-Options"] = "nosniff"
+        resp["Cache-Control"] = "private, no-cache"
+        return resp
+
+
+class MalwareSampleDownloadView(APIView):
+    """Serve malware sample files via HMAC-signed URLs.
+
+    Always returns application/octet-stream with attachment disposition
+    to ensure the file is never rendered or executed by the browser.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        sig = request.query_params.get("sig", "")
+        tid = request.query_params.get("tid", "")
+        if not verify_sample_sig(pk, sig, tenant_id=tid):
+            logger.warning("Sample download denied (bad sig) id=%s", pk)
+            return Response({"detail": "Not found."}, status=404)
+
+        try:
+            qs = MalwareSample.objects.all()
+            if tid:
+                qs = qs.filter(tenant_id=tid)
+            sample = qs.get(pk=pk)
+        except MalwareSample.DoesNotExist:
+            logger.warning("Sample not found id=%s", pk)
+            raise Http404()
+
+        log_audit(
+            request=request, action=AuditAction.READ,
+            resource_type="malware_sample", resource_id=pk,
+            resource_repr=f"Sample: {sample.original_filename}",
+        )
+
+        storage = get_attachment_storage()
+        try:
+            f = storage.open(sample.storage_uri)
+        except FileNotFoundError:
+            logger.warning("Sample file missing id=%s uri=%s", pk, sample.storage_uri)
+            raise Http404()
+
+        # SAFETY: Always serve as octet-stream with attachment disposition.
+        # Never use the original content type. Never allow inline rendering.
+        resp = FileResponse(f, content_type='application/octet-stream')
+        resp["Content-Disposition"] = f'attachment; filename="{sample.original_filename}"'
         resp["X-Content-Type-Options"] = "nosniff"
         resp["Cache-Control"] = "private, no-cache"
         return resp

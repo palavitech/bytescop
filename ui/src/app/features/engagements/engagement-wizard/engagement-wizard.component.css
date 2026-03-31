@@ -1,3 +1,49 @@
+/* ── Sample Upload Drop Zone ──────────────────────────────────────────── */
+
+.bc-sampleDropZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  border: 2px dashed var(--bc-border, rgba(0, 255, 179, .22));
+  border-radius: var(--bc-radius, 14px);
+  background: rgba(0, 255, 179, .02);
+  transition: border-color 0.25s, background 0.25s;
+  cursor: pointer;
+}
+
+.bc-sampleDropZone:hover {
+  border-color: var(--bc-accent, #00ffb3);
+  background: rgba(0, 255, 179, .05);
+}
+
+.bc-sampleDropZoneActive {
+  border-color: var(--bc-accent, #00ffb3);
+  background: rgba(0, 255, 179, .08);
+  box-shadow: 0 0 24px rgba(0, 255, 179, .15);
+}
+
+.bc-sampleDropZoneActive .bc-sampleDropIcon {
+  color: var(--bc-accent, #00ffb3);
+  opacity: 1;
+}
+
+.bc-sampleDropIcon {
+  font-size: 2.5rem;
+  color: var(--bc-accent2, #00b7ff);
+  margin-bottom: 12px;
+  opacity: 0.7;
+}
+
+.bc-sha256 {
+  font-size: 0.75rem;
+  color: var(--bc-muted, #8ea0d7);
+  background: rgba(142, 160, 215, .08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 /* ── Wizard Progress Bar ─────────────────────────────────────────────── */
 
 .bc-wizardProgress {

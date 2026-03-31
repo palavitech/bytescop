@@ -237,6 +237,12 @@ MEDIA_URL = os.environ.get('DJANGO_MEDIA_URL', '/media/')
 MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT', str(BASE_DIR / 'media'))
 
 BC_MAX_UPLOAD_BYTES = int(os.environ.get('BC_MAX_UPLOAD_BYTES', str(10 * 1024 * 1024)))
+BC_MAX_SAMPLE_BYTES = int(os.environ.get('BC_MAX_SAMPLE_BYTES', str(200 * 1024 * 1024)))
+
+# Django streams uploads larger than this to a temp file instead of RAM.
+# Set to match BC_MAX_SAMPLE_BYTES so the full request body is accepted.
+DATA_UPLOAD_MAX_MEMORY_SIZE = BC_MAX_SAMPLE_BYTES
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5 MB — files above this go to disk
 
 # Contact-us recipient — where anonymous inquiries are forwarded
 BC_CONTACT_EMAIL = os.environ.get('BC_CONTACT_EMAIL', 'team@bytescop.com')

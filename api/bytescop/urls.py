@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from api.views_avatar import UserAvatarView
-from evidence.views import AttachmentContentView
+from evidence.views import AttachmentContentView, MalwareSampleDownloadView
 from .views import health_check
 from core.setup_views import setup_status, setup_complete
 from licensing.views import license_status
@@ -27,6 +27,11 @@ urlpatterns = [
         'api/attachments/<uuid:pk>/content/',
         AttachmentContentView.as_view(),
         name='attachment-content',
+    ),
+    path(
+        'api/samples/<uuid:pk>/download/',
+        MalwareSampleDownloadView.as_view(),
+        name='sample-download',
     ),
     path(
         'api/users/<int:user_id>/avatar/',

@@ -79,6 +79,18 @@ export const ENGAGEMENT_STATUS_LABELS: Record<EngagementStatus, string> = {
   completed: 'Completed',
 };
 
+export interface MalwareSample {
+  id: string;
+  original_filename: string;
+  safe_filename: string;
+  sha256: string;
+  content_type: string;
+  size_bytes: number;
+  notes: string;
+  download_url: string;
+  created_at: string;
+}
+
 export type SowStatus = 'draft' | 'approved';
 
 export interface Sow {

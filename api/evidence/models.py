@@ -47,3 +47,39 @@ class Attachment(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.filename or self.sha256 or str(self.id)
+
+
+class MalwareSample(TimeStampedModel):
+    """A malware sample uploaded for analysis.
+
+    Files are stored with neutralized extensions (.sample suffix) and
+    read-only permissions. They must NEVER be executed by the server.
+    """
+
+    tenant = models.ForeignKey(
+        'tenancy.Tenant', on_delete=models.CASCADE, related_name='malware_samples',
+    )
+    engagement = models.ForeignKey(
+        'engagements.Engagement', on_delete=models.CASCADE, related_name='malware_samples',
+    )
+    original_filename = models.CharField(max_length=255)
+    safe_filename = models.CharField(max_length=260)
+    sha256 = models.CharField(max_length=64, blank=True, default='')
+    storage_uri = models.TextField(blank=True, default='')
+    content_type = models.CharField(max_length=120, blank=True, default='')
+    size_bytes = models.BigIntegerField(default=0)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='samples_uploaded',
+    )
+    notes = models.TextField(blank=True, default='')
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['tenant', 'engagement']),
+            models.Index(fields=['tenant', 'sha256']),
+        ]
+
+    def __str__(self) -> str:
+        return self.original_filename or str(self.id)
