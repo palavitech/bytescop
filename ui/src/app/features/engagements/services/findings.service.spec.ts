@@ -18,6 +18,11 @@ const MOCK: Finding = {
   description_md: '',
   recommendation_md: '',
   is_draft: false,
+  sample_id: null,
+  sample_name: '',
+  analysis_type: '',
+  analysis_check_key: '',
+  execution_status: '',
   created_at: '2026-02-01T00:00:00Z',
   updated_at: '2026-02-01T00:00:00Z',
 };
