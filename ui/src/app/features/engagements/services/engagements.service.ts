@@ -79,10 +79,14 @@ export class EngagementsService {
     return this.http.delete<void>(`${this.baseUrl}/${engId}/samples/${sampleId}/`);
   }
 
-  // -- Static Analysis --
+  // -- Analysis Checks --
 
-  triggerStaticAnalysis(engId: string, sampleId: string): Observable<{ job_id: string }> {
-    return this.http.post<{ job_id: string }>(`${this.baseUrl}/${engId}/analyze-static/`, { sample_id: sampleId });
+  initializeAnalysis(engId: string): Observable<{ created: number }> {
+    return this.http.post<{ created: number }>(`${this.baseUrl}/${engId}/initialize-analysis/`, {});
+  }
+
+  executeFinding(engId: string, findingId: string): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.baseUrl}/${engId}/findings/${findingId}/execute/`, {});
   }
 
   // -- Stakeholders --

@@ -40,6 +40,8 @@ class FindingSerializer(serializers.ModelSerializer):
             'description_md',
             'recommendation_md',
             'is_draft',
+            'analysis_check_key',
+            'execution_status',
             'created_at',
             'updated_at',
         ]
@@ -48,6 +50,8 @@ class FindingSerializer(serializers.ModelSerializer):
             'engagement_id',
             'asset_name',
             'sample_name',
+            'analysis_check_key',
+            'execution_status',
             'created_at',
             'updated_at',
         ]

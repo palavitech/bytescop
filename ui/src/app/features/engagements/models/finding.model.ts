@@ -14,6 +14,16 @@ export type FindingStatus =
   | 'fixed'
   | 'false_positive';
 
+export type ExecutionStatus = '' | 'pending' | 'running' | 'completed' | 'failed';
+
+export const EXECUTION_STATUS_LABELS: Record<string, string> = {
+  '': '',
+  pending: 'Pending',
+  running: 'Running',
+  completed: 'Completed',
+  failed: 'Failed',
+};
+
 export interface Finding {
   id: string;
   engagement_id: string;
@@ -31,6 +41,8 @@ export interface Finding {
   description_md: string;
   recommendation_md: string;
   is_draft: boolean;
+  analysis_check_key: string;
+  execution_status: ExecutionStatus;
   created_at: string;
   updated_at: string;
 }

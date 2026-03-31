@@ -120,6 +120,23 @@ class Finding(TimeStampedModel):
     recommendation_md = models.TextField(blank=True, default='')
     is_draft = models.BooleanField(default=False)
 
+    analysis_check_key = models.CharField(
+        max_length=60, blank=True, default='',
+        help_text='Links to an analysis check definition. Empty for manual findings.',
+    )
+
+    EXECUTION_STATUSES = [
+        ('', 'N/A'),
+        ('pending', 'Pending'),
+        ('running', 'Running'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+    execution_status = models.CharField(
+        max_length=16, choices=EXECUTION_STATUSES, blank=True, default='',
+        help_text='Execution lifecycle for analysis check findings. Empty for manual findings.',
+    )
+
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True,
         on_delete=models.SET_NULL, related_name='findings_created',
@@ -132,6 +149,7 @@ class Finding(TimeStampedModel):
             models.Index(fields=['tenant', 'status']),
             models.Index(fields=['tenant', '-created_at']),
             models.Index(fields=['tenant', 'assessment_area']),
+            models.Index(fields=['tenant', 'engagement', 'analysis_check_key']),
         ]
 
     def __str__(self) -> str:

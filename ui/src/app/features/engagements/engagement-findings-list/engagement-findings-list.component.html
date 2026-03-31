@@ -77,10 +77,10 @@
             <button class="btn btn-outline-light bc-btn bc-btnCtaFoot"
               type="button"
               *ngIf="vm.engagement?.engagement_type === 'malware_analysis'"
-              (click)="openSamplePicker(vm.engagement)"
-              [disabled]="!vm.engagement || analysisRunning">
+              (click)="initializeAnalysis(vm.engagement)"
+              [disabled]="!vm.engagement || initializingAnalysis">
               <i class="bi bi-cpu"></i>
-              <span class="ms-2">Do Static Analysis</span>
+              <span class="ms-2">{{ initializingAnalysis ? 'Initializing...' : 'Initialize Analysis' }}</span>
             </button>
             <button class="btn btn-success bc-btn bc-btnCtaFoot"
               type="button"
@@ -119,7 +119,8 @@
                 <app-findings-table-malware
                   *ngIf="e.engagement_type === 'malware_analysis'"
                   [findings]="vm.items"
-                  [engagementId]="e.id">
+                  [engagementId]="e.id"
+                  (execute)="executeFinding($event, e)">
                 </app-findings-table-malware>
 
                 <app-findings-table-standard
@@ -225,37 +226,6 @@
       </div>
 
     </ng-container>
-
-    <!-- Sample Picker Modal -->
-    <div class="ap-overlay" *ngIf="showSamplePicker" (click)="cancelSamplePicker()">
-      <div class="ap-pickerCard" (click)="$event.stopPropagation()">
-        <div class="ap-pickerTitle">Select sample to analyze</div>
-        <select class="form-select mb-3" [(ngModel)]="selectedSampleId">
-          <option value="" disabled>Choose a sample...</option>
-          <option *ngFor="let s of samples" [value]="s.id">
-            {{ s.original_filename }} ({{ s.sha256 | slice:0:12 }}...)
-          </option>
-        </select>
-        <div class="d-flex justify-content-end gap-2">
-          <button class="btn btn-sm btn-outline-light bc-btnSoft" (click)="cancelSamplePicker()">Cancel</button>
-          <button class="btn btn-sm btn-success bc-btn" [disabled]="!selectedSampleId"
-            (click)="confirmStaticAnalysis()">
-            <i class="bi bi-cpu me-1"></i> Run Analysis
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Analysis Progress Overlay -->
-    <app-analysis-progress *ngIf="analysisRunning"
-      [filename]="analysisFilename"
-      [steps]="analysisSteps"
-      [findingsCreated]="analysisFindingsCreated"
-      [totalSteps]="analysisTotalSteps"
-      [status]="analysisStatus"
-      [errorMessage]="analysisError"
-      (dismissed)="dismissAnalysis()">
-    </app-analysis-progress>
 
   </div>
 </div>

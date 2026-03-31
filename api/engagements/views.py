@@ -16,7 +16,6 @@ from subscriptions.guard import SubscriptionGuard, SubscriptionLimitExceeded
 from subscriptions.services import check_image_limit
 from assets.models import Asset
 from assets.serializers import AssetSerializer
-from jobs.models import BackgroundJob
 from evidence.services.attachment_upload import AttachmentUploadService
 from evidence.services.sample_upload import MalwareSampleUploadService
 from evidence.models import Attachment, MalwareSample
@@ -31,6 +30,50 @@ from .models import Engagement, EngagementSetting, EngagementStakeholder, Sow, S
 from .serializers import EngagementSerializer, SowSerializer
 
 logger = logging.getLogger("bytescop.engagements")
+
+
+def seed_analysis_findings(engagement, tenant, user):
+    """Create placeholder findings for each analysis check that doesn't already exist.
+
+    Returns the number of newly created findings.
+    """
+    from findings.analysis_checks import ANALYSIS_CHECKS
+
+    existing_keys = set(
+        Finding.objects.filter(
+            engagement=engagement,
+            tenant=tenant,
+        ).exclude(analysis_check_key='').values_list('analysis_check_key', flat=True)
+    )
+
+    # Pick the first sample if available (user can reassign later).
+    first_sample = MalwareSample.objects.filter(
+        tenant=tenant, engagement=engagement,
+    ).order_by('created_at').first()
+
+    created = 0
+    for check in ANALYSIS_CHECKS:
+        if check['key'] in existing_keys:
+            continue
+        Finding.objects.create(
+            tenant=tenant,
+            engagement=engagement,
+            sample=first_sample,
+            title=check['title'],
+            analysis_type=check['analysis_type'],
+            description_md=check['description_placeholder'],
+            analysis_check_key=check['key'],
+            execution_status='pending',
+            created_by=user,
+        )
+        created += 1
+
+    if created:
+        logger.info(
+            'Seeded %d analysis findings: engagement=%s tenant=%s',
+            created, engagement.pk, tenant.slug,
+        )
+    return created
 
 
 class EngagementViewSet(AuditedModelViewSet):
@@ -80,7 +123,8 @@ class EngagementViewSet(AuditedModelViewSet):
         'samples_list': ['engagement.view'],
         'upload_sample': ['engagement.update'],
         'delete_sample': ['engagement.update'],
-        'analyze_static': ['engagement.update'],
+        'initialize_analysis': ['engagement.update'],
+        'execute_finding': ['engagement.update'],
         'stakeholders': ['engagement.view'],
         'stakeholders_list': ['engagement.view'],
         'stakeholders_create': ['engagement.update'],
@@ -143,8 +187,17 @@ class EngagementViewSet(AuditedModelViewSet):
         logger.info("Engagement created id=%s user=%s tenant=%s", engagement.pk, self.request.user.pk, self.request.tenant.slug)
 
     def perform_update(self, serializer):
+        old_status = serializer.instance.status
         engagement = serializer.save()
         logger.info("Engagement updated id=%s user=%s tenant=%s", engagement.pk, self.request.user.pk, self.request.tenant.slug)
+
+        # Seed analysis placeholder findings when a malware_analysis engagement is activated.
+        if (
+            engagement.engagement_type == 'malware_analysis'
+            and old_status != 'active'
+            and engagement.status == 'active'
+        ):
+            seed_analysis_findings(engagement, self.request.tenant, self.request.user)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -739,85 +792,101 @@ class EngagementViewSet(AuditedModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     # ------------------------------------------------------------------
-    # Static Analysis: POST /api/engagements/<pk>/analyze-static/
+    # Initialize Analysis: POST /api/engagements/<pk>/initialize-analysis/
     # ------------------------------------------------------------------
 
-    @action(detail=True, methods=['post'], url_path='analyze-static')
-    def analyze_static(self, request, pk=None):
-        self.action = 'analyze_static'
+    @action(detail=True, methods=['post'], url_path='initialize-analysis')
+    def initialize_analysis(self, request, pk=None):
+        self.action = 'initialize_analysis'
         self.check_permissions(request)
         engagement = self.get_object()
-        tenant = request.tenant
-        tenant_id = str(tenant.id)
 
-        sample_id = request.data.get('sample_id')
-        if not sample_id:
+        if engagement.engagement_type != 'malware_analysis':
             return Response(
-                {'detail': 'sample_id is required.'},
+                {'detail': 'Only malware_analysis engagements support analysis checks.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Validate sample belongs to this engagement + tenant
-        if not MalwareSample.objects.filter(
-            id=sample_id, tenant=tenant, engagement=engagement,
-        ).exists():
+        created = seed_analysis_findings(engagement, request.tenant, request.user)
+        return Response({'created': created}, status=status.HTTP_200_OK)
+
+    # ------------------------------------------------------------------
+    # Execute Finding: POST /api/engagements/<pk>/findings/<fid>/execute/
+    # ------------------------------------------------------------------
+
+    @action(detail=True, methods=['post'], url_path=r'findings/(?P<finding_id>[^/.]+)/execute')
+    def execute_finding(self, request, pk=None, finding_id=None):
+        self.action = 'execute_finding'
+        self.check_permissions(request)
+        engagement = self.get_object()
+
+        try:
+            finding = Finding.objects.get(
+                id=finding_id,
+                engagement=engagement,
+                tenant=request.tenant,
+            )
+        except Finding.DoesNotExist:
+            return Response({'detail': 'Finding not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not finding.analysis_check_key:
             return Response(
-                {'detail': 'Sample not found for this engagement.'},
-                status=status.HTTP_404_NOT_FOUND,
+                {'detail': 'This finding is not an analysis check.'},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Create background job
-        from jobs.service import JobService
-        svc = JobService()
-        job = svc.create_job(
-            tenant_id=tenant_id,
-            job_type='static_analysis',
-            created_by=request.user,
-            params={
-                'event_area': 'malware_analysis',
-                'event_type': 'static_analysis',
-                'tenant_id': tenant_id,
-                'job_id': '',  # filled below
-                'engagement_id': str(engagement.id),
-                'sample_id': str(sample_id),
-                'user_id': str(request.user.id) if request.user else None,
-            },
-        )
+        if finding.execution_status == 'running':
+            return Response(
+                {'detail': 'Execution already in progress.'},
+                status=status.HTTP_409_CONFLICT,
+            )
 
-        # Inject job_id into params (needed by handler for progress updates)
-        job_id = str(job['job_id'])
-        BackgroundJob.objects.filter(id=job_id).update(
-            params={**job['params'], 'job_id': job_id},
-        )
-        payload = {**job['params'], 'job_id': job_id}
+        from findings.analysis_executors import EXECUTORS
+        executor = EXECUTORS.get(finding.analysis_check_key)
+        if not executor:
+            return Response(
+                {'detail': f'No executor for check: {finding.analysis_check_key}.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        # Run analysis in background thread so the response returns
-        # immediately and the frontend can poll for step-by-step progress.
+        # Need a sample to execute against
+        sample = finding.sample
+        if not sample:
+            return Response(
+                {'detail': 'No sample linked to this finding. Assign a sample first.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Mark running and launch background thread
+        Finding.objects.filter(id=finding.id).update(execution_status='running')
+
         import threading
-        from job_processor.handlers import get_handler
+        from evidence.storage.factory import get_attachment_storage
 
-        def _run_analysis():
+        def _run_executor():
             from django.db import connection
             try:
-                h = get_handler('malware_analysis', 'static_analysis')
-                if h:
-                    h.process(payload)
+                storage = get_attachment_storage()
+                description_md = executor(storage, sample, finding)
+                Finding.objects.filter(id=finding.id).update(
+                    execution_status='completed',
+                    description_md=description_md,
+                )
+            except Exception:
+                logger.exception('Executor failed: check=%s finding=%s', finding.analysis_check_key, finding.id)
+                Finding.objects.filter(id=finding.id).update(execution_status='failed')
             finally:
                 connection.close()
 
-        threading.Thread(target=_run_analysis, daemon=True).start()
+        threading.Thread(target=_run_executor, daemon=True).start()
 
         log_audit(
             request=request, action=AuditAction.CREATE,
-            resource_type='static_analysis_job', resource_id=job_id,
-            resource_repr=f'Static analysis on sample {sample_id}',
-        )
-        logger.info(
-            'Static analysis triggered: job=%s sample=%s engagement=%s',
-            job_id, sample_id, pk,
+            resource_type='analysis_execution', resource_id=str(finding.id),
+            resource_repr=f'Execute {finding.analysis_check_key} on finding {finding.id}',
         )
 
-        return Response({'job_id': job_id}, status=status.HTTP_202_ACCEPTED)
+        return Response({'status': 'started'}, status=status.HTTP_202_ACCEPTED)
 
     # ------------------------------------------------------------------
     # Stakeholders: /api/engagements/<pk>/stakeholders/
