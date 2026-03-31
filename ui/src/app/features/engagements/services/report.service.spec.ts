@@ -21,6 +21,7 @@ const MOCK_ENGAGEMENT: Engagement = {
   start_date: '2026-01-15',
   end_date: '2026-02-15',
   findings_summary: null,
+  engagement_type: 'general',
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
 };
@@ -39,6 +40,11 @@ const MOCK_FINDING_CRITICAL: Finding = {
   description_md: '**Critical** SQL injection found',
   recommendation_md: 'Use parameterized queries',
   is_draft: false,
+  sample_id: null,
+  sample_name: '',
+  analysis_type: '',
+  analysis_check_key: '',
+  execution_status: '',
   created_at: '2026-01-10T00:00:00Z',
   updated_at: '2026-01-10T00:00:00Z',
 };
@@ -57,6 +63,11 @@ const MOCK_FINDING_LOW: Finding = {
   description_md: 'X-Frame-Options missing',
   recommendation_md: 'Add header',
   is_draft: false,
+  sample_id: null,
+  sample_name: '',
+  analysis_type: '',
+  analysis_check_key: '',
+  execution_status: '',
   created_at: '2026-01-11T00:00:00Z',
   updated_at: '2026-01-11T00:00:00Z',
 };

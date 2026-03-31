@@ -24,6 +24,7 @@ const MOCK_ENGAGEMENT: Engagement = {
   start_date: '2025-01-01',
   end_date: '2025-06-01',
   findings_summary: null,
+  engagement_type: 'general',
   created_at: '2025-01-01T00:00:00Z',
   updated_at: '2025-01-01T00:00:00Z',
 };
@@ -42,6 +43,11 @@ const MOCK_FINDING: Finding = {
   description_md: '## Description\n\nThis is a **test** finding.',
   recommendation_md: '## Recommendation\n\nFix it.',
   is_draft: false,
+  sample_id: null,
+  sample_name: '',
+  analysis_type: '',
+  analysis_check_key: '',
+  execution_status: '',
   created_at: '2025-01-01T00:00:00Z',
   updated_at: '2025-01-01T00:00:00Z',
 };
