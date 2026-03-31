@@ -785,7 +785,7 @@ class EngagementViewSet(AuditedModelViewSet):
         )
 
         # Inject job_id into params (needed by handler for progress updates)
-        job_id = str(job['id'])
+        job_id = str(job['job_id'])
         BackgroundJob.objects.filter(id=job_id).update(
             params={**job['params'], 'job_id': job_id},
         )
@@ -816,7 +816,7 @@ class EngagementViewSet(AuditedModelViewSet):
             job['id'], sample_id, pk,
         )
 
-        return Response({'job_id': str(job['id'])}, status=status.HTTP_202_ACCEPTED)
+        return Response({'job_id': job_id}, status=status.HTTP_202_ACCEPTED)
 
     # ------------------------------------------------------------------
     # Stakeholders: /api/engagements/<pk>/stakeholders/
