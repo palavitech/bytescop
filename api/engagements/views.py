@@ -17,8 +17,10 @@ from subscriptions.services import check_image_limit
 from assets.models import Asset
 from assets.serializers import AssetSerializer
 from evidence.services.attachment_upload import AttachmentUploadService
-from evidence.models import Attachment
-from evidence.signing import sign_attachment_url
+from evidence.services.sample_upload import MalwareSampleUploadService
+from evidence.models import Attachment, MalwareSample
+from evidence.serializers import MalwareSampleSerializer
+from evidence.signing import sign_attachment_url, sign_sample_url
 from findings.models import Finding
 from findings.serializers import FindingSerializer
 from findings.services.attachment_reconcile import AttachmentReconcileService
@@ -74,6 +76,9 @@ class EngagementViewSet(AuditedModelViewSet):
         'finding_update': ['finding.update'],
         'finding_destroy': ['finding.delete'],
         'upload_image': ['finding.create'],
+        'samples_list': ['engagement.view'],
+        'upload_sample': ['engagement.update'],
+        'delete_sample': ['engagement.update'],
         'stakeholders': ['engagement.view'],
         'stakeholders_list': ['engagement.view'],
         'stakeholders_create': ['engagement.update'],
@@ -218,13 +223,20 @@ class EngagementViewSet(AuditedModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Block approval if no assets are in scope
+        # Block approval if no assets/samples are in scope
         new_status = request.data.get('status')
         if new_status == 'approved' and sow.status != 'approved':
-            has_scope = SowAsset.objects.filter(sow=sow, in_scope=True).exists()
+            if engagement.engagement_type == 'malware_analysis':
+                has_scope = MalwareSample.objects.filter(
+                    tenant=request.tenant, engagement=engagement,
+                ).exists()
+                scope_error = 'Cannot approve SoW with no malware samples uploaded.'
+            else:
+                has_scope = SowAsset.objects.filter(sow=sow, in_scope=True).exists()
+                scope_error = 'Cannot approve SoW with no assets in scope.'
             if not has_scope:
                 return Response(
-                    {'detail': 'Cannot approve SoW with no assets in scope.'},
+                    {'detail': scope_error},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -626,6 +638,103 @@ class EngagementViewSet(AuditedModelViewSet):
             },
             status=status.HTTP_201_CREATED,
         )
+
+    # ------------------------------------------------------------------
+    # Malware samples: /api/engagements/<pk>/samples/
+    # ------------------------------------------------------------------
+
+    @action(detail=True, methods=['get'], url_path='samples')
+    def samples_list(self, request, pk=None):
+        self.action = 'samples_list'
+        self.check_permissions(request)
+        engagement = self.get_object()
+        samples = MalwareSample.objects.filter(
+            tenant=request.tenant, engagement=engagement,
+        ).order_by('-created_at')
+        data = MalwareSampleSerializer(samples, many=True).data
+        # Add signed download URL to each sample
+        tid = str(request.tenant.pk)
+        for item in data:
+            item['download_url'] = sign_sample_url(item['id'], tenant_id=tid)
+        return Response(data)
+
+    @action(
+        detail=True, methods=['post'],
+        url_path='samples/upload',
+        parser_classes=[MultiPartParser],
+    )
+    def upload_sample(self, request, pk=None):
+        self.action = 'upload_sample'
+        self.check_permissions(request)
+        engagement = self.get_object()
+        tenant = request.tenant
+        tenant_id = str(tenant.id)
+        file_obj = request.FILES.get('file')
+        notes = request.data.get('notes', '')
+
+        if not file_obj:
+            return Response(
+                {'error': "Missing multipart file field 'file'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        service = MalwareSampleUploadService()
+        sample = service.upload_sample(
+            tenant=tenant,
+            tenant_id=tenant_id,
+            engagement=engagement,
+            user=request.user,
+            file_obj=file_obj,
+            notes=notes,
+        )
+
+        log_audit(
+            request=request, action=AuditAction.CREATE,
+            resource_type="malware_sample", resource_id=sample.id,
+            resource_repr=f"Sample: {sample.original_filename}",
+        )
+        logger.info(
+            "Sample uploaded id=%s engagement=%s user=%s tenant=%s",
+            sample.id, pk, request.user.pk, tenant_id,
+        )
+
+        data = MalwareSampleSerializer(sample).data
+        data['download_url'] = sign_sample_url(sample.id, tenant_id=tenant_id)
+        return Response(data, status=status.HTTP_201_CREATED)
+
+    @action(
+        detail=True, methods=['delete'],
+        url_path=r'samples/(?P<sample_id>[0-9a-f-]+)',
+    )
+    def delete_sample(self, request, pk=None, sample_id=None):
+        self.action = 'delete_sample'
+        self.check_permissions(request)
+        engagement = self.get_object()
+
+        try:
+            sample = MalwareSample.objects.get(
+                pk=sample_id, tenant=request.tenant, engagement=engagement,
+            )
+        except MalwareSample.DoesNotExist:
+            return Response(
+                {'detail': 'Sample not found.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Delete file from storage
+        if sample.storage_uri:
+            try:
+                get_attachment_storage().delete(sample.storage_uri)
+            except Exception:
+                logger.warning("Failed to delete sample file uri=%s", sample.storage_uri)
+
+        log_audit(
+            request=request, action=AuditAction.DELETE,
+            resource_type="malware_sample", resource_id=sample.id,
+            resource_repr=f"Sample: {sample.original_filename}",
+        )
+        sample.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     # ------------------------------------------------------------------
     # Stakeholders: /api/engagements/<pk>/stakeholders/

@@ -10,18 +10,26 @@ import { AssetsService } from '../../assets/services/assets.service';
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { OrganizationRef, Organization } from '../../organizations/models/organization.model';
 import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS, AssetType, AssetEnvironment, AssetCriticality } from '../../assets/models/asset.model';
-import { Engagement, Sow, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
+import { Engagement, MalwareSample, Sow, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
 
-export type WizardStep = 'org' | 'assets' | 'details' | 'sow' | 'review';
+export type WizardStep = 'org' | 'assets' | 'sample' | 'details' | 'sow' | 'review';
 
-const STEP_ORDER: WizardStep[] = ['org', 'assets', 'details', 'sow', 'review'];
+const DEFAULT_STEP_ORDER: WizardStep[] = ['org', 'assets', 'details', 'sow', 'review'];
+const MALWARE_STEP_ORDER: WizardStep[] = ['org', 'sample', 'details', 'sow', 'review'];
+
 const STEP_LABELS: Record<WizardStep, string> = {
   org: 'Organization',
   assets: 'Assets',
+  sample: 'Samples',
   details: 'Engagement',
   sow: 'Statement of Work',
   review: 'Review & Activate',
 };
+
+function getStepOrder(type: EngagementType): WizardStep[] {
+  if (type === 'malware_analysis') return MALWARE_STEP_ORDER;
+  return DEFAULT_STEP_ORDER;
+}
 
 @Component({
   selector: 'app-engagement-wizard',
@@ -43,10 +51,11 @@ export class EngagementWizardComponent {
 
   // -- Step state --
   readonly currentStep = signal<WizardStep>('org');
-  readonly stepOrder = STEP_ORDER;
   readonly stepLabels = STEP_LABELS;
+  readonly stepOrder = computed(() => getStepOrder(this.engagementType()));
 
-  readonly currentStepIndex = computed(() => STEP_ORDER.indexOf(this.currentStep()));
+  readonly currentStepIndex = computed(() => this.stepOrder().indexOf(this.currentStep()));
+  readonly isMalwareFlow = computed(() => this.engagementType() === 'malware_analysis');
 
   // -- Loading / error --
   readonly submitting = signal(false);
@@ -74,6 +83,10 @@ export class EngagementWizardComponent {
   readonly typeOptions = Object.entries(ASSET_TYPE_LABELS) as [AssetType, string][];
   readonly envOptions = Object.entries(ASSET_ENV_LABELS) as [AssetEnvironment, string][];
   readonly critOptions = Object.entries(ASSET_CRIT_LABELS) as [AssetCriticality, string][];
+
+  // -- Step 2b: Malware Samples (replaces assets for malware_analysis) --
+  readonly uploadedSamples = signal<MalwareSample[]>([]);
+  readonly sampleUploading = signal(false);
 
   // -- Step 3: Engagement details --
   engForm!: FormGroup;
@@ -161,23 +174,25 @@ export class EngagementWizardComponent {
   }
 
   nextStep(): void {
+    const order = this.stepOrder();
     const idx = this.currentStepIndex();
-    if (idx < STEP_ORDER.length - 1) {
+    if (idx < order.length - 1) {
       this.error.set('');
-      this.currentStep.set(STEP_ORDER[idx + 1]);
+      this.currentStep.set(order[idx + 1]);
     }
   }
 
   prevStep(): void {
+    const order = this.stepOrder();
     const idx = this.currentStepIndex();
     if (idx > 0) {
       this.error.set('');
-      this.currentStep.set(STEP_ORDER[idx - 1]);
+      this.currentStep.set(order[idx - 1]);
     }
   }
 
   isStepDone(step: WizardStep): boolean {
-    return STEP_ORDER.indexOf(step) < this.currentStepIndex();
+    return this.stepOrder().indexOf(step) < this.currentStepIndex();
   }
 
   isStepActive(step: WizardStep): boolean {
@@ -232,7 +247,11 @@ export class EngagementWizardComponent {
 
   proceedFromOrg(): void {
     if (!this.canProceedFromOrg()) return;
-    this.loadAssetsForOrg();
+    if (this.isMalwareFlow()) {
+      this.ensureEngagementForSamples();
+    } else {
+      this.loadAssetsForOrg();
+    }
     this.nextStep();
   }
 
@@ -334,6 +353,120 @@ export class EngagementWizardComponent {
     return this.orgAssets().filter((a) => ids.has(a.id));
   }
 
+  // ── Step 2b: Malware Samples ────────────────────────────────────────
+
+  onSampleFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+    if (!files || files.length === 0) return;
+    for (let i = 0; i < files.length; i++) {
+      this.uploadSampleFile(files[i]);
+    }
+    input.value = '';
+  }
+
+  onSampleDrop(event: DragEvent): void {
+    event.preventDefault();
+    const files = event.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+    for (let i = 0; i < files.length; i++) {
+      this.uploadSampleFile(files[i]);
+    }
+  }
+
+  onSampleDragOver(event: DragEvent): void {
+    event.preventDefault();
+  }
+
+  private uploadSampleFile(file: File): void {
+    const eng = this.createdEngagementForSamples();
+    if (!eng) {
+      this.notify.error('Engagement must be created before uploading samples.');
+      return;
+    }
+    this.sampleUploading.set(true);
+    this.engService.uploadSample(eng, file).subscribe({
+      next: (sample) => {
+        this.uploadedSamples.update((list) => [...list, sample]);
+        this.sampleUploading.set(false);
+        this.notify.success(`Sample "${sample.original_filename}" uploaded.`);
+      },
+      error: (err) => {
+        this.sampleUploading.set(false);
+        const detail = err?.error?.file?.[0] || err?.error?.detail || err?.error?.error || 'Failed to upload sample.';
+        this.notify.error(detail);
+      },
+    });
+  }
+
+  removeSample(sampleId: string): void {
+    const eng = this.createdEngagementForSamples();
+    if (!eng) return;
+    this.engService.deleteSample(eng, sampleId).subscribe({
+      next: () => {
+        this.uploadedSamples.update((list) => list.filter((s) => s.id !== sampleId));
+        this.notify.success('Sample removed.');
+      },
+      error: () => this.notify.error('Failed to remove sample.'),
+    });
+  }
+
+  canProceedFromSample(): boolean {
+    return this.uploadedSamples().length > 0;
+  }
+
+  proceedFromSample(): void {
+    if (!this.canProceedFromSample()) return;
+    this.nextStep();
+  }
+
+  /**
+   * For malware flow, we need the engagement to be created before we can upload
+   * samples (they require an engagement ID). We create a temporary engagement
+   * early so the upload endpoint works, then update it in the details step.
+   */
+  private _tempEngagementId: string | null = null;
+
+  private createdEngagementForSamples(): string | null {
+    return this._tempEngagementId;
+  }
+
+  ensureEngagementForSamples(): void {
+    if (this._tempEngagementId) return;
+    this.submitting.set(true);
+    this.error.set('');
+    const payload = {
+      name: `Malware Analysis — ${new Date().toISOString().slice(0, 10)}`,
+      client_id: this.selectedOrgId(),
+      engagement_type: this.engagementType(),
+      status: 'planned' as const,
+      start_date: new Date().toISOString().slice(0, 10),
+    };
+    this.engService.create(payload).subscribe({
+      next: (eng) => {
+        this._tempEngagementId = eng.id;
+        this.createdEngagement.set(eng);
+        this.submitting.set(false);
+      },
+      error: (err) => {
+        this.submitting.set(false);
+        if (err?.status !== 402) {
+          const detail = err?.error?.message || err?.error?.detail || 'Failed to create engagement for samples.';
+          this.error.set(detail);
+          this.notify.error(detail);
+        }
+      },
+    });
+  }
+
+  formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
   // ── Step 3: Engagement Details ─────────────────────────────────────
 
   isEngFormInvalid(name: string): boolean {
@@ -351,6 +484,25 @@ export class EngagementWizardComponent {
     this.error.set('');
 
     const formVal = this.engForm.getRawValue();
+
+    // For malware flow, the engagement was already created in the sample step.
+    // Update it with the details form values instead of creating a new one.
+    if (this.isMalwareFlow() && this._tempEngagementId) {
+      this.engService.update(this._tempEngagementId, formVal).subscribe({
+        next: (eng) => {
+          this.createdEngagement.set(eng);
+          this.fetchSowAndAdvance(eng.id);
+        },
+        error: (err) => {
+          this.submitting.set(false);
+          const detail = err?.error?.message || err?.error?.detail || err?.error?.name?.[0] || 'Failed to update engagement.';
+          this.error.set(detail);
+          this.notify.error(detail);
+        },
+      });
+      return;
+    }
+
     const payload = {
       ...formVal,
       client_id: this.selectedOrgId(),

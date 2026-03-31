@@ -34,7 +34,7 @@
 
         <!-- Progress bar -->
         <div class="bc-wizardProgress mb-3">
-          @for (step of stepOrder; track step; let i = $index) {
+          @for (step of stepOrder(); track step; let i = $index) {
             @if (i > 0) {
               <div class="bc-wizardProgressLine"
                 [class.bc-wizardProgressLineDone]="isStepDone(step)"></div>
@@ -148,7 +148,7 @@
                 <button class="btn btn-success bc-btn" type="button"
                   [disabled]="!canProceedFromOrg()"
                   (click)="proceedFromOrg()">
-                  Next: Assets
+                  Next: {{ isMalwareFlow() ? 'Samples' : 'Assets' }}
                   <i class="bi bi-arrow-right ms-1"></i>
                 </button>
               </div>
@@ -326,6 +326,101 @@
         }
 
         <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- STEP 2b: Malware Samples (malware_analysis only)           -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        @if (currentStep() === 'sample') {
+          <div class="bc-card">
+            <div class="bc-wizardStepHead">
+              <h3 class="bc-wizardStepTitle">
+                <i class="bi bi-bug me-2"></i>Upload Malware Samples
+              </h3>
+              <span class="bc-sub" style="font-size:0.8rem">
+                Upload one or more files for analysis. Files are stored safely with neutralized extensions.
+              </span>
+            </div>
+            <div class="bc-cardInner p-4">
+
+              @if (submitting() && !sampleUploading()) {
+                <div class="text-center py-4">
+                  <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  <span class="bc-sub">Preparing engagement...</span>
+                </div>
+              } @else {
+
+                <!-- Drop zone -->
+                <div class="bc-sampleDropZone mb-3"
+                  (drop)="onSampleDrop($event)"
+                  (dragover)="onSampleDragOver($event)">
+                  <i class="bi bi-cloud-arrow-up bc-sampleDropIcon"></i>
+                  <p class="bc-sub mb-2">Drag and drop files here, or</p>
+                  <label class="btn btn-sm btn-outline-light bc-btnSoft">
+                    <i class="bi bi-folder2-open me-1"></i> Browse Files
+                    <input type="file" class="d-none" multiple (change)="onSampleFileSelected($event)">
+                  </label>
+                  @if (sampleUploading()) {
+                    <div class="mt-3">
+                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                      <span class="bc-sub">Uploading...</span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Uploaded samples table -->
+                @if (uploadedSamples().length > 0) {
+                  <div class="bc-label mb-2">Uploaded Samples ({{ uploadedSamples().length }})</div>
+                  <div class="table-responsive mb-3">
+                    <table class="table bc-table mb-0">
+                      <thead>
+                        <tr>
+                          <th>Filename</th>
+                          <th>Size</th>
+                          <th>SHA-256</th>
+                          <th style="width:60px"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (s of uploadedSamples(); track s.id) {
+                          <tr>
+                            <td>
+                              <i class="bi bi-file-earmark-binary me-1" style="color:var(--bc-accent2)"></i>
+                              {{ s.original_filename }}
+                            </td>
+                            <td class="bc-sub">{{ formatBytes(s.size_bytes) }}</td>
+                            <td>
+                              <code class="bc-sha256">{{ s.sha256 }}</code>
+                            </td>
+                            <td class="text-end">
+                              <button class="btn btn-sm btn-outline-danger bc-btnSoft" type="button"
+                                (click)="removeSample(s.id)" title="Remove sample">
+                                <i class="bi bi-trash3"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              }
+
+              <!-- Navigation -->
+              <div class="bc-wizardNav mt-4">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="prevStep()">
+                  <i class="bi bi-arrow-left me-1"></i> Back
+                </button>
+                <button class="btn btn-success bc-btn" type="button"
+                  [disabled]="!canProceedFromSample()"
+                  (click)="proceedFromSample()">
+                  Next: Engagement Details
+                  <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
         <!-- STEP 3: Engagement Details                                 -->
         <!-- ═══════════════════════════════════════════════════════════ -->
         @if (currentStep() === 'details') {
@@ -344,7 +439,11 @@
               <div class="bc-wizardSummaryBar mb-4">
                 <span><i class="bi bi-building me-1"></i> {{ selectedOrgName() }}</span>
                 <span class="bc-wizardSummaryDot"></span>
-                <span><i class="bi bi-hdd-network me-1"></i> {{ selectedAssetIds().size }} asset{{ selectedAssetIds().size === 1 ? '' : 's' }}</span>
+                @if (isMalwareFlow()) {
+                  <span><i class="bi bi-bug me-1"></i> {{ uploadedSamples().length }} sample{{ uploadedSamples().length === 1 ? '' : 's' }}</span>
+                } @else {
+                  <span><i class="bi bi-hdd-network me-1"></i> {{ selectedAssetIds().size }} asset{{ selectedAssetIds().size === 1 ? '' : 's' }}</span>
+                }
               </div>
 
               <form [formGroup]="engForm" (ngSubmit)="proceedFromDetails()" autocomplete="off">
@@ -453,38 +552,65 @@
                 </div>
               }
 
-              <!-- Scoped assets table -->
-              <div class="bc-label mt-3 mb-2">In-Scope Assets ({{ selectedAssetsList().length }})</div>
-              <div class="table-responsive mb-3">
-                <table class="table bc-table mb-0">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Type</th>
-                      <th>Environment</th>
-                      <th>Criticality</th>
-                      <th>Target</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (asset of selectedAssetsList(); track asset.id) {
+              <!-- Scoped assets or malware samples -->
+              @if (isMalwareFlow()) {
+                <div class="bc-label mt-3 mb-2">Malware Samples ({{ uploadedSamples().length }})</div>
+                <div class="table-responsive mb-3">
+                  <table class="table bc-table mb-0">
+                    <thead>
                       <tr>
-                        <td>{{ asset.name }}</td>
-                        <td>{{ assetTypeLabels[asset.asset_type] || asset.asset_type }}</td>
-                        <td>{{ assetEnvLabels[asset.environment] || asset.environment }}</td>
-                        <td>
-                          <span class="badge" [ngClass]="{
-                            'bg-danger': asset.criticality === 'high',
-                            'bg-warning text-dark': asset.criticality === 'medium',
-                            'bg-secondary': asset.criticality === 'low'
-                          }">{{ assetCritLabels[asset.criticality] || asset.criticality }}</span>
-                        </td>
-                        <td class="bc-sub">{{ asset.target || '—' }}</td>
+                        <th>Filename</th>
+                        <th>Size</th>
+                        <th>SHA-256</th>
                       </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      @for (s of uploadedSamples(); track s.id) {
+                        <tr>
+                          <td>
+                            <i class="bi bi-file-earmark-binary me-1" style="color:var(--bc-accent2)"></i>
+                            {{ s.original_filename }}
+                          </td>
+                          <td class="bc-sub">{{ formatBytes(s.size_bytes) }}</td>
+                          <td><code class="bc-sha256">{{ s.sha256 }}</code></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <div class="bc-label mt-3 mb-2">In-Scope Assets ({{ selectedAssetsList().length }})</div>
+                <div class="table-responsive mb-3">
+                  <table class="table bc-table mb-0">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Environment</th>
+                        <th>Criticality</th>
+                        <th>Target</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (asset of selectedAssetsList(); track asset.id) {
+                        <tr>
+                          <td>{{ asset.name }}</td>
+                          <td>{{ assetTypeLabels[asset.asset_type] || asset.asset_type }}</td>
+                          <td>{{ assetEnvLabels[asset.environment] || asset.environment }}</td>
+                          <td>
+                            <span class="badge" [ngClass]="{
+                              'bg-danger': asset.criticality === 'high',
+                              'bg-warning text-dark': asset.criticality === 'medium',
+                              'bg-secondary': asset.criticality === 'low'
+                            }">{{ assetCritLabels[asset.criticality] || asset.criticality }}</span>
+                          </td>
+                          <td class="bc-sub">{{ asset.target || '—' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
 
               <!-- Navigation -->
               <div class="bc-wizardNav mt-4">
@@ -596,15 +722,27 @@
                     <span class="bc-reviewVal">{{ createdSow()?.title }}</span>
                     <span class="badge bg-success">Approved</span>
                   </div>
-                  <div class="bc-reviewKey mb-1">In-Scope Assets ({{ selectedAssetsList().length }})</div>
-                  <ul class="bc-wizardReviewList">
-                    @for (asset of selectedAssetsList(); track asset.id) {
-                      <li>
-                        <strong>{{ asset.name }}</strong>
-                        <span class="bc-sub ms-2">{{ assetTypeLabels[asset.asset_type] }} &middot; {{ asset.target || 'No target' }}</span>
-                      </li>
-                    }
-                  </ul>
+                  @if (isMalwareFlow()) {
+                    <div class="bc-reviewKey mb-1">Malware Samples ({{ uploadedSamples().length }})</div>
+                    <ul class="bc-wizardReviewList">
+                      @for (s of uploadedSamples(); track s.id) {
+                        <li>
+                          <strong>{{ s.original_filename }}</strong>
+                          <span class="bc-sub ms-2">{{ formatBytes(s.size_bytes) }} &middot; SHA-256: {{ s.sha256 }}</span>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <div class="bc-reviewKey mb-1">In-Scope Assets ({{ selectedAssetsList().length }})</div>
+                    <ul class="bc-wizardReviewList">
+                      @for (asset of selectedAssetsList(); track asset.id) {
+                        <li>
+                          <strong>{{ asset.name }}</strong>
+                          <span class="bc-sub ms-2">{{ assetTypeLabels[asset.asset_type] }} &middot; {{ asset.target || 'No target' }}</span>
+                        </li>
+                      }
+                    </ul>
+                  }
                 </div>
 
                 <!-- Activate button -->

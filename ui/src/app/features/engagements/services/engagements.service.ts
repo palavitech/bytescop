@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { Engagement, Sow } from '../models/engagement.model';
+import { Engagement, MalwareSample, Sow } from '../models/engagement.model';
 import { Asset } from '../../assets/models/asset.model';
 import { EngagementStakeholder, StakeholderCreate, EngagementSettingDef } from '../models/stakeholder.model';
 
@@ -58,6 +58,25 @@ export class EngagementsService {
 
   removeFromScope(engId: string, assetId: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${engId}/scope/${assetId}/`);
+  }
+
+  // -- Malware Samples --
+
+  listSamples(engId: string): Observable<MalwareSample[]> {
+    return this.http.get<MalwareSample[]>(`${this.baseUrl}/${engId}/samples/`);
+  }
+
+  uploadSample(engId: string, file: File, notes: string = ''): Observable<MalwareSample> {
+    const form = new FormData();
+    form.append('file', file);
+    if (notes) {
+      form.append('notes', notes);
+    }
+    return this.http.post<MalwareSample>(`${this.baseUrl}/${engId}/samples/upload/`, form);
+  }
+
+  deleteSample(engId: string, sampleId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${engId}/samples/${sampleId}/`);
   }
 
   // -- Stakeholders --

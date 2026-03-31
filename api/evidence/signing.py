@@ -63,3 +63,27 @@ def verify_download_sig(job_id, sig: str, tenant_id: str = '') -> bool:
         return False
     expected = _sign(f"export:{str(job_id)}", str(tenant_id) if tenant_id else '')
     return hmac.compare_digest(sig, expected)
+
+
+# ---------------------------------------------------------------------------
+# Malware sample download signing
+# ---------------------------------------------------------------------------
+
+def sign_sample_url(sample_id, tenant_id: str = '') -> str:
+    """Build a signed URL for downloading a malware sample."""
+    sid = str(sample_id)
+    tid = str(tenant_id) if tenant_id else ''
+    sig = _sign(f"sample:{sid}", tid)
+    url = f"/api/samples/{sid}/download/"
+    qs = f"sig={sig}"
+    if tid:
+        qs += f"&tid={tid}"
+    return f"{url}?{qs}"
+
+
+def verify_sample_sig(sample_id, sig: str, tenant_id: str = '') -> bool:
+    """Verify a signed malware sample download URL."""
+    if not sig:
+        return False
+    expected = _sign(f"sample:{str(sample_id)}", str(tenant_id) if tenant_id else '')
+    return hmac.compare_digest(sig, expected)
