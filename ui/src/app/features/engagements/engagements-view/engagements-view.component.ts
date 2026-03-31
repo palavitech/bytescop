@@ -3,7 +3,7 @@ import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, forkJoin, map, of, switchMap, Subscription } from 'rxjs';
 import { EngagementsService } from '../services/engagements.service';
-import { Engagement, EngagementStatus, ENGAGEMENT_STATUS_LABELS } from '../models/engagement.model';
+import { Engagement, EngagementStatus, EngagementType, ENGAGEMENT_STATUS_LABELS, ENGAGEMENT_TYPE_LABELS } from '../models/engagement.model';
 import { SowService } from '../services/sow.service';
 import { Sow, SowStatus, SOW_STATUS_LABELS } from '../models/sow.model';
 import { Asset, AssetType, AssetCriticality, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS } from '../../assets/models/asset.model';
@@ -290,6 +290,10 @@ export class EngagementsViewComponent implements OnInit, OnDestroy {
 
   prettyStatus(status: string): string {
     return ENGAGEMENT_STATUS_LABELS[status as EngagementStatus] ?? status;
+  }
+
+  prettyType(type: string): string {
+    return ENGAGEMENT_TYPE_LABELS[type as EngagementType] ?? type;
   }
 
   statusClass(status: string): string {

@@ -12,6 +12,13 @@ export const ENGAGEMENT_ROUTES: Routes = [
   {
     path: 'create',
     loadComponent: () =>
+      import('./engagement-type-select/engagement-type-select.component').then(m => m.EngagementTypeSelectComponent),
+    canActivate: [requirePermission('engagement.create')],
+    data: { breadcrumb: 'New Engagement' },
+  },
+  {
+    path: 'create/wizard',
+    loadComponent: () =>
       import('./engagement-wizard/engagement-wizard.component').then(m => m.EngagementWizardComponent),
     canActivate: [requirePermission('engagement.create')],
     data: { breadcrumb: 'New Engagement' },

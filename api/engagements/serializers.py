@@ -19,6 +19,7 @@ class EngagementSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+            'engagement_type',
             'client_id',
             'client_name',
             'status',
