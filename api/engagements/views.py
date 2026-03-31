@@ -808,12 +808,12 @@ class EngagementViewSet(AuditedModelViewSet):
 
         log_audit(
             request=request, action=AuditAction.CREATE,
-            resource_type='static_analysis_job', resource_id=job['id'],
+            resource_type='static_analysis_job', resource_id=job_id,
             resource_repr=f'Static analysis on sample {sample_id}',
         )
         logger.info(
             'Static analysis triggered: job=%s sample=%s engagement=%s',
-            job['id'], sample_id, pk,
+            job_id, sample_id, pk,
         )
 
         return Response({'job_id': job_id}, status=status.HTTP_202_ACCEPTED)
