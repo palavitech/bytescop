@@ -12,6 +12,8 @@ export interface Finding {
   engagement_id: string;
   asset_id: string | null;
   asset_name: string;
+  sample_id: string | null;
+  sample_name: string;
   title: string;
   severity: FindingSeverity;
   assessment_area: string;

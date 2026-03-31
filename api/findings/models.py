@@ -97,6 +97,10 @@ class Finding(TimeStampedModel):
         'assets.Asset', null=True, blank=True,
         on_delete=models.SET_NULL, related_name='findings',
     )
+    sample = models.ForeignKey(
+        'evidence.MalwareSample', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='findings',
+    )
 
     title = models.CharField(max_length=240)
     severity = models.CharField(max_length=16, choices=SEVERITIES, default='medium')

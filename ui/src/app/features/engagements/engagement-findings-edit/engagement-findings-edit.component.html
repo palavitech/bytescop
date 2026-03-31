@@ -49,6 +49,20 @@
         <div class="bc-card">
           <div class="bc-cardInner p-4">
 
+            <!-- ═══ Malware Analysis Section ═══ -->
+            <ng-container *ngIf="isMalwareFlow">
+              <app-finding-section-malware
+                [engagementId]="e.id"
+                [samples$]="samples$"
+                [initialData]="malwareInitialData"
+                (submitted)="onMalwareFindingSubmitted($event)"
+                (cancelled)="cancel()"
+                (dirtyChange)="onMalwareDirtyChange($event)">
+              </app-finding-section-malware>
+            </ng-container>
+
+            <!-- ═══ Standard Section ═══ -->
+            <ng-container *ngIf="!isMalwareFlow">
               <form [formGroup]="form" (ngSubmit)="save(e.id, f.id)" novalidate>
                 <div class="row g-3">
 
@@ -172,6 +186,7 @@
                   </button>
                 </div>
               </form>
+            </ng-container>
 
           </div>
         </div>
