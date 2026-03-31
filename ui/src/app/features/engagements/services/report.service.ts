@@ -4,7 +4,7 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { wrapImageCaptions } from '../engagement-findings-view/markdown-utils';
 
-import { Engagement } from '../models/engagement.model';
+import { Engagement, EngagementType } from '../models/engagement.model';
 import { Finding, FindingSeverity, FindingStatus, FINDING_SEVERITY_LABELS, FINDING_STATUS_LABELS } from '../models/finding.model';
 import { Asset, ASSET_TYPE_LABELS } from '../../assets/models/asset.model';
 import { EngagementStakeholder, EngagementSettingDef, STAKEHOLDER_ROLE_LABELS } from '../models/stakeholder.model';
@@ -29,6 +29,16 @@ const ROLE_ORDER: string[] = [
 const STATUS_COLORS: Record<string, string> = {
   open: '#ef4444', triage: '#f97316', accepted: '#3b82f6', fixed: '#22c55e', false_positive: '#94a3b8',
 };
+
+const REPORT_TITLES: Partial<Record<EngagementType, string>> = {
+  malware_analysis: 'Malware Analysis<br>Report',
+  digital_forensics: 'Digital Forensics<br>Report',
+  wifi: 'WiFi Assessment<br>Report',
+  linux_audit: 'Linux Server Audit<br>Report',
+  windows_audit: 'Windows Audit<br>Report',
+  active_directory: 'Active Directory<br>Report',
+};
+const DEFAULT_REPORT_TITLE = 'Penetration Test<br>Report';
 
 @Injectable({ providedIn: 'root' })
 export class ReportService {
@@ -179,7 +189,7 @@ ${this.getStyles()}
 
     <div class="bc-coverCenter">
       <div class="bc-accentRule"></div>
-      <h1 class="bc-coverTitle">Penetration Test<br>Report</h1>
+      <h1 class="bc-coverTitle">${REPORT_TITLES[eng.engagement_type] ?? DEFAULT_REPORT_TITLE}</h1>
       <p class="bc-coverClient">${this.esc(eng.client_name || '—')}</p>
       <p class="bc-coverEngagement">${this.esc(eng.name)}</p>
     </div>
