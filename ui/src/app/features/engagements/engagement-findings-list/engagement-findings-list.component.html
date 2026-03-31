@@ -92,55 +92,35 @@
           <!-- Table -->
           <div class="bc-card">
             <div class="bc-cardInner p-0">
-              <div class="table-responsive">
-                <table class="table table-dark mb-0 align-middle bc-table">
 
-                  <thead>
-                    <tr>
-                      <th style="min-width:260px">Title</th>
-                      <th style="min-width:140px">Asset</th>
-                      <th style="min-width:140px">Severity</th>
-                      <th style="min-width:140px">Status</th>
-                      <th style="min-width:180px">Updated</th>
-                    </tr>
-                  </thead>
+              <!-- Loading / Error / Empty states -->
+              <ng-container *ngIf="vm.state === 'init'">
+                <div class="p-4"><div class="bc-sub">Fetching findings...</div></div>
+              </ng-container>
 
-                  <tbody>
+              <ng-container *ngIf="vm.state === 'error'">
+                <div class="p-4"><div class="alert alert-danger mb-0">Could not load findings.</div></div>
+              </ng-container>
 
-                    <tr *ngIf="vm.state === 'init'">
-                      <td colspan="5" class="p-4">
-                        <div class="bc-sub">Fetching findings...</div>
-                      </td>
-                    </tr>
+              <ng-container *ngIf="vm.state === 'ready' && vm.items.length === 0">
+                <div class="p-4"><div class="bc-sub">No findings yet. Create your first finding to start tracking observations.</div></div>
+              </ng-container>
 
-                    <tr *ngIf="vm.state === 'error'">
-                      <td colspan="5" class="p-4">
-                        <div class="alert alert-danger mb-0">Could not load findings.</div>
-                      </td>
-                    </tr>
+              <!-- Data table — composed per engagement type -->
+              <ng-container *ngIf="vm.state === 'ready' && vm.items.length > 0 && vm.engagement as e">
+                <app-findings-table-malware
+                  *ngIf="e.engagement_type === 'malware_analysis'"
+                  [findings]="vm.items"
+                  [engagementId]="e.id">
+                </app-findings-table-malware>
 
-                    <tr *ngIf="vm.state === 'ready' && vm.items.length === 0">
-                      <td colspan="5" class="p-4">
-                        <div class="bc-sub">No findings yet. Create one and link it to an asset to start building reports.</div>
-                      </td>
-                    </tr>
+                <app-findings-table-standard
+                  *ngIf="e.engagement_type !== 'malware_analysis'"
+                  [findings]="vm.items"
+                  [engagementId]="e.id">
+                </app-findings-table-standard>
+              </ng-container>
 
-                    <ng-container *ngIf="vm.state === 'ready' && vm.engagement as e">
-                      <tr *ngFor="let f of vm.items" class="bc-tableRow">
-                        <td>
-                          <a class="bc-rowLink" [routerLink]="['/engagements', e.id, 'findings', f.id]">{{ f.title }}</a>
-                          <span class="bc-draftBadge ms-2" *ngIf="f.is_draft">Draft</span>
-                        </td>
-                        <td>{{ f.asset_name || '—' }}</td>
-                        <td><span class="bc-severityPill bc-severityPill--{{ f.severity }}">{{ prettySeverity(f.severity) }}</span></td>
-                        <td>{{ prettyStatus(f.status) }}</td>
-                        <td>{{ f.updated_at | bcDate }}</td>
-                      </tr>
-                    </ng-container>
-
-                  </tbody>
-                </table>
-              </div>
             </div>
           </div>
 

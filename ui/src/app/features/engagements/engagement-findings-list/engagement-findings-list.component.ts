@@ -10,6 +10,8 @@ import { Finding, FINDING_SEVERITY_LABELS, FINDING_STATUS_LABELS, FindingSeverit
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { BcDatePipe } from '../../../components/pipes/bc-date.pipe';
+import { FindingsTableStandardComponent } from './tables/findings-table-standard.component';
+import { FindingsTableMalwareComponent } from './tables/findings-table-malware.component';
 
 type VmState = 'init' | 'ready' | 'error';
 
@@ -37,7 +39,7 @@ interface ViewModel {
   selector: 'app-engagement-findings-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink, HasPermissionDirective, BcDatePipe],
+  imports: [CommonModule, RouterLink, HasPermissionDirective, BcDatePipe, FindingsTableStandardComponent, FindingsTableMalwareComponent],
   templateUrl: './engagement-findings-list.component.html',
   styleUrl: './engagement-findings-list.component.css',
 })
