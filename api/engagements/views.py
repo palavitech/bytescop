@@ -16,6 +16,7 @@ from subscriptions.guard import SubscriptionGuard, SubscriptionLimitExceeded
 from subscriptions.services import check_image_limit
 from assets.models import Asset
 from assets.serializers import AssetSerializer
+from jobs.models import BackgroundJob
 from evidence.services.attachment_upload import AttachmentUploadService
 from evidence.services.sample_upload import MalwareSampleUploadService
 from evidence.models import Attachment, MalwareSample
@@ -776,20 +777,34 @@ class EngagementViewSet(AuditedModelViewSet):
                 'event_area': 'malware_analysis',
                 'event_type': 'static_analysis',
                 'tenant_id': tenant_id,
+                'job_id': '',  # filled below
                 'engagement_id': str(engagement.id),
                 'sample_id': str(sample_id),
                 'user_id': str(request.user.id) if request.user else None,
             },
         )
 
-        # Dispatch to Celery
-        from bytescop.celery import app as celery_app
-        celery_app.send_task(
-            'bytescop.tasks.process_job',
-            args=[job['params']],
-            kwargs={'job_id': str(job['id'])},
-            queue='jobs',
+        # Inject job_id into params (needed by handler for progress updates)
+        job_id = str(job['id'])
+        BackgroundJob.objects.filter(id=job_id).update(
+            params={**job['params'], 'job_id': job_id},
         )
+        payload = {**job['params'], 'job_id': job_id}
+
+        # Dispatch to Celery (fall back to synchronous if broker unavailable)
+        try:
+            from bytescop.celery import app as celery_app
+            celery_app.send_task(
+                'bytescop.tasks.process_job',
+                args=[payload],
+                queue='jobs',
+            )
+        except Exception:
+            logger.warning('Celery unavailable — running static analysis synchronously')
+            from job_processor.handlers import get_handler
+            handler = get_handler('malware_analysis', 'static_analysis')
+            if handler:
+                handler.process(payload)
 
         log_audit(
             request=request, action=AuditAction.CREATE,
