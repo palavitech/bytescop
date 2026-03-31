@@ -166,7 +166,6 @@ export class EngagementFindingsListComponent implements OnDestroy {
       next: (res) => {
         this.initializingAnalysis = false;
         if (res.created > 0) {
-          this.notify.success(`Created ${res.created} analysis finding${res.created === 1 ? '' : 's'}.`);
           this.refresh();
         } else {
           this.notify.info('All analysis checks already exist.');
@@ -185,13 +184,20 @@ export class EngagementFindingsListComponent implements OnDestroy {
     if (!engagement) return;
 
     this.engagementsService.executeFinding(engagement.id, finding.id).subscribe({
-      next: () => {
-        this.notify.success(`Executing "${finding.title}"...`);
-        // Poll for completion by refreshing the list after a delay.
-        this.scheduleRefresh(3000);
-      },
+      next: () => this.scheduleRefresh(3000),
       error: (err) => {
         this.notify.error(err?.error?.message || err?.error?.detail || 'Failed to start execution.');
+      },
+    });
+  }
+
+  deleteFinding(finding: Finding, engagement: Engagement | null): void {
+    if (!engagement) return;
+
+    this.findingsService.delete(engagement.id, finding.id).subscribe({
+      next: () => this.refresh(),
+      error: (err) => {
+        this.notify.error(err?.error?.message || err?.error?.detail || 'Failed to delete finding.');
       },
     });
   }

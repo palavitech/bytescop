@@ -120,7 +120,8 @@
                   *ngIf="e.engagement_type === 'malware_analysis'"
                   [findings]="vm.items"
                   [engagementId]="e.id"
-                  (execute)="executeFinding($event, e)">
+                  (execute)="executeFinding($event, e)"
+                  (delete)="deleteFinding($event, e)">
                 </app-findings-table-malware>
 
                 <app-findings-table-standard
