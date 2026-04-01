@@ -23,6 +23,48 @@ ANALYSIS_CHECKS = [
         'description_placeholder': '*Pending execution.* Click **Execute** to identify email addresses, phone numbers, IP addresses, and URLs.',
         'analysis_type': 'static',
     },
+    {
+        'key': 'file_type',
+        'title': 'File Type',
+        'description_placeholder': '*Pending execution.* Click **Execute** to identify file type, MIME type, and format details.',
+        'analysis_type': 'static',
+    },
+    {
+        'key': 'pe_headers',
+        'title': 'PE Headers',
+        'description_placeholder': '*Pending execution.* Click **Execute** to parse PE headers (machine type, compile timestamp, entry point, subsystem).',
+        'analysis_type': 'static',
+    },
+    {
+        'key': 'pe_sections',
+        'title': 'PE Sections',
+        'description_placeholder': '*Pending execution.* Click **Execute** to analyse PE sections (sizes, entropy, permissions, anomalies).',
+        'analysis_type': 'static',
+    },
+    {
+        'key': 'pe_imports',
+        'title': 'PE Imports & Suspicious APIs',
+        'description_placeholder': '*Pending execution.* Click **Execute** to list imported DLLs/functions and flag suspicious API calls.',
+        'analysis_type': 'static',
+    },
+    {
+        'key': 'pe_exports',
+        'title': 'PE Exports',
+        'description_placeholder': '*Pending execution.* Click **Execute** to list exported functions.',
+        'analysis_type': 'static',
+    },
+    {
+        'key': 'pe_packer_detection',
+        'title': 'Packer Detection',
+        'description_placeholder': '*Pending execution.* Click **Execute** to check for packing, high entropy, and known packer signatures.',
+        'analysis_type': 'static',
+    },
+    {
+        'key': 'pe_resources',
+        'title': 'PE Resources & Version Info',
+        'description_placeholder': '*Pending execution.* Click **Execute** to extract embedded resources, version strings, PDB paths, and manifest info.',
+        'analysis_type': 'static',
+    },
 ]
 
 # Keyed lookup for fast access by check key.

@@ -6,7 +6,14 @@ for reading sample bytes from storage.
 """
 
 import hashlib
+import mimetypes
 import re
+
+try:
+    import magic as _magic
+    _HAS_MAGIC = True
+except ImportError:
+    _HAS_MAGIC = False
 
 # Match printable ASCII runs of 4+ chars in raw bytes.
 _STRINGS_RE = re.compile(rb'[\x20-\x7e]{4,}')
@@ -131,9 +138,64 @@ def execute_special_strings(storage, sample, finding):
     return description
 
 
+def _format_size(size_bytes):
+    """Human-readable file size."""
+    for unit in ('B', 'KB', 'MB', 'GB'):
+        if size_bytes < 1024:
+            return f'{size_bytes:.2f} {unit}' if unit != 'B' else f'{size_bytes} {unit}'
+        size_bytes /= 1024
+    return f'{size_bytes:.2f} TB'
+
+
+def execute_file_type(storage, sample, finding):
+    """Identify file type, MIME type, and format description (like the `file` command)."""
+    f = storage.open(sample.storage_uri)
+    try:
+        header = f.read(8192)
+        f.seek(0, 2)
+        file_size = f.tell()
+    finally:
+        f.close()
+
+    filename = sample.original_filename
+
+    if _HAS_MAGIC:
+        description = _magic.from_buffer(header)
+        mime_type = _magic.from_buffer(header, mime=True)
+    else:
+        mime_type, _ = mimetypes.guess_type(filename)
+        mime_type = mime_type or 'application/octet-stream'
+        description = 'Install python-magic for detailed file type detection'
+
+    return (
+        f'## File Type — {filename}\n\n'
+        f'| Property | Value |\n'
+        f'|----------|-------|\n'
+        f'| MIME Type | `{mime_type}` |\n'
+        f'| Description | {description} |\n'
+        f'| File Size | {_format_size(file_size)} |\n'
+    )
+
+
+from .pe_executors import (
+    execute_pe_headers,
+    execute_pe_sections,
+    execute_pe_imports,
+    execute_pe_exports,
+    execute_pe_packer_detection,
+    execute_pe_resources,
+)
+
 # Registry mapping check key → executor function.
 EXECUTORS = {
     'hash_identification': execute_hash_identification,
     'extract_strings': execute_extract_strings,
     'special_strings': execute_special_strings,
+    'file_type': execute_file_type,
+    'pe_headers': execute_pe_headers,
+    'pe_sections': execute_pe_sections,
+    'pe_imports': execute_pe_imports,
+    'pe_exports': execute_pe_exports,
+    'pe_packer_detection': execute_pe_packer_detection,
+    'pe_resources': execute_pe_resources,
 }
