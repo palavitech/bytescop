@@ -17,6 +17,12 @@ ANALYSIS_CHECKS = [
         'description_placeholder': '*Pending execution.* Click **Execute** to extract printable strings.',
         'analysis_type': 'static',
     },
+    {
+        'key': 'special_strings',
+        'title': 'Special Strings',
+        'description_placeholder': '*Pending execution.* Click **Execute** to identify email addresses, phone numbers, IP addresses, and URLs.',
+        'analysis_type': 'static',
+    },
 ]
 
 # Keyed lookup for fast access by check key.

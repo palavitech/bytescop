@@ -76,8 +76,64 @@ def execute_extract_strings(storage, sample, finding):
     return description
 
 
+_EMAIL_RE = re.compile(rb'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}')
+_PHONE_RE = re.compile(rb'(?:\+?\d{1,3}[\s\-.]?)?\(?\d{2,4}\)?[\s\-.]?\d{3,4}[\s\-.]?\d{3,4}')
+_IPV4_RE = re.compile(rb'\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b')
+_URL_RE = re.compile(rb'https?://[^\s\x00-\x1f"\'<>\x7f]{4,}')
+
+MAX_SPECIAL = 200
+
+
+def execute_special_strings(storage, sample, finding):
+    """Identify email addresses, phone numbers, IP addresses, and URLs."""
+    f = storage.open(sample.storage_uri)
+    try:
+        data = f.read()
+    finally:
+        f.close()
+
+    filename = sample.original_filename
+
+    categories = [
+        ('Email Addresses', _EMAIL_RE),
+        ('IP Addresses', _IPV4_RE),
+        ('URLs', _URL_RE),
+        ('Phone Numbers', _PHONE_RE),
+    ]
+
+    sections = []
+    grand_total = 0
+
+    for label, pattern in categories:
+        raw_matches = pattern.findall(data)
+        decoded = sorted({m.decode('ascii', errors='replace') for m in raw_matches})
+        grand_total += len(decoded)
+
+        if not decoded:
+            sections.append(f'### {label}\n\nNone found.\n')
+            continue
+
+        truncated = len(decoded) > MAX_SPECIAL
+        display = decoded[:MAX_SPECIAL]
+        lines = '\n'.join(display)
+        section = f'### {label}\n\nFound **{len(decoded)}** unique match{"es" if len(decoded) != 1 else ""}.'
+        if truncated:
+            section += f' Showing first {MAX_SPECIAL}.'
+        section += f'\n\n```\n{lines}\n```\n'
+        sections.append(section)
+
+    description = (
+        f'## Special Strings — {filename}\n\n'
+        f'Scanned for email addresses, phone numbers, IP addresses, and URLs. '
+        f'**{grand_total}** total unique matches.\n\n'
+    )
+    description += '\n'.join(sections)
+    return description
+
+
 # Registry mapping check key → executor function.
 EXECUTORS = {
     'hash_identification': execute_hash_identification,
     'extract_strings': execute_extract_strings,
+    'special_strings': execute_special_strings,
 }
