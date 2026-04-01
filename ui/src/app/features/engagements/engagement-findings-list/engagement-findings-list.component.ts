@@ -67,7 +67,10 @@ export class EngagementFindingsListComponent implements OnDestroy {
 
   private readonly engagement$ = this.engagementId$.pipe(
     switchMap(id => id
-      ? this.engagementsService.getById(id).pipe(catchError(() => of(null)))
+      ? this.engagementsService.getById(id).pipe(catchError(err => {
+          console.error('[findings-list] failed to load engagement', id, err?.status);
+          return of(null);
+        }))
       : of(null),
     ),
     shareReplay(1),
@@ -81,7 +84,10 @@ export class EngagementFindingsListComponent implements OnDestroy {
         status: f.status || undefined,
         include_drafts: true,
       }).pipe(
-        catchError(() => of([] as Finding[])),
+        catchError(err => {
+          console.error('[findings-list] failed to load findings', id, err?.status);
+          return of([] as Finding[]);
+        }),
       );
     }),
     shareReplay(1),

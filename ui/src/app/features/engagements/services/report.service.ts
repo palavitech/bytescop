@@ -60,7 +60,9 @@ export class ReportService {
       const settings = await firstValueFrom(this.settingsService.list());
       const cn = settings.find(s => s.key === 'company_name');
       if (cn?.value?.trim()) companyName = cn.value.trim();
-    } catch { /* fall back */ }
+    } catch (err) {
+      console.warn('[report] failed to load company name, using default', err);
+    }
 
     let logoDataUrl: string | null = null;
     try {
@@ -69,7 +71,9 @@ export class ReportService {
         const blob = await firstValueFrom(this.settingsService.getLogoBlob());
         logoDataUrl = await this.blobToDataUrl(blob);
       }
-    } catch { /* no logo */ }
+    } catch (err) {
+      console.warn('[report] failed to load logo', err);
+    }
 
     let stakeholders: EngagementStakeholder[] = [];
     let showContactInfo = true;
@@ -80,12 +84,16 @@ export class ReportService {
         const bi = ROLE_ORDER.indexOf(b.role);
         return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
       });
-    } catch { /* no stakeholders */ }
+    } catch (err) {
+      console.warn('[report] failed to load stakeholders', err);
+    }
     try {
       const engSettings = await firstValueFrom(this.engagementsService.listSettings(engagement.id));
       const contactSetting = engSettings.find(s => s.key === 'show_contact_info_on_report');
       if (contactSetting) showContactInfo = contactSetting.value === 'true';
-    } catch { /* default true */ }
+    } catch (err) {
+      console.warn('[report] failed to load engagement settings, using defaults', err);
+    }
 
     const descriptions = await Promise.all(sorted.map(f => this.renderMarkdown(f.description_md)));
     const recommendations = await Promise.all(sorted.map(f => this.renderMarkdown(f.recommendation_md)));

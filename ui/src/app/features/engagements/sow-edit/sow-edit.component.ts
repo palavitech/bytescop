@@ -106,10 +106,16 @@ export class SowEditComponent implements OnInit {
   private _loadScopeData(clientId: string | null): void {
     forkJoin({
       scope: this.sowService.listScope(this.engagementId).pipe(
-        catchError(() => of(null as Asset[] | null)),
+        catchError(err => {
+          console.error('[sow-edit] failed to load scope', err?.status);
+          return of(null as Asset[] | null);
+        }),
       ),
       assets: clientId
-        ? this.assetsService.list(clientId).pipe(catchError(() => of([] as Asset[])))
+        ? this.assetsService.list(clientId).pipe(catchError(err => {
+            console.warn('[sow-edit] failed to load client assets', err?.status);
+            return of([] as Asset[]);
+          }))
         : of([] as Asset[]),
     }).subscribe(({ scope, assets }) => {
       this.clientAssets = assets;

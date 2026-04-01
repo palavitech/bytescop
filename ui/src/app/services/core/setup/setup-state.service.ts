@@ -31,7 +31,10 @@ export class SetupStateService {
     try {
       const res = await firstValueFrom(
         this.http.get<{ setup_required: boolean }>(`${base}/api/setup/status/`).pipe(
-          catchError(() => of(null)),
+          catchError(err => {
+            console.warn('[setup] status probe failed', err?.status ?? err?.message ?? 'unknown');
+            return of(null);
+          }),
         ),
       );
 
@@ -40,7 +43,8 @@ export class SetupStateService {
       } else {
         this._probe$.next({ status: 'ok', setupRequired: res.setup_required });
       }
-    } catch {
+    } catch (err) {
+      console.error('[setup] unexpected error during refresh', err);
       this._probe$.next({ status: 'unreachable', setupRequired: null });
     }
   }

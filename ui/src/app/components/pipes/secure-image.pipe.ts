@@ -23,7 +23,10 @@ export class SecureImagePipe implements PipeTransform {
         const objectUrl = URL.createObjectURL(blob);
         return this.sanitizer.bypassSecurityTrustUrl(objectUrl);
       }),
-      catchError(() => of(null)),
+      catchError(err => {
+        console.warn('[secureImage] failed to load image', url, err?.status);
+        return of(null);
+      }),
     );
   }
 }

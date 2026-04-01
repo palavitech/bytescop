@@ -169,7 +169,10 @@ export class EngagementFindingsCreateComponent implements AfterViewInit, OnDestr
 
     this.engagementId$.pipe(
       take(1),
-      switchMap(id => id ? this.sowService.get(id).pipe(catchError(() => of(null))) : of(null)),
+      switchMap(id => id ? this.sowService.get(id).pipe(catchError(err => {
+        console.warn('[findings-create] failed to load SoW', err?.status);
+        return of(null);
+      })) : of(null)),
     ).subscribe(sow => {
       this.sowStatus$.next(sow?.status ?? null);
       this.sowLoaded = true;

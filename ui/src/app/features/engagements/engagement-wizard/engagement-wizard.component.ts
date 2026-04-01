@@ -603,7 +603,6 @@ export class EngagementWizardComponent {
   keepPlanned(): void {
     const eng = this.createdEngagement();
     if (!eng) return;
-    this.notify.success(`Engagement "${eng.name}" saved as Planned.`);
     this.router.navigate(['/engagements', eng.id]);
   }
 
@@ -618,7 +617,6 @@ export class EngagementWizardComponent {
       next: (updated) => {
         this.createdEngagement.set(updated);
         this.submitting.set(false);
-        this.notify.success(`Engagement "${updated.name}" is now active!`);
         this.router.navigate(['/engagements', updated.id]);
       },
       error: (err) => {

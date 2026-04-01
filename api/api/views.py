@@ -1,9 +1,13 @@
+import logging
+
 from rest_framework import status as http_status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from authorization.permissions import get_tenant_member, get_user_permissions
+
+logger = logging.getLogger("bytescop.api")
 from authorization.scoping import get_visible_engagement_ids
 from engagements.models import EngagementStakeholder
 from tenancy.models import TenantRole
@@ -23,6 +27,7 @@ def dashboard(request):
     """
     member = get_tenant_member(request)
     if member is None:
+        logger.warning("Dashboard access denied: no tenant membership user=%s", request.user.pk)
         return Response(
             {"detail": "Tenant membership required."},
             status=http_status.HTTP_403_FORBIDDEN,
@@ -68,6 +73,10 @@ def dashboard(request):
     else:
         alerts = get_dashboard_alerts(request.tenant, member)
 
+    logger.debug(
+        "Dashboard loaded: user=%s view=%s widgets=%d alerts=%d customized=%s",
+        request.user.pk, effective_view, len(widgets), len(alerts), saved_layout is not None,
+    )
     return Response({
         "widgets": widgets,
         "alerts": alerts,

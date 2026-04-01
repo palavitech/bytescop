@@ -63,14 +63,14 @@ class AttachmentUploadService:
                 h.update(chunk)
             att.sha256 = h.hexdigest()
         except Exception:
-            pass
+            logger.warning("Failed to compute SHA256 for attachment=%s", att.id)
 
         try:
             f = getattr(file_obj, 'file', None)
             if f and hasattr(f, 'seek'):
                 f.seek(0)
         except Exception:
-            pass
+            logger.warning("Failed to seek file back to start for attachment=%s", att.id)
 
         storage_uri = self.storage.save(
             tenant_id=tenant_id,

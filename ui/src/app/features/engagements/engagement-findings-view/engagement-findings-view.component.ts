@@ -75,7 +75,10 @@ export class EngagementFindingsViewComponent implements OnInit {
       switchMap(() =>
         combineLatest([
           this.engagementsService.getById(this.engagementId).pipe(
-            catchError(() => of(null)),
+            catchError(err => {
+              console.error('[finding-view] failed to load engagement', err?.status);
+              return of(null);
+            }),
           ),
           this.findingsService.getById(this.engagementId, this.findingId).pipe(
             catchError(err => {

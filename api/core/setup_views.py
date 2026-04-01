@@ -48,6 +48,7 @@ def setup_status(request):
         state = InstallState.objects.filter(id=1).first()
         required = not (state and state.installed)
     except Exception:
+        logger.debug("InstallState table unavailable, treating as setup required")
         required = True
 
     return JsonResponse({'setup_required': required})

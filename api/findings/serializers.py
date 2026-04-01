@@ -1,8 +1,12 @@
+import logging
+
 from rest_framework import serializers
 
 from assets.models import Asset
 from evidence.models import MalwareSample
 from .models import ClassificationEntry, Finding
+
+logger = logging.getLogger("bytescop.findings")
 
 
 class FindingSerializer(serializers.ModelSerializer):
@@ -68,12 +72,14 @@ class FindingSerializer(serializers.ModelSerializer):
         try:
             return obj.asset.name if obj.asset_id else ''
         except Exception:
+            logger.warning("Failed to resolve asset_name for finding=%s asset_id=%s", obj.pk, obj.asset_id)
             return ''
 
     def get_sample_name(self, obj):
         try:
             return obj.sample.original_filename if obj.sample_id else ''
         except Exception:
+            logger.warning("Failed to resolve sample_name for finding=%s sample_id=%s", obj.pk, obj.sample_id)
             return ''
 
     def validate(self, data):

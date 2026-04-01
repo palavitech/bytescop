@@ -45,7 +45,10 @@ export class UsersListComponent implements OnInit {
       switchMap(() =>
         this.membersService.list().pipe(
           map(members => ({ state: 'ready' as ViewState, members })),
-          catchError(() => of({ state: 'error' as ViewState, members: [] as TenantMember[] })),
+          catchError(err => {
+            console.error('[users-list] failed to load members', err?.status);
+            return of({ state: 'error' as ViewState, members: [] as TenantMember[] });
+          }),
         ),
       ),
     ),

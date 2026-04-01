@@ -1,8 +1,12 @@
+import logging
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import ClassificationEntry
+
+logger = logging.getLogger("bytescop.findings")
 
 
 @api_view(['GET'])
@@ -18,4 +22,5 @@ def classification_list(request):
     if entry_type:
         qs = qs.filter(entry_type=entry_type)
     data = list(qs.values('entry_type', 'code', 'name', 'description'))
+    logger.debug("classification_list: type=%s count=%d", entry_type or '*', len(data))
     return Response(data)

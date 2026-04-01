@@ -137,8 +137,14 @@ export class UsersViewComponent implements OnInit {
       switchMap(() =>
         forkJoin({
           member: this.membersService.getById(this.memberId),
-          assignments: this.membersService.getEngagements(this.memberId).pipe(catchError(() => of([]))),
-          allEngagements: this.engagementsService.list().pipe(catchError(() => of([]))),
+          assignments: this.membersService.getEngagements(this.memberId).pipe(catchError(err => {
+            console.warn('[users-view] failed to load assignments', err?.status);
+            return of([]);
+          })),
+          allEngagements: this.engagementsService.list().pipe(catchError(err => {
+            console.warn('[users-view] failed to load engagements', err?.status);
+            return of([]);
+          })),
         }).pipe(
           map(({ member, assignments, allEngagements }) => ({
             state: 'ready' as ViewState,

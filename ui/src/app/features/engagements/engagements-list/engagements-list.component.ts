@@ -55,7 +55,10 @@ export class EngagementsListComponent implements OnInit {
 
   readonly vm$ = this.refresh$.pipe(
     switchMap(() =>
-      combineLatest([this.filters$, this.orgService.ref().pipe(catchError(() => of([] as OrganizationRef[])))]).pipe(
+      combineLatest([this.filters$, this.orgService.ref().pipe(catchError(err => {
+            console.warn('[engagements-list] failed to load org refs', err?.status);
+            return of([] as OrganizationRef[]);
+          }))]).pipe(
         switchMap(([filters, organizations]) =>
           this.engagementsService.list({
             client: filters.client ?? undefined,
@@ -78,14 +81,17 @@ export class EngagementsListComponent implements OnInit {
                 filterLabels: { clientName, statusLabel },
               } as ViewModel;
             }),
-            catchError(() => of({
-              state: 'error' as ViewState,
-              engagements: [] as Engagement[],
-              total: 0,
-              organizations,
-              filters,
-              filterLabels: { clientName: null, statusLabel: null },
-            } as ViewModel)),
+            catchError(err => {
+              console.error('[engagements-list] failed to load engagements', err?.status);
+              return of({
+                state: 'error' as ViewState,
+                engagements: [] as Engagement[],
+                total: 0,
+                organizations,
+                filters,
+                filterLabels: { clientName: null, statusLabel: null },
+              } as ViewModel);
+            }),
           ),
         ),
       ),

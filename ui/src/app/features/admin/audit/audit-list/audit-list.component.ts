@@ -128,14 +128,17 @@ export class AuditListComponent implements OnDestroy {
           pageSize: resp.page_size,
           numPages: resp.num_pages,
         })),
-        catchError(() => of({
-          state: 'error' as ViewState,
-          entries: [] as AuditLogListItem[],
-          count: 0,
-          page: 1,
-          pageSize: pageSize,
-          numPages: 1,
-        })),
+        catchError(err => {
+          console.error('[audit-list] failed to load entries', err?.status);
+          return of({
+            state: 'error' as ViewState,
+            entries: [] as AuditLogListItem[],
+            count: 0,
+            page: 1,
+            pageSize: pageSize,
+            numPages: 1,
+          });
+        }),
       ),
     ),
   );
@@ -296,15 +299,18 @@ export class AuditListComponent implements OnDestroy {
     this.summarySub = combineLatest([this.refresh$, this.filters$]).pipe(
       debounceTime(0),
       switchMap(([, filters]) => this.auditService.summary(filters).pipe(
-        catchError(() => of<AuditSummary>({
-          total: 0, by_action: {}, by_resource_type: {}, by_actor: [], by_date: [],
-          findings_by_user_eng: { actors: [], engagements: [], matrix: [] },
-          disruptive_by_user_eng: { actors: [], engagements: [], matrix: [] },
-          engagement_actions_by_user: { actors: [], actions: [], matrix: [] },
-          finding_actions_by_user: { actors: [], actions: [], matrix: [] },
-          actions_by_ip: { ips: [], counts: [] },
-          eng_id_map: {},
-        })),
+        catchError(err => {
+          console.error('[audit-list] failed to load summary', err?.status);
+          return of<AuditSummary>({
+            total: 0, by_action: {}, by_resource_type: {}, by_actor: [], by_date: [],
+            findings_by_user_eng: { actors: [], engagements: [], matrix: [] },
+            disruptive_by_user_eng: { actors: [], engagements: [], matrix: [] },
+            engagement_actions_by_user: { actors: [], actions: [], matrix: [] },
+            finding_actions_by_user: { actors: [], actions: [], matrix: [] },
+            actions_by_ip: { ips: [], counts: [] },
+            eng_id_map: {},
+          });
+        }),
       )),
     ).subscribe(data => {
       this.summaryLoading = false;
@@ -538,7 +544,10 @@ export class AuditListComponent implements OnDestroy {
     if (this.members.length > 0) return of(this.members);
     return this.membersService.list().pipe(
       map(m => { this.members = m; return m; }),
-      catchError(() => of([] as TenantMember[])),
+      catchError(err => {
+        console.warn('[audit-list] failed to load members', err?.status);
+        return of([] as TenantMember[]);
+      }),
     );
   }
 

@@ -193,7 +193,10 @@ export class EngagementsViewComponent implements OnInit, OnDestroy {
       switchMap(() =>
         this.sowService.listScope(this.engagementId).pipe(
           map(assets => ({ state: 'ready' as ScopeState, assets, total: assets.length })),
-          catchError(() => of({ state: 'error' as ScopeState, assets: [] as Asset[], total: 0 })),
+          catchError(err => {
+            console.error('[engagement-view] failed to load scope', err?.status);
+            return of({ state: 'error' as ScopeState, assets: [] as Asset[], total: 0 });
+          }),
         ),
       ),
     );
@@ -266,13 +269,20 @@ export class EngagementsViewComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     forkJoin({
-      findings: this.findingsService.list(eng.id).pipe(catchError(() => of([] as Finding[]))),
-      scope: this.sowService.listScope(eng.id).pipe(catchError(() => of([] as Asset[]))),
+      findings: this.findingsService.list(eng.id).pipe(catchError(err => {
+        console.warn('[engagement-view] report: failed to load findings', err?.status);
+        return of([] as Finding[]);
+      })),
+      scope: this.sowService.listScope(eng.id).pipe(catchError(err => {
+        console.warn('[engagement-view] report: failed to load scope', err?.status);
+        return of([] as Asset[]);
+      })),
     }).subscribe({
       next: async ({ findings, scope }) => {
         try {
           await this.reportService.generate(eng, findings, scope);
-        } catch {
+        } catch (err) {
+          console.error('[engagement-view] report generation failed', err);
           this.notify.error('Failed to generate report.');
         }
         this.generatingReport = false;
@@ -325,8 +335,14 @@ export class EngagementsViewComponent implements OnInit, OnDestroy {
   private renderCharts(): void {
     this.destroyCharts();
     this.chartSub = forkJoin({
-      findings: this.findingsService.list(this.engagementId).pipe(catchError(() => of([] as Finding[]))),
-      scope: this.sowService.listScope(this.engagementId).pipe(catchError(() => of([] as Asset[]))),
+      findings: this.findingsService.list(this.engagementId).pipe(catchError(err => {
+        console.warn('[engagement-view] charts: failed to load findings', err?.status);
+        return of([] as Finding[]);
+      })),
+      scope: this.sowService.listScope(this.engagementId).pipe(catchError(err => {
+        console.warn('[engagement-view] charts: failed to load scope', err?.status);
+        return of([] as Asset[]);
+      })),
     }).subscribe(({ findings, scope }) => {
       this.summaryTotal = findings.length;
       this.cdr.detectChanges();

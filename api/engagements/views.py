@@ -550,6 +550,7 @@ class EngagementViewSet(AuditedModelViewSet):
                 id=finding_id,
             )
         except Finding.DoesNotExist:
+            logger.debug("Finding not found: id=%s engagement=%s", finding_id, pk)
             return None
 
     def _finding_retrieve(self, request, pk, finding_id):
@@ -771,6 +772,7 @@ class EngagementViewSet(AuditedModelViewSet):
                 pk=sample_id, tenant=request.tenant, engagement=engagement,
             )
         except MalwareSample.DoesNotExist:
+            logger.warning("Sample not found: id=%s engagement=%s", sample_id, pk)
             return Response(
                 {'detail': 'Sample not found.'},
                 status=status.HTTP_404_NOT_FOUND,
@@ -827,6 +829,7 @@ class EngagementViewSet(AuditedModelViewSet):
                 tenant=request.tenant,
             )
         except Finding.DoesNotExist:
+            logger.warning("Finding not found for execute: id=%s engagement=%s", finding_id, pk)
             return Response({'detail': 'Finding not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         if not finding.analysis_check_key:
@@ -957,6 +960,7 @@ class EngagementViewSet(AuditedModelViewSet):
                 is_active=True,
             )
         except (TenantMember.DoesNotExist, ValueError):
+            logger.warning("Stakeholder create failed: member not found id=%s tenant=%s", member_id, request.tenant.slug)
             return Response(
                 {'detail': 'Member not found or not active in this tenant.'},
                 status=status.HTTP_400_BAD_REQUEST,
