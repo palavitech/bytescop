@@ -65,6 +65,12 @@ ANALYSIS_CHECKS = [
         'description_placeholder': '*Pending execution.* Click **Execute** to extract embedded resources, version strings, PDB paths, and manifest info.',
         'analysis_type': 'static',
     },
+    {
+        'key': 'compile_time',
+        'title': 'Compile Time',
+        'description_placeholder': '*Pending execution.* Click **Execute** to extract and analyse the PE compile timestamp for anomalies or timestomping.',
+        'analysis_type': 'static',
+    },
 ]
 
 # Keyed lookup for fast access by check key.

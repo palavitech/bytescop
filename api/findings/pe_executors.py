@@ -559,6 +559,92 @@ def execute_pe_packer_detection(storage, sample, finding):
 # PE Resources & Version Info executor
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Compile Time executor
+# ---------------------------------------------------------------------------
+
+def execute_compile_time(storage, sample, finding):
+    """Extract and analyse the PE compile timestamp for anomalies or timestomping."""
+    data = _read_sample(storage, sample)
+    pe, err = _parse_pe(data)
+    if err:
+        return f'## Compile Time — {sample.original_filename}\n\n{err}'
+
+    filename = sample.original_filename
+    fh = pe.FILE_HEADER
+    timestamp_val = fh.TimeDateStamp
+    now = datetime.now(tz=timezone.utc)
+
+    anomalies = []
+
+    # Zero / null timestamp
+    if timestamp_val == 0:
+        compile_time_str = 'Not set (0x00000000)'
+        anomalies.append('Compile timestamp is **zero** — likely stripped or zeroed deliberately')
+    else:
+        try:
+            compile_dt = datetime.fromtimestamp(timestamp_val, tz=timezone.utc)
+            compile_time_str = compile_dt.strftime('%Y-%m-%d %H:%M:%S UTC')
+
+            # Future timestamp
+            if compile_dt > now:
+                anomalies.append(f'Compile time is **in the future** — strong timestomping indicator')
+
+            # Very old (before Windows PE format existed, ~1993)
+            if compile_dt.year < 1993:
+                anomalies.append(f'Compile time predates the PE format (year {compile_dt.year}) — likely tampered')
+
+            # Epoch-like (1970)
+            if compile_dt.year == 1970:
+                anomalies.append('Compile time is near Unix epoch (1970) — likely reset or default value')
+
+            # Delphi/Borland epoch (June 19, 1992)
+            if compile_dt.year == 1992 and compile_dt.month == 6 and compile_dt.day == 19:
+                anomalies.append('Compile time matches Delphi/Borland epoch (1992-06-19) — likely compiled with Delphi or Borland toolchain')
+
+        except (OSError, ValueError, OverflowError):
+            compile_time_str = f'Invalid (0x{timestamp_val:08X})'
+            anomalies.append('Timestamp value cannot be parsed as a valid date — corrupt or tampered')
+
+    # Check debug directory timestamps for mismatches
+    debug_timestamps = []
+    if hasattr(pe, 'DIRECTORY_ENTRY_DEBUG'):
+        for dbg in pe.DIRECTORY_ENTRY_DEBUG:
+            dbg_ts = dbg.struct.TimeDateStamp
+            if dbg_ts and dbg_ts != timestamp_val:
+                try:
+                    dbg_dt = datetime.fromtimestamp(dbg_ts, tz=timezone.utc)
+                    debug_timestamps.append(dbg_dt.strftime('%Y-%m-%d %H:%M:%S UTC'))
+                except (OSError, ValueError, OverflowError):
+                    debug_timestamps.append(f'0x{dbg_ts:08X}')
+
+    if debug_timestamps:
+        anomalies.append(
+            f'Debug directory timestamp differs from PE header — '
+            f'debug: {", ".join(debug_timestamps)}. '
+            f'This may indicate timestomping (header was altered but debug info was not)'
+        )
+
+    # Build markdown
+    md = (
+        f'## Compile Time — {filename}\n\n'
+        f'| Property | Value |\n'
+        f'|----------|-------|\n'
+        f'| Raw Value | `0x{timestamp_val:08X}` |\n'
+        f'| Compile Time | {compile_time_str} |\n'
+    )
+
+    if anomalies:
+        md += '\n### Anomalies\n\n'
+        for a in anomalies:
+            md += f'- {a}\n'
+    else:
+        md += '\nNo anomalies detected.\n'
+
+    pe.close()
+    return md
+
+
 RESOURCE_TYPE_NAMES = {
     1: 'RT_CURSOR', 2: 'RT_BITMAP', 3: 'RT_ICON', 4: 'RT_MENU',
     5: 'RT_DIALOG', 6: 'RT_STRING', 7: 'RT_FONTDIR', 8: 'RT_FONT',

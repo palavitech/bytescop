@@ -184,6 +184,7 @@ from .pe_executors import (
     execute_pe_exports,
     execute_pe_packer_detection,
     execute_pe_resources,
+    execute_compile_time,
 )
 
 # Registry mapping check key → executor function.
@@ -198,4 +199,5 @@ EXECUTORS = {
     'pe_exports': execute_pe_exports,
     'pe_packer_detection': execute_pe_packer_detection,
     'pe_resources': execute_pe_resources,
+    'compile_time': execute_compile_time,
 }
