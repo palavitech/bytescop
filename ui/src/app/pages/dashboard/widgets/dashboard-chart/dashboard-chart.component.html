@@ -2,7 +2,8 @@
   <div class="bc-cardInner p-3">
     <h6 class="bc-widgetTitle mb-3">{{ widget.title }}</h6>
     @if (hasData) {
-      <div class="bc-chartWrap bc-chartWrap--sm">
+      <div class="bc-chartWrap" [class.bc-chartWrap--sm]="!chartHeight"
+           [style.height.px]="chartHeight">
         <canvas #canvas></canvas>
       </div>
     } @else {
