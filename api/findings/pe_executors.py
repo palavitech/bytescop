@@ -520,6 +520,21 @@ def execute_pe_packer_detection(storage, sample, finding):
         if rsize > 0 and vsize > rsize * 5:
             indicators.append(f'Section `{name}` virtual size ({vsize:,}) is {vsize // rsize}x raw size ({rsize:,}) — runtime unpacking')
 
+    # Check for overlay (data appended past the last PE section)
+    overlay_offset = pe.get_overlay_data_start_offset()
+    if overlay_offset is not None:
+        overlay_size = len(data) - overlay_offset
+        if overlay_size > 0:
+            pct = overlay_size / len(data) * 100
+            indicators.append(
+                f'Overlay detected: {overlay_size:,} bytes ({pct:.1f}% of file) '
+                f'appended after last PE section — common in packed or bundled executables'
+            )
+            overlay_data = data[overlay_offset:overlay_offset + min(overlay_size, 4096)]
+            overlay_ent = _entropy(overlay_data)
+            if overlay_ent > 7.0:
+                indicators.append(f'Overlay entropy is **{overlay_ent:.2f}** — likely compressed or encrypted payload')
+
     # Build report
     md = f'## Packer Detection — {filename}\n\n'
     md += f'**Overall Entropy:** {overall_entropy:.2f} / 8.0\n\n'
