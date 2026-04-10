@@ -15,8 +15,8 @@ try:
 except ImportError:
     _HAS_MAGIC = False
 
-# Match printable ASCII runs of 4+ chars in raw bytes.
-_STRINGS_RE = re.compile(rb'[\x20-\x7e]{4,}')
+# Match printable ASCII runs of 6+ chars in raw bytes.
+_STRINGS_RE = re.compile(rb'[\x20-\x7e]{6,}')
 
 MAX_STRINGS = 500
 MAX_STRING_LENGTH = 200
@@ -52,7 +52,7 @@ def execute_hash_identification(storage, sample, finding):
 
 
 def execute_extract_strings(storage, sample, finding):
-    """Extract printable ASCII strings (> 4 chars) from the sample file."""
+    """Extract printable ASCII strings (> 6 chars) from the sample file."""
     f = storage.open(sample.storage_uri)
     try:
         data = f.read()
@@ -69,7 +69,7 @@ def execute_extract_strings(storage, sample, finding):
         lines = '\n'.join(s[:MAX_STRING_LENGTH] for s in display_strings)
         description = (
             f'## Extracted Strings — {filename}\n\n'
-            f'Found **{len(strings)}** printable strings (> 4 characters).'
+            f'Found **{len(strings)}** printable strings (> 6 characters).'
         )
         if truncated:
             description += f' Showing first {MAX_STRINGS}.'

@@ -1605,13 +1605,13 @@ body.bc-sidebar-collapsed .bc-navLink.active {
 
 .bc-md code {
   color: rgba(210, 224, 255, .92);
+  font-size: inherit;
 }
 
 .bc-md table {
   width: 100%;
   border-collapse: collapse;
   margin: 0 0 12px 0;
-  font-size: .92em;
 }
 
 .bc-md th {
