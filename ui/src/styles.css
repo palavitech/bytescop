@@ -1577,6 +1577,13 @@ body.bc-sidebar-collapsed .bc-navLink.active {
 
 /* ===== Markdown rendered content (.bc-md) — global so [innerHTML] picks it up ===== */
 
+.bc-md :where(h1, h2, h3, h4, h5, h6) {
+  font-family: 'Orbitron', sans-serif;
+  color: var(--bc-accent, #00ffb3);
+  letter-spacing: .04em;
+  margin: 0 0 10px 0;
+}
+
 .bc-md :where(p, ul, ol, pre, blockquote) {
   margin: 0 0 12px 0;
 }
@@ -1595,6 +1602,40 @@ body.bc-sidebar-collapsed .bc-navLink.active {
 
 .bc-md code {
   color: rgba(210, 224, 255, .92);
+}
+
+.bc-md table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 12px 0;
+  font-size: .92em;
+}
+
+.bc-md th {
+  text-align: left;
+  padding: 6px 10px;
+  color: var(--bc-accent, #00ffb3);
+  font-weight: 600;
+  border-bottom: 2px solid rgba(0, 255, 179, .25);
+  white-space: nowrap;
+}
+
+.bc-md td {
+  padding: 5px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+
+.bc-md td code,
+.bc-md td strong {
+  white-space: nowrap;
+}
+
+.bc-md td:last-child {
+  width: 100%;
+}
+
+.bc-md tbody tr:hover {
+  background: rgba(0, 183, 255, .05);
 }
 
 .bc-mdImg {

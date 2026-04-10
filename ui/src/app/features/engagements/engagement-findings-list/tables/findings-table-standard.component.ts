@@ -4,12 +4,13 @@ import { RouterLink } from '@angular/router';
 
 import { Finding, FINDING_SEVERITY_LABELS, FINDING_STATUS_LABELS, FindingSeverity, FindingStatus } from '../../models/finding.model';
 import { BcDatePipe } from '../../../../components/pipes/bc-date.pipe';
+import { MarkdownPipe } from '../../../../components/pipes/markdown.pipe';
 
 @Component({
   selector: 'app-findings-table-standard',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink, BcDatePipe],
+  imports: [CommonModule, RouterLink, BcDatePipe, MarkdownPipe],
   template: `
     <div class="table-responsive">
       <table class="table table-dark mb-0 align-middle bc-table">
@@ -42,7 +43,7 @@ import { BcDatePipe } from '../../../../components/pipes/bc-date.pipe';
             </tr>
             <tr *ngIf="expandedId === f.id" class="bc-expandRow">
               <td [attr.colspan]="6" class="p-0">
-                <div class="bc-expandPanel">{{ f.description_md || 'No description.' }}</div>
+                <div class="bc-expandPanel bc-md" [innerHTML]="f.description_md ? (f.description_md | markdown) : 'No description.'"></div>
               </td>
             </tr>
           </ng-container>
@@ -69,7 +70,7 @@ import { BcDatePipe } from '../../../../components/pipes/bc-date.pipe';
       padding: 8px 14px;
       font-size: 12px;
       line-height: 1.55;
-      white-space: pre-wrap;
+
       color: rgba(201, 212, 255, .78);
       background: rgba(0, 183, 255, .04);
       border-top: 1px solid rgba(0, 183, 255, .10);

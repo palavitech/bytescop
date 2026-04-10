@@ -381,32 +381,38 @@ def execute_pe_imports(storage, sample, finding):
         all_imports[dll_name] = funcs
 
     # Build markdown
+    total_funcs = sum(len(v) for v in all_imports.values())
     md = f'## PE Imports & Suspicious APIs — {filename}\n\n'
-
-    # Suspicious APIs section first
+    md += f'**{len(all_imports)}** DLLs, **{total_funcs}** imported functions'
     if flagged:
         total_flagged = sum(len(v) for v in flagged.values())
-        md += f'### Suspicious API Calls ({total_flagged} flagged)\n\n'
-        md += '| Category | DLL | Function | Description |\n'
-        md += '|----------|-----|----------|-------------|\n'
+        md += f', **{total_flagged}** flagged as suspicious'
+    md += '\n\n'
 
+    # Suspicious APIs — single table with category grouping rows
+    if flagged:
+        md += '---\n\n### Suspicious APIs\n\n'
+        md += '| Function | DLL | Description |\n'
+        md += '|----------|-----|-------------|\n'
         for category in sorted(flagged.keys()):
-            for dll, func, desc in sorted(flagged[category]):
-                md += f'| {category} | {dll} | `{func}` | {desc} |\n'
-
+            items = sorted(flagged[category])
+            md += f'| **{category}** | | |\n'
+            for dll, func, desc in items:
+                md += f'| `{func}` | {dll} | {desc} |\n'
         md += '\n'
     else:
-        md += '### Suspicious API Calls\n\nNo known suspicious APIs detected in imports.\n\n'
+        md += '---\n\n### Suspicious APIs\n\nNo known suspicious APIs detected.\n\n'
 
-    # Full import listing
-    total_funcs = sum(len(v) for v in all_imports.values())
-    md += f'### Full Import Table ({len(all_imports)} DLLs, {total_funcs} functions)\n\n'
+    # Full import table — one row per DLL
+    md += '---\n\n### Import Table\n\n'
+    md += '| DLL | Count | Key Functions |\n'
+    md += '|-----|------:|---------------|\n'
     for dll_name in sorted(all_imports.keys()):
         funcs = all_imports[dll_name]
-        func_list = ', '.join(f'`{f}`' for f in funcs[:50])
-        if len(funcs) > 50:
-            func_list += f' ... and {len(funcs) - 50} more'
-        md += f'**{dll_name}** ({len(funcs)}): {func_list}\n\n'
+        preview = ', '.join(funcs[:4])
+        if len(funcs) > 4:
+            preview += f' … +{len(funcs) - 4} more'
+        md += f'| **{dll_name}** | {len(funcs)} | {preview} |\n'
 
     pe.close()
     return md
