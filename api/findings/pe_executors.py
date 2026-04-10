@@ -335,6 +335,18 @@ def execute_pe_sections(storage, sample, finding):
         if vsize > 0 and rsize == 0:
             anomalies.append(f'Section `{name}` has zero raw size but virtual size {vsize:,} — runtime unpacking')
 
+    # Overlay check
+    overlay_offset = pe.get_overlay_data_start_offset()
+    if overlay_offset is not None:
+        overlay_size = len(data) - overlay_offset
+        if overlay_size > 0:
+            pct = overlay_size / len(data) * 100
+            overlay_ent = _entropy(data[overlay_offset:overlay_offset + min(overlay_size, 4096)])
+            note = f'Overlay detected: {overlay_size:,} bytes ({pct:.1f}% of file) appended after last section'
+            if overlay_ent > 7.0:
+                note += f' — high entropy ({overlay_ent:.2f}), likely compressed or encrypted'
+            anomalies.append(note)
+
     if anomalies:
         md += '\n### Anomalies\n\n'
         for a in anomalies:
