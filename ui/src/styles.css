@@ -1584,6 +1584,9 @@ body.bc-sidebar-collapsed .bc-navLink.active {
   margin: 0 0 10px 0;
 }
 
+.bc-md h2 { font-size: 1rem; }
+.bc-md h3 { font-size: .88rem; }
+
 .bc-md :where(p, ul, ol, pre, blockquote) {
   margin: 0 0 12px 0;
 }
