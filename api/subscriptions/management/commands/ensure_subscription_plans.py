@@ -19,12 +19,12 @@ DEFAULT_PLANS = [
     {
         'code': 'free',
         'name': 'Free',
-        'description': 'Free plan — no limits.',
+        'description': 'Free plan — 5 users per workspace, everything else unlimited.',
         'is_default': True,
         'is_active': True,
         'display_order': 0,
         # Limits (0 = unlimited)
-        'max_members': 0,
+        'max_members': 5,
         'max_clients': 0,
         'max_assets': 0,
         'max_engagements': 0,
