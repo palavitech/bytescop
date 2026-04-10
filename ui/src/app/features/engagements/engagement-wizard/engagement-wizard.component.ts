@@ -150,7 +150,7 @@ export class EngagementWizardComponent {
   private initEngForm(): void {
     this.engForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(200)]],
-      start_date: ['', Validators.required],
+      start_date: [new Date().toISOString().slice(0, 10), Validators.required],
       end_date: [''],
       description: ['', Validators.maxLength(5000)],
       notes: ['', Validators.maxLength(5000)],
@@ -401,7 +401,6 @@ export class EngagementWizardComponent {
       next: (sample) => {
         this.uploadedSamples.update((list) => [...list, sample]);
         this.sampleUploading.set(false);
-        this.notify.success(`Sample "${sample.original_filename}" uploaded.`);
       },
       error: (err) => {
         this.sampleUploading.set(false);
