@@ -11,7 +11,6 @@ BytesCop is source-available. Full source code is publicly accessible for review
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
 - [Configuration](#configuration)
-- [Community Edition Limits](#community-edition-limits)
 - [Logs](#logs)
 - [Data Persistence](#data-persistence)
 - [Development](#development)
@@ -129,19 +128,6 @@ docker compose restart nginx
 
 HTTP (port 80) automatically redirects to HTTPS (port 443).
 
-## Community Edition Limits
-
-| Resource | Limit |
-|----------|-------|
-| Workspaces | 1 |
-| Users per workspace | 3 |
-| Clients | 5 |
-| Assets | 10 |
-| Engagements | 3 |
-| Findings per engagement | 20 |
-| Images per finding | 5 |
-
-Enterprise licenses remove all limits and unlock additional features (RBAC, audit trail, data export, custom branding).
 
 ## Logs
 
