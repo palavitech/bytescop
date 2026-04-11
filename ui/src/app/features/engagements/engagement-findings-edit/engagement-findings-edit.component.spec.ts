@@ -13,6 +13,7 @@ import { NotificationService } from '../../../services/core/notify/notification.
 import { Engagement } from '../models/engagement.model';
 import { Finding } from '../models/finding.model';
 import { Asset } from '../../assets/models/asset.model';
+import { UserProfileService } from '../../../services/core/profile/user-profile.service';
 
 const MOCK_ENGAGEMENT: Engagement = {
   id: 'eng-1',
@@ -87,12 +88,13 @@ const MOCK_ASSETS: Asset[] = [
 function buildTestBed(routeParams: Record<string, string> = { id: 'eng-1', findingId: 'find-1' }) {
   const paramMap$ = new BehaviorSubject(convertToParamMap(routeParams));
   const locationSpy = jasmine.createSpyObj('Location', ['back']);
-  const engSvc = jasmine.createSpyObj('EngagementsService', ['getById']);
+  const engSvc = jasmine.createSpyObj('EngagementsService', ['getById', 'listSamples']);
   const findSvc = jasmine.createSpyObj('FindingsService', ['getById', 'update', 'uploadImage']);
   const sowSvc = jasmine.createSpyObj('SowService', ['listScope']);
   const notifySpy = jasmine.createSpyObj('NotificationService', ['success', 'error']);
 
   engSvc.getById.and.returnValue(of(MOCK_ENGAGEMENT));
+  engSvc.listSamples.and.returnValue(of([]));
   findSvc.getById.and.returnValue(of(MOCK_FINDING));
   sowSvc.listScope.and.returnValue(of(MOCK_ASSETS));
 
@@ -1218,6 +1220,352 @@ describe('EngagementFindingsEditComponent', () => {
 
     // cweSearch should remain empty since CWE-999 is not in catalog
     expect(component.cweSearch).toBe('');
+  }));
+
+  // --- isDirty ---
+
+  it('isDirty() returns false when form is pristine', () => {
+    expect(component.isDirty()).toBe(false);
+  });
+
+  it('isDirty() returns true when form is dirty and not saved', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    component.form.markAsDirty();
+    expect(component.isDirty()).toBe(true);
+  }));
+
+  it('isDirty() returns false after save completes', fakeAsync(() => {
+    findingsService.update.and.returnValue(of(MOCK_FINDING));
+    fixture.detectChanges();
+    tick();
+
+    component.form.markAsDirty();
+    expect(component.isDirty()).toBe(true);
+
+    component.save('eng-1', 'find-1');
+    tick();
+
+    expect(component.isDirty()).toBe(false);
+  }));
+
+  // --- onMalwareFindingSubmitted ---
+
+  it('onMalwareFindingSubmitted() calls findingsService.update and navigates on success', fakeAsync(() => {
+    findingsService.update.and.returnValue(of(MOCK_FINDING));
+    fixture.detectChanges();
+
+    const payload = {
+      title: 'Malware Finding Title',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '# Malware desc',
+      is_draft: false,
+    };
+    component.onMalwareFindingSubmitted(payload);
+    tick();
+
+    expect(findingsService.update).toHaveBeenCalledWith('eng-1', 'find-1', jasmine.objectContaining({
+      title: 'Malware Finding Title',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '# Malware desc',
+      is_draft: false,
+    }));
+    expect(router.navigate).toHaveBeenCalledWith(['/engagements', 'eng-1', 'findings', 'find-1']);
+  }));
+
+  it('onMalwareFindingSubmitted() shows error on API failure', fakeAsync(() => {
+    findingsService.update.and.returnValue(throwError(() => ({ error: { detail: 'Sample not found' } })));
+    fixture.detectChanges();
+
+    const payload = {
+      title: 'Malware Finding Title',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '',
+      is_draft: false,
+    };
+    component.onMalwareFindingSubmitted(payload);
+    tick();
+
+    expect(notify.error).toHaveBeenCalledWith('Sample not found');
+    expect(component.busy).toBe(false);
+  }));
+
+  it('onMalwareFindingSubmitted() shows fallback error when no detail or message', fakeAsync(() => {
+    findingsService.update.and.returnValue(throwError(() => ({ error: {} })));
+    fixture.detectChanges();
+
+    const payload = {
+      title: 'Malware Finding Title',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '',
+      is_draft: false,
+    };
+    component.onMalwareFindingSubmitted(payload);
+    tick();
+
+    expect(notify.error).toHaveBeenCalledWith('Update failed.');
+    expect(component.busy).toBe(false);
+  }));
+
+  it('onMalwareFindingSubmitted() does nothing when engagementId is missing', fakeAsync(async () => {
+    const ctx2 = buildTestBed({});
+    await TestBed.resetTestingModule().configureTestingModule({
+      imports: [EngagementFindingsEditComponent],
+      providers: ctx2.providers,
+    }).compileComponents();
+    const fix2 = TestBed.createComponent(EngagementFindingsEditComponent);
+    const comp2 = fix2.componentInstance;
+
+    const payload = {
+      title: 'Malware Finding',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '',
+      is_draft: false,
+    };
+    comp2.onMalwareFindingSubmitted(payload);
+    tick();
+
+    expect(ctx2.findSvc.update).not.toHaveBeenCalled();
+  }));
+
+  it('onMalwareFindingSubmitted() suppresses notification on 402 error', fakeAsync(() => {
+    findingsService.update.and.returnValue(throwError(() => ({ status: 402, error: { detail: 'Payment required' } })));
+    fixture.detectChanges();
+
+    const payload = {
+      title: 'Malware Finding Title',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '',
+      is_draft: false,
+    };
+    component.onMalwareFindingSubmitted(payload);
+    tick();
+
+    expect(notify.error).not.toHaveBeenCalled();
+    expect(component.busy).toBe(false);
+  }));
+
+  it('onMalwareFindingSubmitted() resets busy to false after error', fakeAsync(() => {
+    findingsService.update.and.returnValue(throwError(() => ({ error: { detail: 'fail' } })));
+    fixture.detectChanges();
+
+    expect(component.busy).toBe(false);
+    const payload = {
+      title: 'Malware Finding',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '',
+      is_draft: false,
+    };
+    component.onMalwareFindingSubmitted(payload);
+    tick();
+    expect(component.busy).toBe(false);
+  }));
+
+  // --- onMalwareDirtyChange ---
+
+  it('onMalwareDirtyChange(true) marks form dirty', () => {
+    component.form.markAsPristine();
+    component.onMalwareDirtyChange(true);
+    expect(component.form.dirty).toBe(true);
+  });
+
+  it('onMalwareDirtyChange(false) does not mark form dirty', () => {
+    component.form.markAsPristine();
+    component.onMalwareDirtyChange(false);
+    expect(component.form.dirty).toBe(false);
+  });
+
+  // --- save() 402 suppression ---
+
+  it('save() suppresses notification on 402 error', fakeAsync(() => {
+    findingsService.update.and.returnValue(throwError(() => ({ status: 402, error: { detail: 'Payment required' } })));
+    fixture.detectChanges();
+    tick();
+
+    component.save('eng-1', 'find-1');
+    tick();
+
+    expect(notify.error).not.toHaveBeenCalled();
+  }));
+
+  // --- scrollCweHighlightIntoView ---
+
+  it('scrollCweHighlightIntoView does not throw with detached element', fakeAsync(() => {
+    const inputEl = document.createElement('input');
+    component.cweHighlightIndex = 0;
+
+    expect(() => {
+      (component as any).scrollCweHighlightIntoView(inputEl);
+      tick(16); // requestAnimationFrame
+    }).not.toThrow();
+  }));
+
+  // --- ngAfterViewInit malware flow ---
+
+  it('ngAfterViewInit sets isMalwareFlow to true for malware_analysis engagement', fakeAsync(() => {
+    engagementsService.getById.and.returnValue(of({
+      ...MOCK_ENGAGEMENT,
+      engagement_type: 'malware_analysis',
+    }));
+
+    fixture.detectChanges();
+    component.ngAfterViewInit();
+    tick();
+
+    expect(component.isMalwareFlow).toBe(true);
+  }));
+
+  it('ngAfterViewInit sets isMalwareFlow to false for general engagement', fakeAsync(() => {
+    fixture.detectChanges();
+    component.ngAfterViewInit();
+    tick();
+
+    expect(component.isMalwareFlow).toBe(false);
+  }));
+
+  // --- ngAfterViewInit populates malwareInitialData ---
+
+  it('ngAfterViewInit populates malwareInitialData when finding has sample_id', fakeAsync(() => {
+    findingsService.getById.and.returnValue(of({
+      ...MOCK_FINDING,
+      sample_id: 'sample-42',
+      analysis_type: 'dynamic',
+    }));
+    fixture.detectChanges();
+    component.ngAfterViewInit();
+    tick();
+
+    expect(component.malwareInitialData).toEqual(jasmine.objectContaining({
+      sample_id: 'sample-42',
+      analysis_type: 'dynamic',
+    }));
+  }));
+
+  it('ngAfterViewInit does not set malwareInitialData when finding has no sample_id', fakeAsync(() => {
+    fixture.detectChanges();
+    component.ngAfterViewInit();
+    tick();
+
+    expect(component.malwareInitialData).toBeNull();
+  }));
+
+  // --- ngOnInit CWE display from catalog race ---
+
+  it('ngOnInit populates cweSearch from cweCatalog when finding has cwe_id', fakeAsync(() => {
+    // Set cweCatalog before finding arrives
+    component.cweCatalog = [
+      { code: 'CWE-89', name: 'SQL Injection', description: 'SQLi' },
+    ];
+    fixture.detectChanges();
+    tick();
+
+    expect(component.cweSearch).toBe('CWE-89 — SQL Injection');
+  }));
+
+  it('ngOnInit does not set cweSearch when cwe_id has no catalog match', fakeAsync(() => {
+    component.cweCatalog = [
+      { code: 'CWE-79', name: 'XSS', description: '' },
+    ];
+    component.cweSearch = '';
+    fixture.detectChanges();
+    tick();
+
+    // CWE-89 from MOCK_FINDING is not in catalog, so search should be empty
+    expect(component.cweSearch).toBe('');
+  }));
+
+  // --- uploadImageToApi image limit enforcement ---
+
+  it('uploadImageToApi rejects when image limit is reached', fakeAsync(async () => {
+    fixture.detectChanges();
+    tick();
+
+    const profileSvc = TestBed.inject(UserProfileService);
+    spyOn(profileSvc, 'currentSubscription').and.returnValue({
+      plan_name: 'community',
+      limits: { max_images_per_finding: 1 },
+    } as any);
+
+    // Ensure no Crepe editor so readDescriptionMarkdown returns form value
+    (component as any).descCrepe = undefined;
+    (component as any).recCrepe = undefined;
+
+    // Set form value AFTER detectChanges so ngOnInit finding patch doesn't overwrite
+    component.form.patchValue({
+      description_md: '![img](/api/attachments/12345678-1234-1234-1234-123456789abc/content/img.png)',
+    });
+
+    const file = new File(['px'], 'img.png', { type: 'image/png' });
+    await expectAsync((component as any).uploadImageToApi(file)).toBeRejectedWithError('Image limit reached');
+    expect(notify.error).toHaveBeenCalledWith(jasmine.stringMatching(/Image limit reached/));
+  }));
+
+  it('uploadImageToApi proceeds when image count is under limit', fakeAsync(async () => {
+    fixture.detectChanges();
+    tick();
+
+    const profileSvc = TestBed.inject(UserProfileService);
+    spyOn(profileSvc, 'currentSubscription').and.returnValue({
+      plan_name: 'community',
+      limits: { max_images_per_finding: 5 },
+    } as any);
+
+    // Ensure no Crepe editor so readDescriptionMarkdown returns form value
+    (component as any).descCrepe = undefined;
+    (component as any).recCrepe = undefined;
+
+    findingsService.uploadImage.and.returnValue(of({ token: 't', url: 'https://cdn.test/img.png' }));
+
+    const file = new File(['px'], 'img.png', { type: 'image/png' });
+    const result = await (component as any).uploadImageToApi(file);
+    expect(result).toBe('https://cdn.test/img.png');
+  }));
+
+  // --- save() publish sets isDraft$ to false ---
+
+  it('save() with publish=true updates isDraft$ to false', fakeAsync(() => {
+    const draftFinding: Finding = { ...MOCK_FINDING, is_draft: true };
+    findingsService.getById.and.returnValue(of(draftFinding));
+    findingsService.update.and.returnValue(of({ ...draftFinding, is_draft: false }));
+    fixture.detectChanges();
+    tick();
+
+    let isDraft: boolean | undefined;
+    component.isDraft$.subscribe(v => isDraft = v);
+    expect(isDraft).toBe(true);
+
+    component.save('eng-1', 'find-1', true);
+    tick();
+
+    expect(isDraft).toBe(false);
+  }));
+
+  // --- onBeforeUnload ---
+
+  it('onBeforeUnload calls preventDefault when form is dirty', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    component.form.markAsDirty();
+    const event = new Event('beforeunload') as BeforeUnloadEvent;
+    spyOn(event, 'preventDefault');
+    component.onBeforeUnload(event);
+    expect(event.preventDefault).toHaveBeenCalled();
+  }));
+
+  it('onBeforeUnload does not call preventDefault when form is clean', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    const event = new Event('beforeunload') as BeforeUnloadEvent;
+    spyOn(event, 'preventDefault');
+    component.onBeforeUnload(event);
+    expect(event.preventDefault).not.toHaveBeenCalled();
   }));
 });
 

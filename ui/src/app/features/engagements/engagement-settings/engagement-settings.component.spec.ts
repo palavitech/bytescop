@@ -595,6 +595,143 @@ describe('EngagementSettingsComponent', () => {
     expect(notifySpy.error).toHaveBeenCalledWith('Failed to remove member.');
   }));
 
+  // --- saveNewStakeholder (no role) ---
+
+  it('saveNewStakeholder() shows error when no role selected', () => {
+    component.addStakeholderMemberId = 'mem-2';
+    component.addStakeholderRole = '';
+    component.saveNewStakeholder();
+    expect(notifySpy.error).toHaveBeenCalledWith('Please select a position.');
+    expect(engagementsServiceSpy.createStakeholder).not.toHaveBeenCalled();
+  });
+
+  // --- getPositionsForMember ---
+
+  it('getPositionsForMember() returns all roles when member not found', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    const result = component.getPositionsForMember('non-existent');
+    expect(result.length).toBe(component.allRoles.length);
+  }));
+
+  it('getPositionsForMember() returns all roles for owner', fakeAsync(() => {
+    const ownerMember: TenantMember = {
+      ...MOCK_MEMBER,
+      id: 'mem-owner',
+      role: 'owner',
+      groups: [],
+    };
+    component.availableMembers.set([ownerMember]);
+    fixture.detectChanges();
+    tick();
+
+    const result = component.getPositionsForMember('mem-owner');
+    expect(result.length).toBe(component.allRoles.length);
+  }));
+
+  it('getPositionsForMember() returns analyst positions for Analysts group', fakeAsync(() => {
+    const analystMember: TenantMember = {
+      ...MOCK_MEMBER,
+      id: 'mem-analyst',
+      role: 'MEMBER',
+      groups: [{ id: 'g1', name: 'Analysts', is_default: false }],
+    };
+    component.availableMembers.set([analystMember]);
+    fixture.detectChanges();
+    tick();
+
+    const result = component.getPositionsForMember('mem-analyst');
+    const keys = result.map(r => r.value);
+    expect(keys).toContain('security_engineer');
+    expect(keys).toContain('lead_tester');
+    expect(keys).toContain('qa_reviewer');
+    expect(keys).toContain('technical_lead');
+    expect(keys).not.toContain('account_manager');
+  }));
+
+  it('getPositionsForMember() returns collaborator positions for Collaborators group', fakeAsync(() => {
+    const collabMember: TenantMember = {
+      ...MOCK_MEMBER,
+      id: 'mem-collab',
+      role: 'MEMBER',
+      groups: [{ id: 'g2', name: 'Collaborators', is_default: false }],
+    };
+    component.availableMembers.set([collabMember]);
+    fixture.detectChanges();
+    tick();
+
+    const result = component.getPositionsForMember('mem-collab');
+    const keys = result.map(r => r.value);
+    expect(keys).toContain('account_manager');
+    expect(keys).toContain('project_manager');
+    expect(keys).toContain('client_poc');
+    expect(keys).toContain('observer');
+    expect(keys).not.toContain('security_engineer');
+  }));
+
+  it('getPositionsForMember() returns all roles for Administrators group', fakeAsync(() => {
+    const adminMember: TenantMember = {
+      ...MOCK_MEMBER,
+      id: 'mem-admin',
+      role: 'MEMBER',
+      groups: [{ id: 'g3', name: 'Administrators', is_default: false }],
+    };
+    component.availableMembers.set([adminMember]);
+    fixture.detectChanges();
+    tick();
+
+    const result = component.getPositionsForMember('mem-admin');
+    expect(result.length).toBe(component.allRoles.length);
+  }));
+
+  it('getPositionsForMember() returns all roles when member has no matching groups', fakeAsync(() => {
+    const otherMember: TenantMember = {
+      ...MOCK_MEMBER,
+      id: 'mem-other',
+      role: 'MEMBER',
+      groups: [{ id: 'g4', name: 'SomeOtherGroup', is_default: false }],
+    };
+    component.availableMembers.set([otherMember]);
+    fixture.detectChanges();
+    tick();
+
+    const result = component.getPositionsForMember('mem-other');
+    expect(result.length).toBe(component.allRoles.length);
+  }));
+
+  it('getPositionsForMember() merges Analysts and Collaborators positions', fakeAsync(() => {
+    const dualMember: TenantMember = {
+      ...MOCK_MEMBER,
+      id: 'mem-dual',
+      role: 'MEMBER',
+      groups: [{ id: 'g1', name: 'Analysts', is_default: false }, { id: 'g2', name: 'Collaborators', is_default: false }],
+    };
+    component.availableMembers.set([dualMember]);
+    fixture.detectChanges();
+    tick();
+
+    const result = component.getPositionsForMember('mem-dual');
+    expect(result.length).toBe(component.allRoles.length);
+  }));
+
+  // --- vm$ with multiple setting groups ---
+
+  it('buildViewModel sorts groups by first setting order', fakeAsync(() => {
+    const multiGroupSettings: EngagementSettingDef[] = [
+      { ...MOCK_SETTINGS[0], group: 'Zeta', order: 10 },
+      { ...MOCK_SETTINGS[1], group: 'Alpha', order: 1 },
+    ];
+    engagementsServiceSpy.listSettings.and.returnValue(of(multiGroupSettings));
+    fixture.detectChanges();
+    let result: any;
+    component.vm$.subscribe(vm => (result = vm));
+    tick();
+
+    expect(result.groups.length).toBe(2);
+    expect(result.groups[0].name).toBe('Alpha');
+    expect(result.groups[1].name).toBe('Zeta');
+  }));
+
   // --- Route param fallback ---
 
   it('defaults engagementId to empty string when route param is null', async () => {

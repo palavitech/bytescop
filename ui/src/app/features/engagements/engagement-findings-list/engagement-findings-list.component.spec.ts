@@ -89,9 +89,11 @@ describe('EngagementFindingsListComponent', () => {
   let paramMap$: BehaviorSubject<any>;
 
   beforeEach(async () => {
-    engagementsServiceSpy = jasmine.createSpyObj('EngagementsService', ['getById']);
-    findingsServiceSpy = jasmine.createSpyObj('FindingsService', ['list']);
-    notifySpy = jasmine.createSpyObj('NotificationService', ['success', 'error']);
+    engagementsServiceSpy = jasmine.createSpyObj('EngagementsService', [
+      'getById', 'initializeAnalysis', 'executeFinding',
+    ]);
+    findingsServiceSpy = jasmine.createSpyObj('FindingsService', ['list', 'delete']);
+    notifySpy = jasmine.createSpyObj('NotificationService', ['success', 'error', 'info']);
     locationSpy = jasmine.createSpyObj('Location', ['back']);
 
     engagementsServiceSpy.getById.and.returnValue(of(MOCK_ENGAGEMENT));
@@ -516,5 +518,166 @@ describe('EngagementFindingsListComponent', () => {
     tick();
 
     expect(result.timeBar.label).toBe('1 day remaining');
+  }));
+
+  // --- initializeAnalysis ---
+
+  it('initializeAnalysis() does nothing when engagement is null', () => {
+    component.initializeAnalysis(null);
+    expect(engagementsServiceSpy.initializeAnalysis).not.toHaveBeenCalled();
+  });
+
+  it('initializeAnalysis() refreshes findings when checks are created', fakeAsync(() => {
+    engagementsServiceSpy.initializeAnalysis.and.returnValue(of({ created: 3 }));
+    fixture.detectChanges();
+    tick();
+
+    findingsServiceSpy.list.calls.reset();
+    component.initializeAnalysis(MOCK_ENGAGEMENT);
+    tick();
+
+    expect(engagementsServiceSpy.initializeAnalysis).toHaveBeenCalledWith('eng-1');
+    expect(component.initializingAnalysis).toBe(false);
+    expect(findingsServiceSpy.list).toHaveBeenCalled();
+  }));
+
+  it('initializeAnalysis() shows info when no new checks created', fakeAsync(() => {
+    engagementsServiceSpy.initializeAnalysis.and.returnValue(of({ created: 0 }));
+    fixture.detectChanges();
+    tick();
+
+    component.initializeAnalysis(MOCK_ENGAGEMENT);
+    tick();
+
+    expect(component.initializingAnalysis).toBe(false);
+    expect(notifySpy.error).not.toHaveBeenCalled();
+  }));
+
+  it('initializeAnalysis() shows error on failure', fakeAsync(() => {
+    engagementsServiceSpy.initializeAnalysis.and.returnValue(
+      throwError(() => ({ error: { message: 'No samples uploaded' } })),
+    );
+    fixture.detectChanges();
+    tick();
+
+    component.initializeAnalysis(MOCK_ENGAGEMENT);
+    tick();
+
+    expect(component.initializingAnalysis).toBe(false);
+    expect(notifySpy.error).toHaveBeenCalledWith('No samples uploaded');
+  }));
+
+  it('initializeAnalysis() shows fallback error when no message or detail', fakeAsync(() => {
+    engagementsServiceSpy.initializeAnalysis.and.returnValue(
+      throwError(() => ({})),
+    );
+    fixture.detectChanges();
+    tick();
+
+    component.initializeAnalysis(MOCK_ENGAGEMENT);
+    tick();
+
+    expect(notifySpy.error).toHaveBeenCalledWith('Failed to initialize analysis.');
+  }));
+
+  // --- executeFinding ---
+
+  it('executeFinding() does nothing when engagement is null', () => {
+    component.executeFinding(MOCK_FINDINGS[0], null);
+    expect(engagementsServiceSpy.executeFinding).not.toHaveBeenCalled();
+  });
+
+  it('executeFinding() calls service and schedules refresh on success', fakeAsync(() => {
+    engagementsServiceSpy.executeFinding.and.returnValue(of({ status: 'running' }));
+    fixture.detectChanges();
+    tick();
+
+    findingsServiceSpy.list.calls.reset();
+    component.executeFinding(MOCK_FINDINGS[0], MOCK_ENGAGEMENT);
+    tick();
+
+    expect(engagementsServiceSpy.executeFinding).toHaveBeenCalledWith('eng-1', 'f1');
+
+    // After 3000ms delay, refresh should trigger
+    tick(3000);
+    expect(findingsServiceSpy.list).toHaveBeenCalled();
+  }));
+
+  it('executeFinding() shows error on failure', fakeAsync(() => {
+    engagementsServiceSpy.executeFinding.and.returnValue(
+      throwError(() => ({ error: { detail: 'Not ready' } })),
+    );
+    fixture.detectChanges();
+    tick();
+
+    component.executeFinding(MOCK_FINDINGS[0], MOCK_ENGAGEMENT);
+    tick();
+
+    expect(notifySpy.error).toHaveBeenCalledWith('Not ready');
+  }));
+
+  it('executeFinding() shows fallback error when no detail', fakeAsync(() => {
+    engagementsServiceSpy.executeFinding.and.returnValue(
+      throwError(() => ({})),
+    );
+    fixture.detectChanges();
+    tick();
+
+    component.executeFinding(MOCK_FINDINGS[0], MOCK_ENGAGEMENT);
+    tick();
+
+    expect(notifySpy.error).toHaveBeenCalledWith('Failed to start execution.');
+  }));
+
+  // --- deleteFinding ---
+
+  it('deleteFinding() does nothing when engagement is null', () => {
+    component.deleteFinding(MOCK_FINDINGS[0], null);
+    expect(findingsServiceSpy.delete).not.toHaveBeenCalled();
+  });
+
+  it('deleteFinding() calls service and refreshes on success', fakeAsync(() => {
+    findingsServiceSpy.delete.and.returnValue(of(undefined as any));
+    fixture.detectChanges();
+    tick();
+
+    findingsServiceSpy.list.calls.reset();
+    component.deleteFinding(MOCK_FINDINGS[0], MOCK_ENGAGEMENT);
+    tick();
+
+    expect(findingsServiceSpy.delete).toHaveBeenCalledWith('eng-1', 'f1');
+    expect(findingsServiceSpy.list).toHaveBeenCalled();
+  }));
+
+  it('deleteFinding() shows error on failure', fakeAsync(() => {
+    findingsServiceSpy.delete.and.returnValue(
+      throwError(() => ({ error: { message: 'Cannot delete' } })),
+    );
+    fixture.detectChanges();
+    tick();
+
+    component.deleteFinding(MOCK_FINDINGS[0], MOCK_ENGAGEMENT);
+    tick();
+
+    expect(notifySpy.error).toHaveBeenCalledWith('Cannot delete');
+  }));
+
+  // --- ngOnDestroy ---
+
+  it('ngOnDestroy() clears pending refresh timer', fakeAsync(() => {
+    engagementsServiceSpy.executeFinding.and.returnValue(of({ status: 'running' }));
+    fixture.detectChanges();
+    tick();
+
+    component.executeFinding(MOCK_FINDINGS[0], MOCK_ENGAGEMENT);
+    tick();
+
+    // Destroy before the 3000ms timer fires
+    findingsServiceSpy.list.calls.reset();
+    component.ngOnDestroy();
+    tick(3000);
+
+    // Refresh should NOT have been triggered since we destroyed
+    expect(findingsServiceSpy.list).not.toHaveBeenCalled();
   }));
 });

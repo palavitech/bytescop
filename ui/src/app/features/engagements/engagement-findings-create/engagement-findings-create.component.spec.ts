@@ -14,6 +14,7 @@ import { PermissionService } from '../../../services/core/auth/permission.servic
 import { Engagement } from '../models/engagement.model';
 import { Finding } from '../models/finding.model';
 import { Asset } from '../../assets/models/asset.model';
+import { UserProfileService } from '../../../services/core/profile/user-profile.service';
 
 const MOCK_ENGAGEMENT: Engagement = {
   id: 'eng-1',
@@ -91,13 +92,14 @@ function buildTestBed(
 ) {
   const paramMap$ = new BehaviorSubject(convertToParamMap(routeParams));
   const locationSpy = jasmine.createSpyObj('Location', ['back']);
-  const engSvc = jasmine.createSpyObj('EngagementsService', ['getById']);
+  const engSvc = jasmine.createSpyObj('EngagementsService', ['getById', 'listSamples']);
   const findSvc = jasmine.createSpyObj('FindingsService', ['create', 'uploadImage']);
   const sowSvc = jasmine.createSpyObj('SowService', ['listScope', 'get']);
   const notifySpy = jasmine.createSpyObj('NotificationService', ['success', 'error']);
   const permSvc = { has: () => overrides.permHas !== false, hasAny$: () => of(true) };
 
   engSvc.getById.and.returnValue(of(MOCK_ENGAGEMENT));
+  engSvc.listSamples.and.returnValue(of([]));
   sowSvc.listScope.and.returnValue(of(MOCK_ASSETS));
   sowSvc.get.and.returnValue(of({ id: 'sow-1', title: 'Test', status: 'approved', created_at: '', updated_at: '' }));
 
@@ -1044,6 +1046,303 @@ describe('EngagementFindingsCreateComponent', () => {
     expect(component.cweSearch).toBe('');
     expect(component.cweDropdownOpen).toBe(false);
     expect(component.cweHighlightIndex).toBe(-1);
+  });
+
+  // --- isDirty ---
+
+  it('isDirty() returns false when form is pristine', () => {
+    expect(component.isDirty()).toBe(false);
+  });
+
+  it('isDirty() returns true when form is dirty and not saved', () => {
+    component.form.markAsDirty();
+    expect(component.isDirty()).toBe(true);
+  });
+
+  it('isDirty() returns false after save completes', fakeAsync(() => {
+    findingsService.create.and.returnValue(of(MOCK_FINDING));
+    component.form.patchValue({ title: 'XSS in Search Field', asset_id: 'asset-1' });
+    component.form.markAsDirty();
+    fixture.detectChanges();
+
+    component.save('eng-1');
+    tick();
+
+    expect(component.isDirty()).toBe(false);
+  }));
+
+  // --- onMalwareFindingSubmitted ---
+
+  it('onMalwareFindingSubmitted() calls findingsService.create and navigates on success', fakeAsync(() => {
+    findingsService.create.and.returnValue(of(MOCK_FINDING));
+    fixture.detectChanges();
+
+    const payload = {
+      title: 'Malware Finding Title',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '# Malware desc',
+      is_draft: false,
+    };
+    component.onMalwareFindingSubmitted(payload);
+    tick();
+
+    expect(findingsService.create).toHaveBeenCalledWith('eng-1', jasmine.objectContaining({
+      title: 'Malware Finding Title',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '# Malware desc',
+      is_draft: false,
+    }));
+    expect(router.navigate).toHaveBeenCalledWith(['/engagements', 'eng-1', 'findings']);
+  }));
+
+  it('onMalwareFindingSubmitted() shows error on API failure', fakeAsync(() => {
+    findingsService.create.and.returnValue(throwError(() => ({ error: { detail: 'Sample not found' } })));
+    fixture.detectChanges();
+
+    const payload = {
+      title: 'Malware Finding Title',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '',
+      is_draft: false,
+    };
+    component.onMalwareFindingSubmitted(payload);
+    tick();
+
+    expect(notify.error).toHaveBeenCalledWith('Sample not found');
+    expect(component.busy).toBe(false);
+  }));
+
+  it('onMalwareFindingSubmitted() shows fallback error when no detail or message', fakeAsync(() => {
+    findingsService.create.and.returnValue(throwError(() => ({ error: {} })));
+    fixture.detectChanges();
+
+    const payload = {
+      title: 'Malware Finding Title',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '',
+      is_draft: false,
+    };
+    component.onMalwareFindingSubmitted(payload);
+    tick();
+
+    expect(notify.error).toHaveBeenCalledWith('Create failed.');
+    expect(component.busy).toBe(false);
+  }));
+
+  it('onMalwareFindingSubmitted() does nothing when engagementId is missing', fakeAsync(async () => {
+    const ctx2 = buildTestBed({});
+    await TestBed.resetTestingModule().configureTestingModule({
+      imports: [EngagementFindingsCreateComponent],
+      providers: ctx2.providers,
+    }).compileComponents();
+    const fix2 = TestBed.createComponent(EngagementFindingsCreateComponent);
+    const comp2 = fix2.componentInstance;
+
+    const payload = {
+      title: 'Malware Finding',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '',
+      is_draft: false,
+    };
+    comp2.onMalwareFindingSubmitted(payload);
+    tick();
+
+    expect(ctx2.findSvc.create).not.toHaveBeenCalled();
+  }));
+
+  it('onMalwareFindingSubmitted() suppresses notification on 402 error', fakeAsync(() => {
+    findingsService.create.and.returnValue(throwError(() => ({ status: 402, error: { detail: 'Payment required' } })));
+    fixture.detectChanges();
+
+    const payload = {
+      title: 'Malware Finding Title',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '',
+      is_draft: false,
+    };
+    component.onMalwareFindingSubmitted(payload);
+    tick();
+
+    expect(notify.error).not.toHaveBeenCalled();
+    expect(component.busy).toBe(false);
+  }));
+
+  it('onMalwareFindingSubmitted() resets busy to false after error', fakeAsync(() => {
+    findingsService.create.and.returnValue(throwError(() => ({ error: { detail: 'fail' } })));
+    fixture.detectChanges();
+
+    expect(component.busy).toBe(false);
+    const payload = {
+      title: 'Malware Finding',
+      sample_id: 'sample-1',
+      analysis_type: 'static',
+      description_md: '',
+      is_draft: false,
+    };
+    component.onMalwareFindingSubmitted(payload);
+    tick();
+    expect(component.busy).toBe(false);
+  }));
+
+  // --- onMalwareDirtyChange ---
+
+  it('onMalwareDirtyChange(true) marks form dirty', () => {
+    component.form.markAsPristine();
+    component.onMalwareDirtyChange(true);
+    expect(component.form.dirty).toBe(true);
+  });
+
+  it('onMalwareDirtyChange(false) does not mark form dirty', () => {
+    component.form.markAsPristine();
+    component.onMalwareDirtyChange(false);
+    expect(component.form.dirty).toBe(false);
+  });
+
+  // --- save() 402 suppression ---
+
+  it('save() suppresses notification on 402 error', fakeAsync(() => {
+    findingsService.create.and.returnValue(throwError(() => ({ status: 402, error: { detail: 'Payment required' } })));
+    component.form.patchValue({ title: 'XSS in Search Field', asset_id: 'asset-1' });
+    fixture.detectChanges();
+
+    component.save('eng-1');
+    tick();
+
+    expect(notify.error).not.toHaveBeenCalled();
+  }));
+
+  // --- save() with findings limit ---
+
+  it('save() shows error when findings limit is reached', fakeAsync(() => {
+    const profileSvc = TestBed.inject(UserProfileService);
+    spyOn(profileSvc, 'currentSubscription').and.returnValue({
+      plan_name: 'community',
+      limits: { max_findings_per_engagement: 3 },
+    } as any);
+
+    engagementsService.getById.and.returnValue(of({
+      ...MOCK_ENGAGEMENT,
+      findings_summary: { critical: 1, high: 1, medium: 1, low: 0, info: 0 },
+    }));
+
+    component.form.patchValue({ title: 'XSS in Search Field', asset_id: 'asset-1' });
+    fixture.detectChanges();
+
+    component.save('eng-1');
+    tick();
+
+    expect(notify.error).toHaveBeenCalledWith(jasmine.stringMatching(/Findings limit reached/));
+    expect(findingsService.create).not.toHaveBeenCalled();
+  }));
+
+  it('save() proceeds when findings count is under limit', fakeAsync(() => {
+    const profileSvc = TestBed.inject(UserProfileService);
+    spyOn(profileSvc, 'currentSubscription').and.returnValue({
+      plan_name: 'community',
+      limits: { max_findings_per_engagement: 10 },
+    } as any);
+
+    findingsService.create.and.returnValue(of(MOCK_FINDING));
+    component.form.patchValue({ title: 'XSS in Search Field', asset_id: 'asset-1' });
+    fixture.detectChanges();
+
+    component.save('eng-1');
+    tick();
+
+    expect(findingsService.create).toHaveBeenCalled();
+  }));
+
+  // --- scrollCweHighlightIntoView ---
+
+  it('scrollCweHighlightIntoView does not throw with detached element', fakeAsync(() => {
+    const inputEl = document.createElement('input');
+    component.cweHighlightIndex = 0;
+
+    expect(() => {
+      (component as any).scrollCweHighlightIntoView(inputEl);
+      tick(16); // requestAnimationFrame
+    }).not.toThrow();
+  }));
+
+  // --- ngAfterViewInit malware flow ---
+
+  it('ngAfterViewInit sets isMalwareFlow to true for malware_analysis engagement', fakeAsync(() => {
+    engagementsService.getById.and.returnValue(of({
+      ...MOCK_ENGAGEMENT,
+      engagement_type: 'malware_analysis',
+    }));
+
+    fixture.detectChanges();
+    component.ngAfterViewInit();
+    tick();
+
+    expect(component.isMalwareFlow).toBe(true);
+  }));
+
+  it('ngAfterViewInit sets isMalwareFlow to false for general engagement', fakeAsync(() => {
+    fixture.detectChanges();
+    component.ngAfterViewInit();
+    tick();
+
+    expect(component.isMalwareFlow).toBe(false);
+  }));
+
+  // --- uploadImageToApi image limit enforcement ---
+
+  it('uploadImageToApi rejects when image limit is reached', async () => {
+    const profileSvc = TestBed.inject(UserProfileService);
+    spyOn(profileSvc, 'currentSubscription').and.returnValue({
+      plan_name: 'community',
+      limits: { max_images_per_finding: 1 },
+    } as any);
+
+    // Set form description_md with an existing image token
+    component.form.patchValue({
+      description_md: '![img](/api/attachments/12345678-1234-1234-1234-123456789abc/content/img.png)',
+    });
+    fixture.detectChanges();
+
+    const file = new File(['px'], 'img.png', { type: 'image/png' });
+    await expectAsync((component as any).uploadImageToApi(file)).toBeRejectedWithError('Image limit reached');
+    expect(notify.error).toHaveBeenCalledWith(jasmine.stringMatching(/Image limit reached/));
+  });
+
+  it('uploadImageToApi proceeds when image count is under limit', async () => {
+    const profileSvc = TestBed.inject(UserProfileService);
+    spyOn(profileSvc, 'currentSubscription').and.returnValue({
+      plan_name: 'community',
+      limits: { max_images_per_finding: 5 },
+    } as any);
+
+    findingsService.uploadImage.and.returnValue(of({ token: 't', url: 'https://cdn.test/img.png' }));
+    fixture.detectChanges();
+
+    const file = new File(['px'], 'img.png', { type: 'image/png' });
+    const result = await (component as any).uploadImageToApi(file);
+    expect(result).toBe('https://cdn.test/img.png');
+  });
+
+  // --- onBeforeUnload ---
+
+  it('onBeforeUnload calls preventDefault when form is dirty', () => {
+    component.form.markAsDirty();
+    const event = new Event('beforeunload') as BeforeUnloadEvent;
+    spyOn(event, 'preventDefault');
+    component.onBeforeUnload(event);
+    expect(event.preventDefault).toHaveBeenCalled();
+  });
+
+  it('onBeforeUnload does not call preventDefault when form is clean', () => {
+    const event = new Event('beforeunload') as BeforeUnloadEvent;
+    spyOn(event, 'preventDefault');
+    component.onBeforeUnload(event);
+    expect(event.preventDefault).not.toHaveBeenCalled();
   });
 });
 
