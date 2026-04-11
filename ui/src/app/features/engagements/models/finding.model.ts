@@ -55,6 +55,14 @@ export const FINDING_SEVERITY_LABELS: Record<FindingSeverity, string> = {
   info: 'Info',
 };
 
+export const FINDING_SEVERITIES: { value: FindingSeverity; label: string }[] = [
+  { value: 'critical', label: 'Critical' },
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
+  { value: 'info', label: 'Info' },
+];
+
 export const FINDING_STATUS_LABELS: Record<FindingStatus, string> = {
   open: 'Open',
   triage: 'Triage',
@@ -62,3 +70,11 @@ export const FINDING_STATUS_LABELS: Record<FindingStatus, string> = {
   fixed: 'Fixed',
   false_positive: 'False Positive',
 };
+
+export const FINDING_STATUSES: { value: FindingStatus; label: string }[] = [
+  { value: 'open', label: 'Open' },
+  { value: 'triage', label: 'Triage' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'fixed', label: 'Fixed' },
+  { value: 'false_positive', label: 'False Positive' },
+];

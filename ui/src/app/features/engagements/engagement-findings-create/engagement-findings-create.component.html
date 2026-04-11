@@ -61,140 +61,28 @@
         <div class="bc-card" *ngIf="!sowLoaded || (sowStatus$ | async) === 'approved'">
           <div class="bc-cardInner p-4">
 
-            <!-- ═══ Malware Analysis Section ═══ -->
+            <!-- Malware Analysis Section -->
             <ng-container *ngIf="isMalwareFlow">
               <app-finding-section-malware
                 [engagementId]="e.id"
                 [samples$]="samples$"
                 (submitted)="onMalwareFindingSubmitted($event)"
                 (cancelled)="cancel()"
-                (dirtyChange)="onMalwareDirtyChange($event)">
+                (dirtyChange)="onDirtyChange($event)">
               </app-finding-section-malware>
             </ng-container>
 
-            <!-- ═══ Standard Section ═══ -->
+            <!-- Standard Section -->
             <ng-container *ngIf="!isMalwareFlow">
-              <form [formGroup]="form" (ngSubmit)="save(e.id)" novalidate>
-                <div class="row g-3">
-
-                  <div class="col-12">
-                    <label class="form-label">Title <span class="bc-required">*</span></label>
-                    <input class="form-control" formControlName="title" placeholder="Short, actionable title..." />
-                    <div class="bc-fieldError" *ngIf="isInvalid('title')">Title is required (min 6 chars).</div>
-                  </div>
-
-                  <div class="col-12 col-md-6">
-                    <label class="form-label">Asset <span class="bc-required">*</span></label>
-                    <select class="form-select" formControlName="asset_id">
-                      <option value="" disabled>Select scoped asset...</option>
-                      <option *ngFor="let a of (scopeAssets$ | async)" [value]="a.id">{{ a.name }}</option>
-                    </select>
-                    <div class="bc-fieldError" *ngIf="isInvalid('asset_id')">Select an asset.</div>
-                  </div>
-
-                  <div class="col-12 col-md-3">
-                    <label class="form-label">Severity</label>
-                    <select class="form-select" formControlName="severity">
-                      <option *ngFor="let s of severities" [value]="s.value">{{ s.label }}</option>
-                    </select>
-                  </div>
-
-                  <div class="col-12 col-md-3">
-                    <label class="form-label">Status</label>
-                    <select class="form-select" formControlName="status">
-                      <option *ngFor="let s of statuses" [value]="s.value">{{ s.label }}</option>
-                    </select>
-                  </div>
-
-                  <div class="col-12 col-md-4">
-                    <label class="form-label">Assessment Area</label>
-                    <select class="form-select" formControlName="assessment_area">
-                      <option value="">Select area...</option>
-                      <option *ngFor="let a of (assessmentAreas$ | async)" [value]="a.code">{{ a.name }}</option>
-                    </select>
-                  </div>
-
-                  <div class="col-12 col-md-8">
-                    <label class="form-label">OWASP Top 10</label>
-                    <select class="form-select" formControlName="owasp_category">
-                      <option value="">Select category...</option>
-                      <option *ngFor="let o of (owaspCategories$ | async)" [value]="o.code">{{ o.code }} — {{ o.name }}</option>
-                    </select>
-                  </div>
-
-                  <div class="col-12">
-                    <label class="form-label">CWE</label>
-                    <div class="bc-tzDropdown">
-                      <input type="text" class="form-control"
-                        [value]="cweSearch" (input)="onCweInput($event)" (focus)="onCweInput($event)"
-                        (keydown)="onCweKeydown($event)" (blur)="cweDropdownOpen = false"
-                        placeholder="Search CWE..." autocomplete="off">
-                      <button *ngIf="form.get('cwe_id')?.value" type="button"
-                        class="btn btn-sm btn-link position-absolute"
-                        style="right: 8px; top: 50%; transform: translateY(-50%); color: var(--bc-muted);"
-                        (click)="clearCwe()">
-                        <i class="bi bi-x-lg"></i>
-                      </button>
-                      <div class="bc-tzList" *ngIf="cweDropdownOpen && cweFiltered.length > 0">
-                        <div class="bc-tzItem" *ngFor="let c of cweFiltered; let i = index"
-                          [class.is-selected]="c.code === form.get('cwe_id')?.value"
-                          [class.is-highlighted]="i === cweHighlightIndex"
-                          (mousedown)="selectCwe(c)"
-                          (mouseenter)="cweHighlightIndex = i">
-                          <strong>{{ c.code }}</strong> — {{ c.name }}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="col-12">
-                    <app-classification-card
-                      [assessmentArea]="form.get('assessment_area')?.value || ''"
-                      [owaspCategory]="form.get('owasp_category')?.value || ''"
-                      [cweId]="form.get('cwe_id')?.value || ''">
-                    </app-classification-card>
-                  </div>
-
-                  <div class="col-12">
-                    <label class="form-label">Details</label>
-                    <div class="bc-editorShell bc-editorShellWrap">
-                      <div id="findingEditor" class="editorHost" #editorRef></div>
-                      <div *ngIf="imageUploading" class="bc-editorUploadOverlay">
-                        <div class="bc-editorSpinnerRing"></div>
-                        <span class="bc-editorSpinnerText">Uploading image</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="col-12">
-                    <label class="form-label">Recommendation</label>
-                    <div class="bc-editorShell bc-editorShellWrap">
-                      <div id="recEditor" class="editorHost" #recEditorRef></div>
-                      <div *ngIf="imageUploading" class="bc-editorUploadOverlay">
-                        <div class="bc-editorSpinnerRing"></div>
-                        <span class="bc-editorSpinnerText">Uploading image</span>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-
-                <div class="d-flex align-items-center justify-content-end gap-2 mt-4">
-                  <button class="btn btn-outline-light bc-btnSoft" type="button" (click)="cancel()" [disabled]="busy">Cancel</button>
-                  <button class="btn btn-outline-light bc-btnSoft" type="button" (click)="save(e.id, true)" [disabled]="busy">
-                    <span class="d-inline-flex align-items-center gap-2">
-                      <span class="bc-dot" *ngIf="busy"></span>
-                      <span>{{ busy ? 'Saving...' : 'Save as Draft' }}</span>
-                    </span>
-                  </button>
-                  <button class="btn bc-btnPrimary" type="submit" [disabled]="busy || form.invalid">
-                    <span class="d-inline-flex align-items-center gap-2">
-                      <span class="bc-dot" *ngIf="busy"></span>
-                      <span>{{ busy ? 'Saving...' : 'Create finding' }}</span>
-                    </span>
-                  </button>
-                </div>
-              </form>
+              <app-finding-section-standard
+                [engagementId]="e.id"
+                [scopeAssets$]="scopeAssets$"
+                [mode]="'create'"
+                [busy]="busy"
+                (submitted)="onStandardFindingSubmitted($event)"
+                (cancelled)="cancel()"
+                (dirtyChange)="onDirtyChange($event)">
+              </app-finding-section-standard>
             </ng-container>
 
           </div>
