@@ -7,12 +7,13 @@ import { forkJoin } from 'rxjs';
 import { EngagementsService } from '../services/engagements.service';
 import { SowService } from '../services/sow.service';
 import { OrganizationsService } from '../../organizations/services/organizations.service';
-import { AssetsService } from '../../assets/services/assets.service';
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { OrganizationRef, Organization } from '../../organizations/models/organization.model';
-import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS, AssetType, AssetEnvironment, AssetCriticality } from '../../assets/models/asset.model';
+import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS } from '../../assets/models/asset.model';
 import { Engagement, MalwareSample, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
 import { Sow } from '../models/sow.model';
+import { WizardStepAssetsComponent, AssetStepResult } from './steps/wizard-step-assets.component';
+import { WizardStepSamplesComponent } from './steps/wizard-step-samples.component';
 
 export type WizardStep = 'org' | 'assets' | 'sample' | 'details' | 'sow' | 'review';
 
@@ -36,7 +37,7 @@ function getStepOrder(type: EngagementType): WizardStep[] {
 @Component({
   selector: 'app-engagement-wizard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, WizardStepAssetsComponent, WizardStepSamplesComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './engagement-wizard.component.html',
   styleUrl: './engagement-wizard.component.css',
@@ -45,7 +46,6 @@ export class EngagementWizardComponent {
   private readonly engService = inject(EngagementsService);
   private readonly sowService = inject(SowService);
   private readonly orgService = inject(OrganizationsService);
-  private readonly assetService = inject(AssetsService);
   private readonly notify = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -72,25 +72,16 @@ export class EngagementWizardComponent {
   readonly orgSaving = signal(false);
   orgForm!: FormGroup;
 
-  // -- Step 2: Assets --
-  readonly orgAssets = signal<Asset[]>([]);
-  readonly selectedAssetIds = signal<Set<string>>(new Set());
-  readonly showAssetForm = signal(false);
-  readonly assetSaving = signal(false);
-  readonly assetsLoading = signal(false);
-  assetForm!: FormGroup;
+  // -- Step 2: Assets (stored from step component) --
+  readonly selectedAssetIds = signal<string[]>([]);
+  readonly selectedAssets = signal<Asset[]>([]);
 
   readonly assetTypeLabels = ASSET_TYPE_LABELS;
   readonly assetEnvLabels = ASSET_ENV_LABELS;
   readonly assetCritLabels = ASSET_CRIT_LABELS;
-  readonly typeOptions = Object.entries(ASSET_TYPE_LABELS) as [AssetType, string][];
-  readonly envOptions = Object.entries(ASSET_ENV_LABELS) as [AssetEnvironment, string][];
-  readonly critOptions = Object.entries(ASSET_CRIT_LABELS) as [AssetCriticality, string][];
 
-  // -- Step 2b: Malware Samples (replaces assets for malware_analysis) --
+  // -- Step 2b: Malware Samples (stored from step component) --
   readonly uploadedSamples = signal<MalwareSample[]>([]);
-  readonly sampleUploading = signal(false);
-  readonly sampleDragOver = signal(false);
 
   // -- Step 3: Engagement details --
   engForm!: FormGroup;
@@ -113,7 +104,6 @@ export class EngagementWizardComponent {
   constructor() {
     this.initEngagementType();
     this.initOrgForm();
-    this.initAssetForm();
     this.initEngForm();
     this.loadOrganizations();
   }
@@ -135,17 +125,6 @@ export class EngagementWizardComponent {
       name: ['', Validators.required],
       website: [''],
       status: ['active'],
-      notes: [''],
-    });
-  }
-
-  private initAssetForm(): void {
-    this.assetForm = this.fb.group({
-      name: ['', Validators.required],
-      asset_type: ['host'],
-      environment: ['prod'],
-      criticality: ['medium'],
-      target: [''],
       notes: [''],
     });
   }
@@ -253,184 +232,22 @@ export class EngagementWizardComponent {
     if (!this.canProceedFromOrg()) return;
     if (this.isMalwareFlow()) {
       this.ensureEngagementForSamples();
-    } else {
-      this.loadAssetsForOrg();
     }
     this.nextStep();
   }
 
-  // ── Step 2: Assets ─────────────────────────────────────────────────
+  // ── Step 2: Assets (handled by WizardStepAssetsComponent) ──────────
 
-  private loadAssetsForOrg(): void {
-    const orgId = this.selectedOrgId();
-    if (!orgId) return;
-    this.assetsLoading.set(true);
-    this.assetService.list(orgId).subscribe({
-      next: (assets) => {
-        this.orgAssets.set(assets);
-        this.assetsLoading.set(false);
-      },
-      error: () => {
-        this.assetsLoading.set(false);
-        this.notify.error('Failed to load assets.');
-      },
-    });
-  }
-
-  toggleAssetSelection(assetId: string): void {
-    this.selectedAssetIds.update((set) => {
-      const next = new Set(set);
-      if (next.has(assetId)) {
-        next.delete(assetId);
-      } else {
-        next.add(assetId);
-      }
-      return next;
-    });
-  }
-
-  isAssetSelected(assetId: string): boolean {
-    return this.selectedAssetIds().has(assetId);
-  }
-
-  selectAllAssets(): void {
-    const allIds = this.orgAssets().map((a) => a.id);
-    this.selectedAssetIds.set(new Set(allIds));
-  }
-
-  deselectAllAssets(): void {
-    this.selectedAssetIds.set(new Set());
-  }
-
-  toggleAssetForm(): void {
-    this.showAssetForm.update((v) => !v);
-    if (this.showAssetForm()) {
-      this.assetForm.reset({
-        name: '', asset_type: 'host', environment: 'prod',
-        criticality: 'medium', target: '', notes: '',
-      });
-    }
-  }
-
-  submitNewAsset(): void {
-    if (this.assetForm.invalid) {
-      this.assetForm.markAllAsTouched();
-      return;
-    }
-    this.assetSaving.set(true);
-    const value = {
-      ...this.assetForm.getRawValue(),
-      client_id: this.selectedOrgId(),
-    };
-    this.assetService.create(value).subscribe({
-      next: (asset: Asset) => {
-        this.assetSaving.set(false);
-        this.showAssetForm.set(false);
-        // Add to list and auto-select
-        this.orgAssets.update((list) => [asset, ...list]);
-        this.selectedAssetIds.update((set) => {
-          const next = new Set(set);
-          next.add(asset.id);
-          return next;
-        });
-        this.notify.success(`Asset "${asset.name}" created.`);
-      },
-      error: (err) => {
-        this.assetSaving.set(false);
-        const detail = err?.error?.name?.[0] || err?.error?.detail || 'Failed to create asset.';
-        this.notify.error(detail);
-      },
-    });
-  }
-
-  canProceedFromAssets(): boolean {
-    return this.selectedAssetIds().size > 0;
-  }
-
-  proceedFromAssets(): void {
-    if (!this.canProceedFromAssets()) return;
+  onAssetStepProceed(result: AssetStepResult): void {
+    this.selectedAssetIds.set(result.selectedIds);
+    this.selectedAssets.set(result.selectedAssets);
     this.nextStep();
   }
 
-  selectedAssetsList(): Asset[] {
-    const ids = this.selectedAssetIds();
-    return this.orgAssets().filter((a) => ids.has(a.id));
-  }
+  // ── Step 2b: Malware Samples (handled by WizardStepSamplesComponent) ──
 
-  // ── Step 2b: Malware Samples ────────────────────────────────────────
-
-  onSampleFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const files = input.files;
-    if (!files || files.length === 0) return;
-    for (let i = 0; i < files.length; i++) {
-      this.uploadSampleFile(files[i]);
-    }
-    input.value = '';
-  }
-
-  onSampleDrop(event: DragEvent): void {
-    event.preventDefault();
-    this.sampleDragOver.set(false);
-    const files = event.dataTransfer?.files;
-    if (!files || files.length === 0) return;
-    for (let i = 0; i < files.length; i++) {
-      this.uploadSampleFile(files[i]);
-    }
-  }
-
-  onSampleDragOver(event: DragEvent): void {
-    event.preventDefault();
-  }
-
-  onSampleDragEnter(event: DragEvent): void {
-    event.preventDefault();
-    this.sampleDragOver.set(true);
-  }
-
-  onSampleDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    this.sampleDragOver.set(false);
-  }
-
-  private uploadSampleFile(file: File): void {
-    const eng = this.createdEngagementForSamples();
-    if (!eng) {
-      this.notify.error('Engagement must be created before uploading samples.');
-      return;
-    }
-    this.sampleUploading.set(true);
-    this.engService.uploadSample(eng, file).subscribe({
-      next: (sample) => {
-        this.uploadedSamples.update((list) => [...list, sample]);
-        this.sampleUploading.set(false);
-      },
-      error: (err) => {
-        this.sampleUploading.set(false);
-        const detail = err?.error?.file?.[0] || err?.error?.detail || err?.error?.error || 'Failed to upload sample.';
-        this.notify.error(detail);
-      },
-    });
-  }
-
-  removeSample(sampleId: string): void {
-    const eng = this.createdEngagementForSamples();
-    if (!eng) return;
-    this.engService.deleteSample(eng, sampleId).subscribe({
-      next: () => {
-        this.uploadedSamples.update((list) => list.filter((s) => s.id !== sampleId));
-        this.notify.success('Sample removed.');
-      },
-      error: () => this.notify.error('Failed to remove sample.'),
-    });
-  }
-
-  canProceedFromSample(): boolean {
-    return this.uploadedSamples().length > 0;
-  }
-
-  proceedFromSample(): void {
-    if (!this.canProceedFromSample()) return;
+  onSampleStepProceed(samples: MalwareSample[]): void {
+    this.uploadedSamples.set(samples);
     this.nextStep();
   }
 
@@ -441,7 +258,7 @@ export class EngagementWizardComponent {
    */
   private _tempEngagementId: string | null = null;
 
-  private createdEngagementForSamples(): string | null {
+  createdEngagementForSamples(): string | null {
     return this._tempEngagementId;
   }
 
@@ -479,6 +296,10 @@ export class EngagementWizardComponent {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  selectedAssetsList(): Asset[] {
+    return this.selectedAssets();
   }
 
   // ── Step 3: Engagement Details ─────────────────────────────────────
@@ -542,7 +363,7 @@ export class EngagementWizardComponent {
   }
 
   private addAssetsToScopeAndFetchSow(engId: string): void {
-    const assetIds = Array.from(this.selectedAssetIds());
+    const assetIds = this.selectedAssetIds();
     if (assetIds.length === 0) {
       this.fetchSowAndAdvance(engId);
       return;

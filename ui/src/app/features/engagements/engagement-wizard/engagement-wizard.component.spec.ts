@@ -215,13 +215,6 @@ describe('EngagementWizardComponent', () => {
       expect(component.orgForm.get('status')?.value).toBe('active');
     });
 
-    it('initializes assetForm with defaults', () => {
-      expect(component.assetForm).toBeTruthy();
-      expect(component.assetForm.get('asset_type')?.value).toBe('host');
-      expect(component.assetForm.get('environment')?.value).toBe('prod');
-      expect(component.assetForm.get('criticality')?.value).toBe('medium');
-    });
-
     it('initializes engForm with name validators', () => {
       expect(component.engForm).toBeTruthy();
       const nameCtrl = component.engForm.get('name');
@@ -365,12 +358,10 @@ describe('EngagementWizardComponent', () => {
       expect(component.currentStep()).toBe('org');
     });
 
-    it('proceedFromOrg loads assets and advances to assets step', fakeAsync(() => {
+    it('proceedFromOrg advances to assets step', fakeAsync(() => {
       component.selectOrg('org-1', 'Acme Corp');
       component.proceedFromOrg();
       tick();
-      expect(spies.assetServiceSpy.list).toHaveBeenCalledWith('org-1');
-      expect(component.orgAssets().length).toBe(2);
       expect(component.currentStep()).toBe('assets');
     }));
 
@@ -446,160 +437,23 @@ describe('EngagementWizardComponent', () => {
 
     // -- Asset loading --
 
-    it('loadAssetsForOrg loads assets for selected org', fakeAsync(() => {
-      component.selectOrg('org-1', 'Acme Corp');
-      component.proceedFromOrg();
-      tick();
-      expect(component.orgAssets()).toEqual([MOCK_ASSET, MOCK_ASSET_2]);
-      expect(component.assetsLoading()).toBeFalse();
-    }));
+    // -- Asset step component integration --
 
-    it('loadAssetsForOrg shows error on failure', fakeAsync(() => {
-      spies.assetServiceSpy.list.and.returnValue(throwError(() => new Error('fail')));
-      component.selectOrg('org-1', 'Acme Corp');
-      component.proceedFromOrg();
-      tick();
-      expect(component.assetsLoading()).toBeFalse();
-      expect(spies.notifySpy.error).toHaveBeenCalledWith('Failed to load assets.');
-    }));
-
-    // -- Asset selection --
-
-    it('toggleAssetSelection adds an asset id', () => {
-      component.toggleAssetSelection('asset-1');
-      expect(component.isAssetSelected('asset-1')).toBeTrue();
-    });
-
-    it('toggleAssetSelection removes an already-selected asset', () => {
-      component.toggleAssetSelection('asset-1');
-      component.toggleAssetSelection('asset-1');
-      expect(component.isAssetSelected('asset-1')).toBeFalse();
-    });
-
-    it('isAssetSelected returns false for unselected assets', () => {
-      expect(component.isAssetSelected('nonexistent')).toBeFalse();
-    });
-
-    it('selectAllAssets selects every asset in orgAssets', () => {
-      component.orgAssets.set([MOCK_ASSET, MOCK_ASSET_2]);
-      component.selectAllAssets();
-      expect(component.isAssetSelected('asset-1')).toBeTrue();
-      expect(component.isAssetSelected('asset-2')).toBeTrue();
-    });
-
-    it('deselectAllAssets clears selection', () => {
-      component.selectedAssetIds.set(new Set(['asset-1', 'asset-2']));
-      component.deselectAllAssets();
-      expect(component.selectedAssetIds().size).toBe(0);
-    });
-
-    it('selectedAssetsList returns only selected assets', () => {
-      component.orgAssets.set([MOCK_ASSET, MOCK_ASSET_2]);
-      component.selectedAssetIds.set(new Set(['asset-1']));
-      const selected = component.selectedAssetsList();
-      expect(selected.length).toBe(1);
-      expect(selected[0].id).toBe('asset-1');
-    });
-
-    it('canProceedFromAssets returns false when none selected', () => {
-      expect(component.canProceedFromAssets()).toBeFalse();
-    });
-
-    it('canProceedFromAssets returns true when assets selected', () => {
-      component.selectedAssetIds.set(new Set(['asset-1']));
-      expect(component.canProceedFromAssets()).toBeTrue();
-    });
-
-    it('proceedFromAssets does nothing if none selected', () => {
+    it('onAssetStepProceed stores selected IDs and assets, then advances', () => {
       component.currentStep.set('assets');
-      component.proceedFromAssets();
-      expect(component.currentStep()).toBe('assets');
-    });
-
-    it('proceedFromAssets advances to details when assets selected', () => {
-      component.currentStep.set('assets');
-      component.selectedAssetIds.set(new Set(['asset-1']));
-      component.proceedFromAssets();
+      component.onAssetStepProceed({
+        selectedIds: ['asset-1', 'asset-2'],
+        selectedAssets: [MOCK_ASSET, MOCK_ASSET_2],
+      });
+      expect(component.selectedAssetIds()).toEqual(['asset-1', 'asset-2']);
+      expect(component.selectedAssets()).toEqual([MOCK_ASSET, MOCK_ASSET_2]);
       expect(component.currentStep()).toBe('details');
     });
 
-    // -- Asset form --
-
-    it('toggleAssetForm toggles visibility', () => {
-      expect(component.showAssetForm()).toBeFalse();
-      component.toggleAssetForm();
-      expect(component.showAssetForm()).toBeTrue();
+    it('selectedAssetsList returns stored selected assets', () => {
+      component.selectedAssets.set([MOCK_ASSET]);
+      expect(component.selectedAssetsList()).toEqual([MOCK_ASSET]);
     });
-
-    it('toggleAssetForm resets form when opening', () => {
-      component.assetForm.get('name')?.setValue('Dirty');
-      component.toggleAssetForm(); // open
-      expect(component.assetForm.get('name')?.value).toBe('');
-      expect(component.assetForm.get('asset_type')?.value).toBe('host');
-    });
-
-    it('submitNewAsset marks touched if form invalid', () => {
-      spyOn(component.assetForm, 'markAllAsTouched');
-      component.submitNewAsset();
-      expect(component.assetForm.markAllAsTouched).toHaveBeenCalled();
-      expect(spies.assetServiceSpy.create).not.toHaveBeenCalled();
-    });
-
-    it('submitNewAsset creates asset and auto-selects it', fakeAsync(() => {
-      spies.assetServiceSpy.create.and.returnValue(of(MOCK_ASSET));
-      component.selectedOrgId.set('org-1');
-      component.assetForm.get('name')?.setValue('Web App');
-      component.showAssetForm.set(true);
-
-      component.submitNewAsset();
-      tick();
-      expect(component.assetSaving()).toBeFalse();
-      expect(component.showAssetForm()).toBeFalse();
-      expect(component.isAssetSelected('asset-1')).toBeTrue();
-      expect(component.orgAssets().some(a => a.id === 'asset-1')).toBeTrue();
-      expect(spies.notifySpy.success).toHaveBeenCalledWith('Asset "Web App" created.');
-    }));
-
-    it('submitNewAsset sends client_id with payload', fakeAsync(() => {
-      spies.assetServiceSpy.create.and.returnValue(of(MOCK_ASSET));
-      component.selectedOrgId.set('org-1');
-      component.assetForm.get('name')?.setValue('New Asset');
-      component.submitNewAsset();
-      tick();
-      const callArg = spies.assetServiceSpy.create.calls.mostRecent().args[0];
-      expect(callArg.client_id).toBe('org-1');
-    }));
-
-    it('submitNewAsset handles error with name field', fakeAsync(() => {
-      spies.assetServiceSpy.create.and.returnValue(
-        throwError(() => ({ error: { name: ['Name already exists'] } }))
-      );
-      component.assetForm.get('name')?.setValue('Dup');
-      component.submitNewAsset();
-      tick();
-      expect(component.assetSaving()).toBeFalse();
-      expect(spies.notifySpy.error).toHaveBeenCalledWith('Name already exists');
-    }));
-
-    it('submitNewAsset handles error with detail field', fakeAsync(() => {
-      spies.assetServiceSpy.create.and.returnValue(
-        throwError(() => ({ error: { detail: 'Quota exceeded' } }))
-      );
-      component.assetForm.get('name')?.setValue('New');
-      component.submitNewAsset();
-      tick();
-      expect(spies.notifySpy.error).toHaveBeenCalledWith('Quota exceeded');
-    }));
-
-    it('submitNewAsset handles generic error', fakeAsync(() => {
-      spies.assetServiceSpy.create.and.returnValue(
-        throwError(() => ({ error: {} }))
-      );
-      component.assetForm.get('name')?.setValue('New');
-      component.submitNewAsset();
-      tick();
-      expect(spies.notifySpy.error).toHaveBeenCalledWith('Failed to create asset.');
-    }));
 
     // -- formatBytes --
 
@@ -672,7 +526,7 @@ describe('EngagementWizardComponent', () => {
 
       component.engForm.get('name')?.setValue('Test Engagement');
       component.selectedOrgId.set('org-1');
-      component.selectedAssetIds.set(new Set(['asset-1']));
+      component.selectedAssetIds.set(['asset-1']);
       component.currentStep.set('details');
 
       component.proceedFromDetails();
@@ -794,7 +648,7 @@ describe('EngagementWizardComponent', () => {
 
       component.engForm.get('name')?.setValue('Test');
       component.selectedOrgId.set('org-1');
-      component.selectedAssetIds.set(new Set(['asset-1']));
+      component.selectedAssetIds.set(['asset-1']);
       component.currentStep.set('details');
 
       component.proceedFromDetails();
@@ -813,7 +667,7 @@ describe('EngagementWizardComponent', () => {
 
       component.engForm.get('name')?.setValue('Test');
       component.selectedOrgId.set('org-1');
-      component.selectedAssetIds.set(new Set(['asset-1']));
+      component.selectedAssetIds.set(['asset-1']);
       component.currentStep.set('details');
 
       component.proceedFromDetails();
@@ -976,7 +830,7 @@ describe('EngagementWizardComponent', () => {
 
       component.engForm.get('name')?.setValue('Test');
       component.selectedOrgId.set('org-1');
-      component.selectedAssetIds.set(new Set(['asset-1', 'asset-2']));
+      component.selectedAssetIds.set(['asset-1', 'asset-2']);
       component.currentStep.set('details');
 
       component.proceedFromDetails();
@@ -1112,274 +966,12 @@ describe('EngagementWizardComponent', () => {
       expect(component.error()).toBe('Failed to create engagement for samples.');
     }));
 
-    // -- Sample upload --
+    // -- Sample step component integration --
 
-    it('onSampleFileSelected does nothing for empty file list', fakeAsync(() => {
-      const event = { target: { files: null, value: '' } } as unknown as Event;
-      component.onSampleFileSelected(event);
-      expect(spies.engServiceSpy.uploadSample).not.toHaveBeenCalled();
-    }));
-
-    it('onSampleFileSelected does nothing for zero-length file list', fakeAsync(() => {
-      const event = { target: { files: { length: 0 } as FileList, value: '' } } as unknown as Event;
-      component.onSampleFileSelected(event);
-      expect(spies.engServiceSpy.uploadSample).not.toHaveBeenCalled();
-    }));
-
-    it('onSampleFileSelected uploads files and resets input', fakeAsync(() => {
-      spies.engServiceSpy.create.and.returnValue(of(MOCK_MALWARE_ENGAGEMENT));
-      spies.engServiceSpy.uploadSample.and.returnValue(of(MOCK_SAMPLE));
-
-      // Set up temp engagement
-      component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
-      tick();
-
-      const mockFile = new File(['data'], 'malware.exe');
-      const fileList = { length: 1, 0: mockFile, item: (i: number) => mockFile } as unknown as FileList;
-      const event = { target: { files: fileList, value: 'C:\\fakepath\\malware.exe' } } as unknown as Event;
-
-      component.onSampleFileSelected(event);
-      tick();
-
-      expect(spies.engServiceSpy.uploadSample).toHaveBeenCalledWith('eng-ma-1', mockFile);
-      expect(component.uploadedSamples().length).toBe(1);
-      expect(component.sampleUploading()).toBeFalse();
-      expect((event.target as HTMLInputElement).value).toBe('');
-    }));
-
-    it('uploadSampleFile shows error if no temp engagement', fakeAsync(() => {
-      // Don't set up temp engagement
-      const mockFile = new File(['data'], 'test.exe');
-      const fileList = { length: 1, 0: mockFile, item: (i: number) => mockFile } as unknown as FileList;
-      const event = { target: { files: fileList, value: 'test.exe' } } as unknown as Event;
-
-      component.onSampleFileSelected(event);
-      tick();
-
-      expect(spies.notifySpy.error).toHaveBeenCalledWith(
-        'Engagement must be created before uploading samples.'
-      );
-      expect(spies.engServiceSpy.uploadSample).not.toHaveBeenCalled();
-    }));
-
-    it('uploadSampleFile handles upload error with file field', fakeAsync(() => {
-      spies.engServiceSpy.create.and.returnValue(of(MOCK_MALWARE_ENGAGEMENT));
-      spies.engServiceSpy.uploadSample.and.returnValue(
-        throwError(() => ({ error: { file: ['File too large'] } }))
-      );
-
-      component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
-      tick();
-
-      const mockFile = new File(['data'], 'big.bin');
-      const fileList = { length: 1, 0: mockFile, item: (i: number) => mockFile } as unknown as FileList;
-      const event = { target: { files: fileList, value: '' } } as unknown as Event;
-
-      component.onSampleFileSelected(event);
-      tick();
-
-      expect(component.sampleUploading()).toBeFalse();
-      expect(spies.notifySpy.error).toHaveBeenCalledWith('File too large');
-    }));
-
-    it('uploadSampleFile handles upload error with detail field', fakeAsync(() => {
-      spies.engServiceSpy.create.and.returnValue(of(MOCK_MALWARE_ENGAGEMENT));
-      spies.engServiceSpy.uploadSample.and.returnValue(
-        throwError(() => ({ error: { detail: 'Unsupported' } }))
-      );
-
-      component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
-      tick();
-
-      const mockFile = new File(['data'], 'test.bin');
-      const fileList = { length: 1, 0: mockFile, item: (i: number) => mockFile } as unknown as FileList;
-      const event = { target: { files: fileList, value: '' } } as unknown as Event;
-
-      component.onSampleFileSelected(event);
-      tick();
-
-      expect(spies.notifySpy.error).toHaveBeenCalledWith('Unsupported');
-    }));
-
-    it('uploadSampleFile handles upload error with error field', fakeAsync(() => {
-      spies.engServiceSpy.create.and.returnValue(of(MOCK_MALWARE_ENGAGEMENT));
-      spies.engServiceSpy.uploadSample.and.returnValue(
-        throwError(() => ({ error: { error: 'Server failed' } }))
-      );
-
-      component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
-      tick();
-
-      const mockFile = new File(['data'], 'test.bin');
-      const fileList = { length: 1, 0: mockFile, item: (i: number) => mockFile } as unknown as FileList;
-      const event = { target: { files: fileList, value: '' } } as unknown as Event;
-
-      component.onSampleFileSelected(event);
-      tick();
-
-      expect(spies.notifySpy.error).toHaveBeenCalledWith('Server failed');
-    }));
-
-    it('uploadSampleFile handles generic upload error', fakeAsync(() => {
-      spies.engServiceSpy.create.and.returnValue(of(MOCK_MALWARE_ENGAGEMENT));
-      spies.engServiceSpy.uploadSample.and.returnValue(
-        throwError(() => ({ error: {} }))
-      );
-
-      component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
-      tick();
-
-      const mockFile = new File(['data'], 'test.bin');
-      const fileList = { length: 1, 0: mockFile, item: (i: number) => mockFile } as unknown as FileList;
-      const event = { target: { files: fileList, value: '' } } as unknown as Event;
-
-      component.onSampleFileSelected(event);
-      tick();
-
-      expect(spies.notifySpy.error).toHaveBeenCalledWith('Failed to upload sample.');
-    }));
-
-    // -- Drag and drop --
-
-    it('onSampleDrop prevents default and processes files', fakeAsync(() => {
-      spies.engServiceSpy.create.and.returnValue(of(MOCK_MALWARE_ENGAGEMENT));
-      spies.engServiceSpy.uploadSample.and.returnValue(of(MOCK_SAMPLE));
-
-      component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
-      tick();
-
-      component.sampleDragOver.set(true);
-      const mockFile = new File(['data'], 'dropped.exe');
-      const event = {
-        preventDefault: jasmine.createSpy('preventDefault'),
-        dataTransfer: { files: { length: 1, 0: mockFile } as unknown as FileList },
-      } as unknown as DragEvent;
-
-      component.onSampleDrop(event);
-      tick();
-
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(component.sampleDragOver()).toBeFalse();
-      expect(spies.engServiceSpy.uploadSample).toHaveBeenCalled();
-    }));
-
-    it('onSampleDrop does nothing with no files', () => {
-      const event = {
-        preventDefault: jasmine.createSpy('preventDefault'),
-        dataTransfer: { files: { length: 0 } as unknown as FileList },
-      } as unknown as DragEvent;
-
-      component.onSampleDrop(event);
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(spies.engServiceSpy.uploadSample).not.toHaveBeenCalled();
-    });
-
-    it('onSampleDrop handles null dataTransfer', () => {
-      const event = {
-        preventDefault: jasmine.createSpy('preventDefault'),
-        dataTransfer: null,
-      } as unknown as DragEvent;
-
-      component.onSampleDrop(event);
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(spies.engServiceSpy.uploadSample).not.toHaveBeenCalled();
-    });
-
-    it('onSampleDragOver prevents default', () => {
-      const event = {
-        preventDefault: jasmine.createSpy('preventDefault'),
-      } as unknown as DragEvent;
-      component.onSampleDragOver(event);
-      expect(event.preventDefault).toHaveBeenCalled();
-    });
-
-    it('onSampleDragEnter sets dragOver true', () => {
-      const event = {
-        preventDefault: jasmine.createSpy('preventDefault'),
-      } as unknown as DragEvent;
-      component.onSampleDragEnter(event);
-      expect(component.sampleDragOver()).toBeTrue();
-      expect(event.preventDefault).toHaveBeenCalled();
-    });
-
-    it('onSampleDragLeave sets dragOver false', () => {
-      component.sampleDragOver.set(true);
-      const event = {
-        preventDefault: jasmine.createSpy('preventDefault'),
-      } as unknown as DragEvent;
-      component.onSampleDragLeave(event);
-      expect(component.sampleDragOver()).toBeFalse();
-      expect(event.preventDefault).toHaveBeenCalled();
-    });
-
-    // -- removeSample --
-
-    it('removeSample does nothing if no temp engagement', () => {
-      component.removeSample('sample-1');
-      expect(spies.engServiceSpy.deleteSample).not.toHaveBeenCalled();
-    });
-
-    it('removeSample deletes sample and updates list', fakeAsync(() => {
-      spies.engServiceSpy.create.and.returnValue(of(MOCK_MALWARE_ENGAGEMENT));
-      spies.engServiceSpy.deleteSample.and.returnValue(of(undefined));
-
-      component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
-      tick();
-
-      component.uploadedSamples.set([MOCK_SAMPLE]);
-      component.removeSample('sample-1');
-      tick();
-
-      expect(spies.engServiceSpy.deleteSample).toHaveBeenCalledWith('eng-ma-1', 'sample-1');
-      expect(component.uploadedSamples().length).toBe(0);
-      expect(spies.notifySpy.success).toHaveBeenCalledWith('Sample removed.');
-    }));
-
-    it('removeSample handles error', fakeAsync(() => {
-      spies.engServiceSpy.create.and.returnValue(of(MOCK_MALWARE_ENGAGEMENT));
-      spies.engServiceSpy.deleteSample.and.returnValue(throwError(() => new Error('fail')));
-
-      component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
-      tick();
-
-      component.uploadedSamples.set([MOCK_SAMPLE]);
-      component.removeSample('sample-1');
-      tick();
-
-      expect(spies.notifySpy.error).toHaveBeenCalledWith('Failed to remove sample.');
-      // Sample not removed from list on error
-      expect(component.uploadedSamples().length).toBe(1);
-    }));
-
-    // -- canProceedFromSample / proceedFromSample --
-
-    it('canProceedFromSample returns false when no samples', () => {
-      expect(component.canProceedFromSample()).toBeFalse();
-    });
-
-    it('canProceedFromSample returns true when samples exist', () => {
-      component.uploadedSamples.set([MOCK_SAMPLE]);
-      expect(component.canProceedFromSample()).toBeTrue();
-    });
-
-    it('proceedFromSample does nothing if no samples', () => {
+    it('onSampleStepProceed stores samples and advances', () => {
       component.currentStep.set('sample');
-      component.proceedFromSample();
-      expect(component.currentStep()).toBe('sample');
-    });
-
-    it('proceedFromSample advances to details', () => {
-      component.uploadedSamples.set([MOCK_SAMPLE]);
-      component.currentStep.set('sample');
-      component.proceedFromSample();
+      component.onSampleStepProceed([MOCK_SAMPLE]);
+      expect(component.uploadedSamples()).toEqual([MOCK_SAMPLE]);
       expect(component.currentStep()).toBe('details');
     });
 

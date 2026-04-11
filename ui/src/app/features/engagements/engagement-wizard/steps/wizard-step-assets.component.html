@@ -1,0 +1,162 @@
+<div class="bc-card">
+  <div class="bc-wizardStepHead">
+    <h3 class="bc-wizardStepTitle">
+      <i class="bi bi-hdd-network me-2"></i>Select Assets
+    </h3>
+    <span class="bc-sub" style="font-size:0.8rem">
+      Choose assets for <strong>{{ orgName }}</strong> to include in scope, or create new ones.
+    </span>
+  </div>
+  <div class="bc-cardInner p-4">
+
+    @if (assetsLoading()) {
+      <div class="text-center py-4">
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        <span class="bc-sub">Loading assets...</span>
+      </div>
+    } @else {
+
+      <!-- Asset table -->
+      @if (orgAssets().length > 0) {
+        <div class="d-flex gap-2 mb-2">
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="selectAllAssets()">
+            Select All
+          </button>
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="deselectAllAssets()">
+            Deselect All
+          </button>
+        </div>
+        <div class="table-responsive mb-3">
+          <table class="table bc-table mb-0">
+            <thead>
+              <tr>
+                <th style="width:40px"></th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Environment</th>
+                <th>Criticality</th>
+                <th>Target</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (asset of orgAssets(); track asset.id) {
+                <tr class="bc-wizardAssetRow"
+                  [class.bc-wizardAssetSelected]="isAssetSelected(asset.id)"
+                  (click)="toggleAssetSelection(asset.id)">
+                  <td class="text-center">
+                    <input type="checkbox" class="form-check-input"
+                      [checked]="isAssetSelected(asset.id)"
+                      (click)="$event.stopPropagation()"
+                      (change)="toggleAssetSelection(asset.id)">
+                  </td>
+                  <td>{{ asset.name }}</td>
+                  <td>{{ assetTypeLabels[asset.asset_type] || asset.asset_type }}</td>
+                  <td>{{ assetEnvLabels[asset.environment] || asset.environment }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'bg-danger': asset.criticality === 'high',
+                      'bg-warning text-dark': asset.criticality === 'medium',
+                      'bg-secondary': asset.criticality === 'low'
+                    }">{{ assetCritLabels[asset.criticality] || asset.criticality }}</span>
+                  </td>
+                  <td class="bc-sub">{{ asset.target || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="bc-emptyState mb-3">
+          <i class="bi bi-hdd-network" style="font-size:1.5rem;opacity:0.3"></i>
+          <p class="bc-sub mt-2 mb-0">No assets found for this client. Create one below.</p>
+        </div>
+      }
+
+      <!-- Create new asset toggle -->
+      <div class="mb-3">
+        <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleAssetForm()">
+          <i class="bi me-1" [ngClass]="showAssetForm() ? 'bi-x-lg' : 'bi-plus-circle'"></i>
+          {{ showAssetForm() ? 'Cancel' : 'Add New Asset' }}
+        </button>
+      </div>
+
+      <!-- Inline asset form -->
+      @if (showAssetForm()) {
+        <div class="bc-wizardInlineForm">
+          <form [formGroup]="assetForm" (ngSubmit)="submitNewAsset()" autocomplete="off">
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label bc-label">Name <span class="bc-required">*</span></label>
+                <input type="text" class="form-control bc-input" formControlName="name"
+                  placeholder="Asset name">
+                @if (assetForm.get('name')?.touched && assetForm.get('name')?.hasError('required')) {
+                  <div class="bc-fieldError">Name is required.</div>
+                }
+              </div>
+              <div class="col-md-6">
+                <label class="form-label bc-label">Target</label>
+                <input type="text" class="form-control bc-input" formControlName="target"
+                  placeholder="IP, hostname, URL...">
+              </div>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label class="form-label bc-label">Type</label>
+                <select class="form-select bc-input" formControlName="asset_type">
+                  @for (opt of typeOptions; track opt[0]) {
+                    <option [value]="opt[0]">{{ opt[1] }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label bc-label">Environment</label>
+                <select class="form-select bc-input" formControlName="environment">
+                  @for (opt of envOptions; track opt[0]) {
+                    <option [value]="opt[0]">{{ opt[1] }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label bc-label">Criticality</label>
+                <select class="form-select bc-input" formControlName="criticality">
+                  @for (opt of critOptions; track opt[0]) {
+                    <option [value]="opt[0]">{{ opt[1] }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-sm btn-success bc-btn" [disabled]="assetSaving()">
+              @if (assetSaving()) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              }
+              <i class="bi bi-plus-circle me-1" *ngIf="!assetSaving()"></i>
+              Create Asset
+            </button>
+          </form>
+        </div>
+      }
+
+      <!-- Selection summary -->
+      @if (selectedAssetIds().size > 0) {
+        <div class="bc-wizardSelection mt-3">
+          <i class="bi bi-check-circle-fill me-2" style="color:var(--bc-accent)"></i>
+          <strong>{{ selectedAssetIds().size }}</strong> asset{{ selectedAssetIds().size === 1 ? '' : 's' }} selected
+        </div>
+      }
+    }
+
+    <!-- Navigation -->
+    <div class="bc-wizardNav mt-4">
+      <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="onBack()">
+        <i class="bi bi-arrow-left me-1"></i> Back
+      </button>
+      <button class="btn btn-success bc-btn" type="button"
+        [disabled]="!canProceed()"
+        (click)="onProceed()">
+        Next: Engagement Details
+        <i class="bi bi-arrow-right ms-1"></i>
+      </button>
+    </div>
+
+  </div>
+</div>
