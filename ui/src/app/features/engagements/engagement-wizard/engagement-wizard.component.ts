@@ -5,12 +5,14 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { forkJoin } from 'rxjs';
 
 import { EngagementsService } from '../services/engagements.service';
+import { SowService } from '../services/sow.service';
 import { OrganizationsService } from '../../organizations/services/organizations.service';
 import { AssetsService } from '../../assets/services/assets.service';
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { OrganizationRef, Organization } from '../../organizations/models/organization.model';
 import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS, AssetType, AssetEnvironment, AssetCriticality } from '../../assets/models/asset.model';
-import { Engagement, MalwareSample, Sow, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
+import { Engagement, MalwareSample, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
+import { Sow } from '../models/sow.model';
 
 export type WizardStep = 'org' | 'assets' | 'sample' | 'details' | 'sow' | 'review';
 
@@ -41,6 +43,7 @@ function getStepOrder(type: EngagementType): WizardStep[] {
 })
 export class EngagementWizardComponent {
   private readonly engService = inject(EngagementsService);
+  private readonly sowService = inject(SowService);
   private readonly orgService = inject(OrganizationsService);
   private readonly assetService = inject(AssetsService);
   private readonly notify = inject(NotificationService);
@@ -546,7 +549,7 @@ export class EngagementWizardComponent {
     }
 
     // Add all selected assets to scope in parallel
-    const addOps = assetIds.map((id) => this.engService.addToScope(engId, id));
+    const addOps = assetIds.map((id) => this.sowService.addScope(engId, id));
     forkJoin(addOps).subscribe({
       next: () => this.fetchSowAndAdvance(engId),
       error: (err) => {
@@ -559,7 +562,7 @@ export class EngagementWizardComponent {
   }
 
   private fetchSowAndAdvance(engId: string): void {
-    this.engService.getSow(engId).subscribe({
+    this.sowService.get(engId).subscribe({
       next: (sow) => {
         this.createdSow.set(sow);
         this.submitting.set(false);
@@ -582,7 +585,7 @@ export class EngagementWizardComponent {
     this.submitting.set(true);
     this.error.set('');
 
-    this.engService.updateSow(eng.id, { status: 'approved' }).subscribe({
+    this.sowService.update(eng.id, { status: 'approved' }).subscribe({
       next: (sow) => {
         this.createdSow.set(sow);
         this.submitting.set(false);

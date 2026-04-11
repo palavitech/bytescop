@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EngagementsService } from './engagements.service';
-import { Engagement, MalwareSample, Sow } from '../models/engagement.model';
+import { Engagement, MalwareSample } from '../models/engagement.model';
 import { EngagementSettingDef } from '../models/stakeholder.model';
 
 const MOCK: Engagement = {
@@ -224,84 +224,6 @@ describe('EngagementsService', () => {
     service.listSettings('eng-1').subscribe(r => (result = r));
     httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/settings/')).flush([]);
     expect(result).toEqual([]);
-  });
-
-  // --- SoW ---
-
-  it('getSow() sends GET to /api/engagements/:id/sow/', () => {
-    service.getSow('eng-1').subscribe();
-    const req = httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/sow/'));
-    expect(req.request.method).toBe('GET');
-    req.flush({});
-  });
-
-  it('getSow() returns the SoW', () => {
-    const mockSow: Sow = {
-      id: 'sow-1',
-      engagement: 'eng-1',
-      title: 'Test SoW',
-      status: 'draft',
-      created_at: '2026-01-01T00:00:00Z',
-      updated_at: '2026-01-01T00:00:00Z',
-    };
-    let result: Sow | undefined;
-    service.getSow('eng-1').subscribe(r => (result = r));
-    httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/sow/')).flush(mockSow);
-    expect(result).toEqual(mockSow);
-  });
-
-  it('updateSow() sends PATCH to /api/engagements/:id/sow/', () => {
-    service.updateSow('eng-1', { title: 'Updated SoW' }).subscribe();
-    const req = httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/sow/'));
-    expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual({ title: 'Updated SoW' });
-    req.flush({});
-  });
-
-  it('updateSow() returns the updated SoW', () => {
-    const mockSow: Sow = {
-      id: 'sow-1',
-      engagement: 'eng-1',
-      title: 'Updated SoW',
-      status: 'approved',
-      created_at: '2026-01-01T00:00:00Z',
-      updated_at: '2026-01-02T00:00:00Z',
-    };
-    let result: Sow | undefined;
-    service.updateSow('eng-1', { title: 'Updated SoW', status: 'approved' }).subscribe(r => (result = r));
-    httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/sow/')).flush(mockSow);
-    expect(result).toEqual(mockSow);
-  });
-
-  // --- Scope ---
-
-  it('listScope() sends GET to /api/engagements/:id/scope/', () => {
-    service.listScope('eng-1').subscribe();
-    const req = httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/scope/'));
-    expect(req.request.method).toBe('GET');
-    req.flush([]);
-  });
-
-  it('listScope() returns the assets array', () => {
-    let result: any[] | undefined;
-    service.listScope('eng-1').subscribe(r => (result = r));
-    httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/scope/')).flush([]);
-    expect(result).toEqual([]);
-  });
-
-  it('addToScope() sends POST to /api/engagements/:id/scope/', () => {
-    service.addToScope('eng-1', 'asset-1').subscribe();
-    const req = httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/scope/'));
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ asset_id: 'asset-1' });
-    req.flush({});
-  });
-
-  it('removeFromScope() sends DELETE to /api/engagements/:id/scope/:assetId/', () => {
-    service.removeFromScope('eng-1', 'asset-1').subscribe();
-    const req = httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/scope/asset-1/'));
-    expect(req.request.method).toBe('DELETE');
-    req.flush(null);
   });
 
   // --- Stakeholder return values ---

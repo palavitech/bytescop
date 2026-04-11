@@ -91,14 +91,4 @@ export interface MalwareSample {
   created_at: string;
 }
 
-export type SowStatus = 'draft' | 'approved';
-
-export interface Sow {
-  id: string;
-  engagement: string;
-  title: string;
-  status: SowStatus;
-  created_at: string;
-  updated_at: string;
-}
 

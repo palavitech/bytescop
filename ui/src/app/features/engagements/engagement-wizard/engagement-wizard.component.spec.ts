@@ -7,10 +7,12 @@ import { of, throwError } from 'rxjs';
 
 import { EngagementWizardComponent, WizardStep } from './engagement-wizard.component';
 import { EngagementsService } from '../services/engagements.service';
+import { SowService } from '../services/sow.service';
 import { OrganizationsService } from '../../organizations/services/organizations.service';
 import { AssetsService } from '../../assets/services/assets.service';
 import { NotificationService } from '../../../services/core/notify/notification.service';
-import { Engagement, MalwareSample, Sow } from '../models/engagement.model';
+import { Engagement, MalwareSample } from '../models/engagement.model';
+import { Sow } from '../models/sow.model';
 import { Asset } from '../../assets/models/asset.model';
 import { Organization, OrganizationRef } from '../../organizations/models/organization.model';
 
@@ -86,7 +88,6 @@ const MOCK_MALWARE_ENGAGEMENT: Engagement = {
 
 const MOCK_SOW: Sow = {
   id: 'sow-1',
-  engagement: 'eng-1',
   title: 'Test SOW',
   status: 'draft',
   created_at: '2025-01-01T00:00:00Z',
@@ -114,8 +115,11 @@ const MOCK_SAMPLE: MalwareSample = {
 
 function buildTestBed(engagementType: string | null = 'general') {
   const engServiceSpy = jasmine.createSpyObj('EngagementsService', [
-    'create', 'update', 'getSow', 'updateSow', 'addToScope',
+    'create', 'update',
     'uploadSample', 'deleteSample',
+  ]);
+  const sowServiceSpy = jasmine.createSpyObj('SowService', [
+    'get', 'update', 'addScope',
   ]);
   const orgServiceSpy = jasmine.createSpyObj('OrganizationsService', ['ref', 'create']);
   const assetServiceSpy = jasmine.createSpyObj('AssetsService', ['list', 'create']);
@@ -128,6 +132,7 @@ function buildTestBed(engagementType: string | null = 'general') {
 
   return {
     engServiceSpy,
+    sowServiceSpy,
     orgServiceSpy,
     assetServiceSpy,
     notifySpy,
@@ -140,6 +145,7 @@ function buildTestBed(engagementType: string | null = 'general') {
           provideHttpClientTesting(),
           provideRouter([]),
           { provide: EngagementsService, useValue: engServiceSpy },
+          { provide: SowService, useValue: sowServiceSpy },
           { provide: OrganizationsService, useValue: orgServiceSpy },
           { provide: AssetsService, useValue: assetServiceSpy },
           { provide: NotificationService, useValue: notifySpy },
@@ -661,8 +667,8 @@ describe('EngagementWizardComponent', () => {
 
     it('proceedFromDetails creates engagement and adds scope', fakeAsync(() => {
       spies.engServiceSpy.create.and.returnValue(of(MOCK_ENGAGEMENT));
-      spies.engServiceSpy.addToScope.and.returnValue(of(MOCK_ASSET));
-      spies.engServiceSpy.getSow.and.returnValue(of(MOCK_SOW));
+      spies.sowServiceSpy.addScope.and.returnValue(of(MOCK_ASSET));
+      spies.sowServiceSpy.get.and.returnValue(of(MOCK_SOW));
 
       component.engForm.get('name')?.setValue('Test Engagement');
       component.selectedOrgId.set('org-1');
@@ -672,8 +678,8 @@ describe('EngagementWizardComponent', () => {
       component.proceedFromDetails();
       tick();
       expect(spies.engServiceSpy.create).toHaveBeenCalled();
-      expect(spies.engServiceSpy.addToScope).toHaveBeenCalledWith('eng-1', 'asset-1');
-      expect(spies.engServiceSpy.getSow).toHaveBeenCalledWith('eng-1');
+      expect(spies.sowServiceSpy.addScope).toHaveBeenCalledWith('eng-1', 'asset-1');
+      expect(spies.sowServiceSpy.get).toHaveBeenCalledWith('eng-1');
       expect(component.createdEngagement()).toEqual(MOCK_ENGAGEMENT);
       expect(component.createdSow()).toEqual(MOCK_SOW);
       expect(component.submitting()).toBeFalse();
@@ -682,7 +688,7 @@ describe('EngagementWizardComponent', () => {
 
     it('proceedFromDetails with no assets skips scope and fetches SoW', fakeAsync(() => {
       spies.engServiceSpy.create.and.returnValue(of(MOCK_ENGAGEMENT));
-      spies.engServiceSpy.getSow.and.returnValue(of(MOCK_SOW));
+      spies.sowServiceSpy.get.and.returnValue(of(MOCK_SOW));
 
       component.engForm.get('name')?.setValue('Test');
       component.selectedOrgId.set('org-1');
@@ -692,8 +698,8 @@ describe('EngagementWizardComponent', () => {
       component.proceedFromDetails();
       tick();
 
-      expect(spies.engServiceSpy.addToScope).not.toHaveBeenCalled();
-      expect(spies.engServiceSpy.getSow).toHaveBeenCalledWith('eng-1');
+      expect(spies.sowServiceSpy.addScope).not.toHaveBeenCalled();
+      expect(spies.sowServiceSpy.get).toHaveBeenCalledWith('eng-1');
       expect(component.createdSow()).toEqual(MOCK_SOW);
       expect(component.currentStep()).toBe('sow');
     }));
@@ -782,7 +788,7 @@ describe('EngagementWizardComponent', () => {
 
     it('addAssetsToScopeAndFetchSow handles scope add error', fakeAsync(() => {
       spies.engServiceSpy.create.and.returnValue(of(MOCK_ENGAGEMENT));
-      spies.engServiceSpy.addToScope.and.returnValue(
+      spies.sowServiceSpy.addScope.and.returnValue(
         throwError(() => ({ error: { detail: 'Scope error' } }))
       );
 
@@ -801,7 +807,7 @@ describe('EngagementWizardComponent', () => {
 
     it('addAssetsToScopeAndFetchSow handles generic scope error', fakeAsync(() => {
       spies.engServiceSpy.create.and.returnValue(of(MOCK_ENGAGEMENT));
-      spies.engServiceSpy.addToScope.and.returnValue(
+      spies.sowServiceSpy.addScope.and.returnValue(
         throwError(() => ({ error: {} }))
       );
 
@@ -820,7 +826,7 @@ describe('EngagementWizardComponent', () => {
 
     it('fetchSowAndAdvance still advances on SoW fetch error', fakeAsync(() => {
       spies.engServiceSpy.create.and.returnValue(of(MOCK_ENGAGEMENT));
-      spies.engServiceSpy.getSow.and.returnValue(throwError(() => new Error('no sow')));
+      spies.sowServiceSpy.get.and.returnValue(throwError(() => new Error('no sow')));
 
       component.engForm.get('name')?.setValue('Test');
       component.selectedOrgId.set('org-1');
@@ -839,24 +845,24 @@ describe('EngagementWizardComponent', () => {
     it('approveSow does nothing when no engagement', () => {
       component.createdEngagement.set(null);
       component.approveSow();
-      expect(spies.engServiceSpy.updateSow).not.toHaveBeenCalled();
+      expect(spies.sowServiceSpy.update).not.toHaveBeenCalled();
     });
 
     it('approveSow updates SoW status and advances', fakeAsync(() => {
-      spies.engServiceSpy.updateSow.and.returnValue(of(MOCK_APPROVED_SOW));
+      spies.sowServiceSpy.update.and.returnValue(of(MOCK_APPROVED_SOW));
       component.createdEngagement.set(MOCK_ENGAGEMENT);
       component.currentStep.set('sow');
 
       component.approveSow();
       tick();
-      expect(spies.engServiceSpy.updateSow).toHaveBeenCalledWith('eng-1', { status: 'approved' });
+      expect(spies.sowServiceSpy.update).toHaveBeenCalledWith('eng-1', { status: 'approved' });
       expect(component.createdSow()).toEqual(MOCK_APPROVED_SOW);
       expect(component.submitting()).toBeFalse();
       expect(component.currentStep()).toBe('review');
     }));
 
     it('approveSow handles error', fakeAsync(() => {
-      spies.engServiceSpy.updateSow.and.returnValue(
+      spies.sowServiceSpy.update.and.returnValue(
         throwError(() => ({ error: { detail: 'SoW locked' } }))
       );
       component.createdEngagement.set(MOCK_ENGAGEMENT);
@@ -871,7 +877,7 @@ describe('EngagementWizardComponent', () => {
     }));
 
     it('approveSow handles generic error', fakeAsync(() => {
-      spies.engServiceSpy.updateSow.and.returnValue(
+      spies.sowServiceSpy.update.and.returnValue(
         throwError(() => ({ error: {} }))
       );
       component.createdEngagement.set(MOCK_ENGAGEMENT);
@@ -965,8 +971,8 @@ describe('EngagementWizardComponent', () => {
 
     it('proceedFromDetails adds multiple assets to scope via forkJoin', fakeAsync(() => {
       spies.engServiceSpy.create.and.returnValue(of(MOCK_ENGAGEMENT));
-      spies.engServiceSpy.addToScope.and.returnValue(of(MOCK_ASSET));
-      spies.engServiceSpy.getSow.and.returnValue(of(MOCK_SOW));
+      spies.sowServiceSpy.addScope.and.returnValue(of(MOCK_ASSET));
+      spies.sowServiceSpy.get.and.returnValue(of(MOCK_SOW));
 
       component.engForm.get('name')?.setValue('Test');
       component.selectedOrgId.set('org-1');
@@ -976,7 +982,7 @@ describe('EngagementWizardComponent', () => {
       component.proceedFromDetails();
       tick();
 
-      expect(spies.engServiceSpy.addToScope).toHaveBeenCalledTimes(2);
+      expect(spies.sowServiceSpy.addScope).toHaveBeenCalledTimes(2);
       expect(component.currentStep()).toBe('sow');
     }));
   });
@@ -1385,7 +1391,7 @@ describe('EngagementWizardComponent', () => {
         ...MOCK_MALWARE_ENGAGEMENT,
         name: 'Updated MA',
       }));
-      spies.engServiceSpy.getSow.and.returnValue(of(MOCK_SOW));
+      spies.sowServiceSpy.get.and.returnValue(of(MOCK_SOW));
 
       // First create temp engagement
       component.selectOrg('org-1', 'Acme Corp');

@@ -2,8 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { Engagement, MalwareSample, Sow } from '../models/engagement.model';
-import { Asset } from '../../assets/models/asset.model';
+import { Engagement, MalwareSample } from '../models/engagement.model';
 import { EngagementStakeholder, StakeholderCreate, EngagementSettingDef } from '../models/stakeholder.model';
 
 @Injectable({ providedIn: 'root' })
@@ -36,28 +35,6 @@ export class EngagementsService {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}/`);
-  }
-
-  // -- SoW & Scope --
-
-  getSow(engId: string): Observable<Sow> {
-    return this.http.get<Sow>(`${this.baseUrl}/${engId}/sow/`);
-  }
-
-  updateSow(engId: string, data: Partial<Sow>): Observable<Sow> {
-    return this.http.patch<Sow>(`${this.baseUrl}/${engId}/sow/`, data);
-  }
-
-  listScope(engId: string): Observable<Asset[]> {
-    return this.http.get<Asset[]>(`${this.baseUrl}/${engId}/scope/`);
-  }
-
-  addToScope(engId: string, assetId: string): Observable<Asset> {
-    return this.http.post<Asset>(`${this.baseUrl}/${engId}/scope/`, { asset_id: assetId });
-  }
-
-  removeFromScope(engId: string, assetId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${engId}/scope/${assetId}/`);
   }
 
   // -- Malware Samples --
