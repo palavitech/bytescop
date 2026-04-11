@@ -14,8 +14,8 @@ import { NotificationService } from '../../../services/core/notify/notification.
 import { PermissionService } from '../../../services/core/auth/permission.service';
 import { UserProfileService } from '../../../services/core/profile/user-profile.service';
 import { DirtyFormComponent, beforeUnloadGuard } from '../../../services/core/guards/dirty-form.guard';
-import { FindingSectionMalwareComponent, MalwareFindingPayload } from './sections/finding-section-malware.component';
-import { FindingSectionStandardComponent, StandardFindingPayload } from './sections/finding-section-standard.component';
+import { FindingSectionMalwareComponent, MalwareFindingPayload } from '../types/malware-analysis';
+import { FindingSectionStandardComponent, StandardFindingPayload } from '../types/default';
 
 @Component({
   selector: 'app-engagement-findings-create',

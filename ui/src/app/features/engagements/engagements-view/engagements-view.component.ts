@@ -14,7 +14,7 @@ import { HasPermissionDirective } from '../../../components/directives/has-permi
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { BcDatePipe } from '../../../components/pipes/bc-date.pipe';
 import { BcCommentsComponent } from '../../comments/components/bc-comments.component';
-import { SowScopeAssetsComponent } from './sow-scope-assets.component';
+import { SowScopeAssetsComponent } from '../types/default';
 import {
   Chart,
   DoughnutController,

@@ -12,8 +12,8 @@ import { OrganizationRef, Organization } from '../../organizations/models/organi
 import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS } from '../../assets/models/asset.model';
 import { Engagement, MalwareSample, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
 import { Sow } from '../models/sow.model';
-import { WizardStepAssetsComponent, AssetStepResult } from './steps/wizard-step-assets.component';
-import { WizardStepSamplesComponent } from './steps/wizard-step-samples.component';
+import { WizardStepAssetsComponent, AssetStepResult } from '../types/default';
+import { WizardStepSamplesComponent } from '../types/malware-analysis';
 
 export type WizardStep = 'org' | 'assets' | 'sample' | 'details' | 'sow' | 'review';
 

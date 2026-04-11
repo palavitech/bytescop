@@ -12,8 +12,8 @@ import { FindingsService } from '../services/findings.service';
 import { Finding } from '../models/finding.model';
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { DirtyFormComponent, beforeUnloadGuard } from '../../../services/core/guards/dirty-form.guard';
-import { FindingSectionMalwareComponent, MalwareFindingPayload } from '../engagement-findings-create/sections/finding-section-malware.component';
-import { FindingSectionStandardComponent, StandardFindingPayload } from '../engagement-findings-create/sections/finding-section-standard.component';
+import { FindingSectionMalwareComponent, MalwareFindingPayload } from '../types/malware-analysis';
+import { FindingSectionStandardComponent, StandardFindingPayload } from '../types/default';
 
 @Component({
   selector: 'app-engagement-findings-edit',

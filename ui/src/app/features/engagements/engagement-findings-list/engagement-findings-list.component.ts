@@ -10,8 +10,8 @@ import { FindingsService } from '../services/findings.service';
 import { Finding, FINDING_SEVERITY_LABELS, FINDING_STATUS_LABELS, FindingSeverity, FindingStatus } from '../models/finding.model';
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
 import { NotificationService } from '../../../services/core/notify/notification.service';
-import { FindingsTableStandardComponent } from './tables/findings-table-standard.component';
-import { FindingsTableMalwareComponent } from './tables/findings-table-malware.component';
+import { FindingsTableStandardComponent } from '../types/default';
+import { FindingsTableMalwareComponent } from '../types/malware-analysis';
 
 type VmState = 'init' | 'ready' | 'error';
 
