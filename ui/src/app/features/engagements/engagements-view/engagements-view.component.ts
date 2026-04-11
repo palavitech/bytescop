@@ -14,6 +14,7 @@ import { HasPermissionDirective } from '../../../components/directives/has-permi
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { BcDatePipe } from '../../../components/pipes/bc-date.pipe';
 import { BcCommentsComponent } from '../../comments/components/bc-comments.component';
+import { SowScopeAssetsComponent } from './sow-scope-assets.component';
 import {
   Chart,
   DoughnutController,
@@ -51,7 +52,7 @@ interface ScopeViewModel {
 @Component({
   selector: 'app-engagements-view',
   standalone: true,
-  imports: [CommonModule, RouterLink, HasPermissionDirective, BcDatePipe, BcCommentsComponent],
+  imports: [CommonModule, RouterLink, HasPermissionDirective, BcDatePipe, BcCommentsComponent, SowScopeAssetsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './engagements-view.component.html',
   styleUrl: './engagements-view.component.css',
@@ -154,9 +155,6 @@ export class EngagementsViewComponent implements OnInit, OnDestroy {
   private readonly refreshScope$ = new BehaviorSubject<void>(undefined);
   scopeVm$ = of<ScopeViewModel>({ state: 'init', assets: [], total: 0 });
 
-  readonly typeLabels = ASSET_TYPE_LABELS;
-  readonly envLabels = ASSET_ENV_LABELS;
-  readonly critLabels = ASSET_CRIT_LABELS;
 
   ngOnInit(): void {
     this.engagementId = this.route.snapshot.paramMap.get('id') ?? '';

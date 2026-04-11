@@ -74,14 +74,6 @@
           </div>
 
           <div class="bc-pageCardFootRight">
-            <button class="btn btn-outline-light bc-btn bc-btnCtaFoot"
-              type="button"
-              *ngIf="vm.engagement?.engagement_type === 'malware_analysis'"
-              (click)="initializeAnalysis(vm.engagement)"
-              [disabled]="!vm.engagement || initializingAnalysis">
-              <i class="bi bi-cpu"></i>
-              <span class="ms-2">{{ initializingAnalysis ? 'Initializing...' : 'Initialize Analysis' }}</span>
-            </button>
             <button class="btn btn-success bc-btn bc-btnCtaFoot"
               type="button"
               *bcHasPermission="'finding.create'"
@@ -120,7 +112,8 @@
                   *ngIf="e.engagement_type === 'malware_analysis'"
                   [findings]="vm.items"
                   [engagementId]="e.id"
-                  (execute)="executeFinding($event, e)"
+                  (refresh)="refresh()"
+                  (scheduleRefresh)="scheduleRefresh($event)"
                   (delete)="deleteFinding($event, e)">
                 </app-findings-table-malware>
 

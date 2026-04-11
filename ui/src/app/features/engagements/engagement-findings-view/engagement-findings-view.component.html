@@ -136,17 +136,12 @@
                 <div class="row g-4">
 
                   <div class="col-12 col-lg-4">
-                    <ng-container *ngIf="vm.engagement?.engagement_type === 'malware_analysis'; else assetBlock">
-                      <div class="bc-sub">Sample</div>
-                      <div class="mt-1">
-                        <i class="bi bi-file-earmark-binary me-1" style="color:var(--bc-accent2)"></i>
-                        {{ f.sample_name || '—' }}
-                      </div>
-                    </ng-container>
-                    <ng-template #assetBlock>
-                      <div class="bc-sub">Asset</div>
-                      <div class="mt-1">{{ f.asset_name || '—' }}</div>
-                    </ng-template>
+                    <div class="bc-sub">{{ vm.engagement?.engagement_type === 'malware_analysis' ? 'Sample' : 'Asset' }}</div>
+                    <div class="mt-1">
+                      <i *ngIf="vm.engagement?.engagement_type === 'malware_analysis'"
+                        class="bi bi-file-earmark-binary me-1" style="color:var(--bc-accent2)"></i>
+                      {{ vm.engagement?.engagement_type === 'malware_analysis' ? (f.sample_name || '—') : (f.asset_name || '—') }}
+                    </div>
                   </div>
 
                   <div class="col-12 col-lg-4">

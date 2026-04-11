@@ -54,7 +54,6 @@ export class EngagementFindingsListComponent implements OnDestroy {
 
   showHelp = false;
   showFilters = false;
-  initializingAnalysis = false;
 
   private readonly refresh$ = new BehaviorSubject<number>(0);
   private readonly filter$ = new BehaviorSubject<FilterState>({ severity: '', status: '' });
@@ -161,42 +160,6 @@ export class EngagementFindingsListComponent implements OnDestroy {
     this.router.navigate(['/engagements', engagement.id, 'findings', 'create']);
   }
 
-  // -- Analysis Checks --
-
-  initializeAnalysis(engagement: Engagement | null): void {
-    if (!engagement) return;
-    this.initializingAnalysis = true;
-    this.cdr.markForCheck();
-
-    this.engagementsService.initializeAnalysis(engagement.id).subscribe({
-      next: (res) => {
-        this.initializingAnalysis = false;
-        if (res.created > 0) {
-          this.refresh();
-        } else {
-          this.notify.info('All analysis checks already exist.');
-        }
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        this.initializingAnalysis = false;
-        this.cdr.markForCheck();
-        this.notify.error(err?.error?.message || err?.error?.detail || 'Failed to initialize analysis.');
-      },
-    });
-  }
-
-  executeFinding(finding: Finding, engagement: Engagement | null): void {
-    if (!engagement) return;
-
-    this.engagementsService.executeFinding(engagement.id, finding.id).subscribe({
-      next: () => this.scheduleRefresh(3000),
-      error: (err) => {
-        this.notify.error(err?.error?.message || err?.error?.detail || 'Failed to start execution.');
-      },
-    });
-  }
-
   deleteFinding(finding: Finding, engagement: Engagement | null): void {
     if (!engagement) return;
 
@@ -208,7 +171,7 @@ export class EngagementFindingsListComponent implements OnDestroy {
     });
   }
 
-  private scheduleRefresh(delayMs: number): void {
+  scheduleRefresh(delayMs: number): void {
     clearTimeout(this.refreshTimer);
     this.refreshTimer = setTimeout(() => this.refresh(), delayMs);
   }
