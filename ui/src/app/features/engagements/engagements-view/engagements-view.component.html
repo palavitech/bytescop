@@ -384,9 +384,12 @@
                     </div>
                   </div>
 
-                  <!-- Scope Assets (nested inside SoW card) -->
+                  <!-- Scope summary (type-specific via registry) -->
                   <ng-container *bcHasPermission="'scope.view'">
-                    <app-sow-scope-assets [scopeVm$]="scopeVm$"></app-sow-scope-assets>
+                    <ng-container *ngIf="scopeSummaryComponent"
+                      [ngComponentOutlet]="scopeSummaryComponent"
+                      [ngComponentOutletInputs]="{ engagementId: engagementId, refreshTrigger: scopeRefreshTrigger() }">
+                    </ng-container>
                   </ng-container>
 
                 </ng-container>

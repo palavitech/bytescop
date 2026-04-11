@@ -1,0 +1,123 @@
+import { Component, ChangeDetectionStrategy, Input, ViewEncapsulation, inject, OnInit, OnChanges, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+import { EngagementsService } from '../services/engagements.service';
+import { MalwareSample } from '../models/engagement.model';
+
+type ScopeState = 'init' | 'ready' | 'error';
+
+@Component({
+  selector: 'app-sow-scope-samples',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
+  imports: [CommonModule],
+  styles: [`
+    .bc-scopeHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-top: 1px solid rgba(0, 255, 179, 0.1);
+      border-bottom: 1px solid rgba(0, 255, 179, 0.06);
+      position: relative;
+    }
+    .bc-sha256Sm {
+      font-size: 0.75rem;
+      color: var(--bc-muted, #8ea0d7);
+      background: rgba(142, 160, 215, .08);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  `],
+  template: `
+    <div class="bc-scopeHead">
+      <div class="d-flex align-items-center gap-2">
+        <span class="bc-sub fw-semibold">Malware Samples</span>
+        <span class="badge bg-secondary" *ngIf="state() === 'ready'">{{ samples().length }}</span>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="p-4" *ngIf="state() === 'init'">
+      <div class="bc-sub">Loading samples...</div>
+    </div>
+
+    <!-- Error -->
+    <div class="p-4" *ngIf="state() === 'error'">
+      <div class="bc-sub text-danger">Failed to load samples.</div>
+    </div>
+
+    <!-- Ready -->
+    <ng-container *ngIf="state() === 'ready'">
+      <!-- Empty -->
+      <div class="p-4" *ngIf="samples().length === 0">
+        <div class="bc-sub">No samples uploaded yet.</div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-responsive" *ngIf="samples().length > 0">
+        <table class="table bc-table mb-0">
+          <thead>
+            <tr>
+              <th>Filename</th>
+              <th>Size</th>
+              <th>SHA-256</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of samples()">
+              <td>
+                <i class="bi bi-file-earmark-binary me-1" style="color:var(--bc-accent2)"></i>
+                {{ s.original_filename }}
+              </td>
+              <td class="bc-sub">{{ formatBytes(s.size_bytes) }}</td>
+              <td><code class="bc-sha256Sm">{{ s.sha256 }}</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  `,
+})
+export class SowScopeSamplesComponent implements OnInit, OnChanges {
+  private readonly engService = inject(EngagementsService);
+
+  @Input({ required: true }) engagementId!: string;
+  @Input() refreshTrigger = 0;
+
+  readonly state = signal<ScopeState>('init');
+  readonly samples = signal<MalwareSample[]>([]);
+
+  ngOnInit(): void {
+    this.loadSamples();
+  }
+
+  ngOnChanges(): void {
+    if (this.engagementId) {
+      this.loadSamples();
+    }
+  }
+
+  private loadSamples(): void {
+    this.state.set('init');
+    this.engService.listSamples(this.engagementId).subscribe({
+      next: (samples) => {
+        this.samples.set(samples);
+        this.state.set('ready');
+      },
+      error: () => {
+        this.samples.set([]);
+        this.state.set('error');
+      },
+    });
+  }
+
+  formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+}

@@ -247,25 +247,10 @@ describe('EngagementsViewComponent', () => {
     expect(result.sow).toBeNull();
   }));
 
-  it('sets up scopeVm$ that emits ready state with assets', fakeAsync(() => {
+  it('resolves scopeSummaryComponent from registry after engagement loads', fakeAsync(() => {
     fixture.detectChanges();
-    let result: any;
-    component.scopeVm$.subscribe(vm => (result = vm));
     tick();
-    expect(result.state).toBe('ready');
-    expect(result.assets).toEqual([MOCK_ASSET]);
-    expect(result.total).toBe(1);
-  }));
-
-  it('sets up scopeVm$ that emits error state on failure', fakeAsync(() => {
-    sowServiceSpy.listScope.and.returnValue(throwError(() => new Error('fail')));
-    fixture.detectChanges();
-    let result: any;
-    component.scopeVm$.subscribe(vm => (result = vm));
-    tick();
-    expect(result.state).toBe('error');
-    expect(result.assets).toEqual([]);
-    expect(result.total).toBe(0);
+    expect(component.scopeSummaryComponent).toBeTruthy();
   }));
 
   // --- goBack ---
@@ -347,36 +332,36 @@ describe('EngagementsViewComponent', () => {
 
   // --- refresh ---
 
-  it('refresh() triggers all three streams', fakeAsync(() => {
+  it('refresh() triggers engagement, sow, and scope refresh', fakeAsync(() => {
     fixture.detectChanges();
     tick();
 
     engagementsServiceSpy.getById.calls.reset();
     sowServiceSpy.get.calls.reset();
-    sowServiceSpy.listScope.calls.reset();
+    const before = component.scopeRefreshTrigger();
 
     component.refresh();
     tick();
 
     expect(engagementsServiceSpy.getById).toHaveBeenCalled();
     expect(sowServiceSpy.get).toHaveBeenCalled();
-    expect(sowServiceSpy.listScope).toHaveBeenCalled();
+    expect(component.scopeRefreshTrigger()).toBe(before + 1);
   }));
 
   // --- refreshSow ---
 
-  it('refreshSow() triggers sow and scope streams', fakeAsync(() => {
+  it('refreshSow() triggers sow and scope refresh', fakeAsync(() => {
     fixture.detectChanges();
     tick();
 
     sowServiceSpy.get.calls.reset();
-    sowServiceSpy.listScope.calls.reset();
+    const before = component.scopeRefreshTrigger();
 
     component.refreshSow();
     tick();
 
     expect(sowServiceSpy.get).toHaveBeenCalled();
-    expect(sowServiceSpy.listScope).toHaveBeenCalled();
+    expect(component.scopeRefreshTrigger()).toBe(before + 1);
   }));
 
   // --- Delete engagement ---

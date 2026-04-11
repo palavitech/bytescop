@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, OnInit, OnDestroy, ViewChild, ElementRef, signal, Type } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, forkJoin, map, of, switchMap, Subscription } from 'rxjs';
@@ -14,7 +14,7 @@ import { HasPermissionDirective } from '../../../components/directives/has-permi
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { BcDatePipe } from '../../../components/pipes/bc-date.pipe';
 import { BcCommentsComponent } from '../../comments/components/bc-comments.component';
-import { SowScopeAssetsComponent } from '../types/default';
+import { getTypeConfig } from '../types/registry';
 import {
   Chart,
   DoughnutController,
@@ -31,8 +31,6 @@ Chart.register(DoughnutController, ArcElement, BarController, BarElement, Catego
 
 type ViewState = 'init' | 'ready' | 'error' | 'missing';
 type SowState = 'init' | 'ready' | 'empty' | 'error';
-type ScopeState = 'init' | 'ready' | 'error';
-
 interface ViewModel {
   state: ViewState;
   engagement: Engagement | null;
@@ -43,16 +41,10 @@ interface SowViewModel {
   sow: Sow | null;
 }
 
-interface ScopeViewModel {
-  state: ScopeState;
-  assets: Asset[];
-  total: number;
-}
-
 @Component({
   selector: 'app-engagements-view',
   standalone: true,
-  imports: [CommonModule, RouterLink, HasPermissionDirective, BcDatePipe, BcCommentsComponent, SowScopeAssetsComponent],
+  imports: [CommonModule, RouterLink, HasPermissionDirective, BcDatePipe, BcCommentsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './engagements-view.component.html',
   styleUrl: './engagements-view.component.css',
@@ -148,12 +140,12 @@ export class EngagementsViewComponent implements OnInit, OnDestroy {
   readonly confirmingDelete$ = new BehaviorSubject(false);
   readonly deleting$ = new BehaviorSubject(false);
 
-  private engagementId = '';
+  engagementId = '';
 
   vm$ = of<ViewModel>({ state: 'init', engagement: null });
   sowVm$ = of<SowViewModel>({ state: 'init', sow: null });
-  private readonly refreshScope$ = new BehaviorSubject<void>(undefined);
-  scopeVm$ = of<ScopeViewModel>({ state: 'init', assets: [], total: 0 });
+  scopeSummaryComponent: Type<any> | null = null;
+  readonly scopeRefreshTrigger = signal(0);
 
 
   ngOnInit(): void {
@@ -187,17 +179,14 @@ export class EngagementsViewComponent implements OnInit, OnDestroy {
       ),
     );
 
-    this.scopeVm$ = this.refreshScope$.pipe(
-      switchMap(() =>
-        this.sowService.listScope(this.engagementId).pipe(
-          map(assets => ({ state: 'ready' as ScopeState, assets, total: assets.length })),
-          catchError(err => {
-            console.error('[engagement-view] failed to load scope', err?.status);
-            return of({ state: 'error' as ScopeState, assets: [] as Asset[], total: 0 });
-          }),
-        ),
-      ),
-    );
+    // Resolve scope summary component from engagement type
+    this.vm$.subscribe(vm => {
+      if (vm.engagement) {
+        const config = getTypeConfig(vm.engagement.engagement_type);
+        this.scopeSummaryComponent = config.scopeSummaryComponent;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   goBack(): void {
@@ -224,12 +213,12 @@ export class EngagementsViewComponent implements OnInit, OnDestroy {
   refresh(): void {
     this.refresh$.next();
     this.refreshSow$.next();
-    this.refreshScope$.next();
+    this.scopeRefreshTrigger.update(n => n + 1);
   }
 
   refreshSow(): void {
     this.refreshSow$.next();
-    this.refreshScope$.next();
+    this.scopeRefreshTrigger.update(n => n + 1);
   }
 
   // -- Engagement delete --
