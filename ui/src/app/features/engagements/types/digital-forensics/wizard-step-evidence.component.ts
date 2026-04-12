@@ -34,6 +34,7 @@ export class WizardStepEvidenceComponent {
   readonly evidenceSources = signal<ForensicsEvidence[]>([]);
   readonly adding = signal(false);
 
+  readonly typeLabels = EVIDENCE_SOURCE_TYPE_LABELS;
   readonly evidenceTypes = Object.entries(EVIDENCE_SOURCE_TYPE_LABELS).map(
     ([value, label]) => ({ value, label }),
   );
