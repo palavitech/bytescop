@@ -239,7 +239,7 @@ class EngagementViewSet(AuditedModelViewSet):
         findings_count = Finding.objects.filter(engagement=instance).count()
         if findings_count > 0:
             return Response(
-                {'detail': f'Cannot delete engagement with {findings_count} finding{"s" if findings_count != 1 else ""}. Remove all findings first.'},
+                {'detail': f'This engagement has {findings_count} finding{"s" if findings_count != 1 else ""} and cannot be deleted. Remove all findings first.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return super().destroy(request, *args, **kwargs)
