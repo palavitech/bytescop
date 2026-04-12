@@ -80,6 +80,10 @@
                 </span>
                 <span class="bc-pillStatus">
                   <span class="bc-pillDot"></span>
+                  <span>{{ prettyType(vm.engagement.engagement_type) }}</span>
+                </span>
+                <span class="bc-pillStatus">
+                  <span class="bc-pillDot"></span>
                   <span>{{ daysRemaining(vm.engagement.start_date, vm.engagement.end_date) }}</span>
                 </span>
               </div>
