@@ -1013,11 +1013,11 @@ body.bc-sidebar-collapsed .bc-navLink.active {
 }
 
 .bc-table thead th:first-child {
-   border-top-left-radius: 14px;
+   border-top-left-radius: 0;
 }
 
 .bc-table thead th:last-child {
-   border-top-right-radius: 14px;
+   border-top-right-radius: 0;
 }
 
 .bc-table tbody tr:last-child td:first-child {
