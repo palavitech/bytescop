@@ -282,7 +282,7 @@ export class EngagementWizardComponent {
     this.submitting.set(true);
     this.error.set('');
     const payload = {
-      name: `Malware Analysis — ${new Date().toISOString().slice(0, 10)}`,
+      name: `${this.engagementTypeLabel()} — ${new Date().toISOString().slice(0, 10)}`,
       client_id: this.selectedOrgId(),
       engagement_type: this.engagementType(),
       status: 'planned' as const,
