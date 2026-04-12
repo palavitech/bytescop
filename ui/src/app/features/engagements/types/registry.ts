@@ -35,6 +35,13 @@ import { WizardStepSamplesComponent } from './malware-analysis';
 import { SowScopeSamplesComponent } from './malware-analysis';
 import { SowScopeSamplesEditComponent } from './malware-analysis';
 
+import { FindingSectionForensicsComponent } from './digital-forensics';
+import { FindingsTableForensicsComponent } from './digital-forensics';
+import { WizardStepEvidenceComponent } from './digital-forensics';
+import { SowScopeEvidenceComponent } from './digital-forensics';
+import { SowScopeEvidenceEditComponent } from './digital-forensics';
+import { FORENSICS_CONFIDENCES, FORENSICS_VERIFICATION_STATUSES } from './digital-forensics';
+
 const DEFAULTS: EngagementTypeConfig = {
   findingsSectionComponent: FindingSectionStandardComponent,
   findingsTableComponent: FindingsTableStandardComponent,
@@ -58,6 +65,18 @@ const OVERRIDES: Partial<Record<EngagementType, Partial<EngagementTypeConfig>>> 
     scopeEntityLabel: 'Sample',
     scopeEntityIcon: 'bi bi-file-earmark-binary',
     scopeEntityField: 'sample_name',
+  },
+  digital_forensics: {
+    findingsSectionComponent: FindingSectionForensicsComponent,
+    findingsTableComponent: FindingsTableForensicsComponent,
+    wizardStepScopeComponent: WizardStepEvidenceComponent,
+    scopeSummaryComponent: SowScopeEvidenceComponent,
+    sowScopeEditComponent: SowScopeEvidenceEditComponent,
+    scopeEntityLabel: 'Evidence Source',
+    scopeEntityIcon: 'bi bi-search',
+    scopeEntityField: 'evidence_source_name',
+    severityOptions: FORENSICS_CONFIDENCES,
+    statusOptions: FORENSICS_VERIFICATION_STATUSES,
   },
 };
 

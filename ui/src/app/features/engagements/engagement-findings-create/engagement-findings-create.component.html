@@ -71,8 +71,18 @@
               </app-finding-section-malware>
             </ng-container>
 
+            <!-- Digital Forensics Section -->
+            <ng-container *ngIf="isForensicsFlow">
+              <app-finding-section-forensics
+                [engagementId]="e.id"
+                (submitted)="onForensicsFindingSubmitted($event)"
+                (cancelled)="cancel()"
+                (dirtyChange)="onDirtyChange($event)">
+              </app-finding-section-forensics>
+            </ng-container>
+
             <!-- Standard Section -->
-            <ng-container *ngIf="!isMalwareFlow">
+            <ng-container *ngIf="!isMalwareFlow && !isForensicsFlow">
               <app-finding-section-standard
                 [engagementId]="e.id"
                 [scopeAssets$]="scopeAssets$"

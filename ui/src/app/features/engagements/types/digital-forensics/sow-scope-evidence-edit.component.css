@@ -1,0 +1,20 @@
+.bc-scopeHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(0, 255, 179, 0.1);
+  position: relative;
+}
+
+.bc-addRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid rgba(0, 255, 179, 0.06);
+}
+
+.bc-removeCell {
+  white-space: nowrap;
+}

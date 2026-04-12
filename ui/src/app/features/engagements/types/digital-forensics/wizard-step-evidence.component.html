@@ -1,0 +1,84 @@
+<div class="bc-card">
+  <div class="bc-wizardStepHead">
+    <h3 class="bc-wizardStepTitle">
+      <i class="bi bi-search me-2"></i>Evidence Sources
+    </h3>
+    <span class="bc-sub" style="font-size:0.8rem">
+      Add the digital evidence sources for this investigation (disk images, memory dumps, network captures, etc.).
+    </span>
+  </div>
+  <div class="bc-cardInner p-4">
+
+    <!-- Add form -->
+    <div class="bc-addForm mb-3">
+      <div class="d-flex gap-2 align-items-end">
+        <div class="flex-grow-1">
+          <label class="form-label bc-sub">Name</label>
+          <input class="form-control bc-input" [(ngModel)]="newName" [ngModelOptions]="{standalone:true}"
+            placeholder="e.g. Workstation-04 Disk Image" />
+        </div>
+        <div style="min-width:180px">
+          <label class="form-label bc-sub">Type</label>
+          <select class="form-select bc-input" [(ngModel)]="newType" [ngModelOptions]="{standalone:true}">
+            <option *ngFor="let t of evidenceTypes" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn btn-success bc-btn" type="button"
+            [disabled]="!newName.trim() || adding()"
+            (click)="addEvidence()">
+            <i class="bi bi-plus-lg me-1"></i>
+            {{ adding() ? 'Adding...' : 'Add' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evidence list -->
+    @if (evidenceSources().length > 0) {
+      <div class="bc-label mb-2">Evidence Sources ({{ evidenceSources().length }})</div>
+      <div class="table-responsive mb-3">
+        <table class="table bc-table mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th style="width:60px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of evidenceSources(); track e.id) {
+              <tr>
+                <td>
+                  <i class="bi bi-search me-1" style="color:var(--bc-accent2)"></i>
+                  {{ e.name }}
+                </td>
+                <td class="bc-sub">{{ evidenceTypes | json }}</td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-danger bc-btnSoft" type="button"
+                    (click)="removeEvidence(e.id)" title="Remove evidence source">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Navigation -->
+    <div class="bc-wizardNav mt-4">
+      <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="onBack()">
+        <i class="bi bi-arrow-left me-1"></i> Back
+      </button>
+      <button class="btn btn-success bc-btn" type="button"
+        [disabled]="!canProceed()"
+        (click)="onProceed()">
+        Next: Engagement Details
+        <i class="bi bi-arrow-right ms-1"></i>
+      </button>
+    </div>
+
+  </div>
+</div>

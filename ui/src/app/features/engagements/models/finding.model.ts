@@ -28,6 +28,15 @@ export interface Finding {
   is_draft: boolean;
   analysis_check_key: string;
   execution_status: ExecutionStatus;
+  // Forensics fields (optional — absent for non-forensics findings)
+  evidence_source_id?: string | null;
+  evidence_source_name?: string;
+  mitre_tactic?: string;
+  mitre_technique?: string;
+  ioc_type?: string;
+  ioc_value?: string;
+  occurrence_date?: string | null;
+  confidence?: string;
   created_at: string;
   updated_at: string;
 }

@@ -182,6 +182,17 @@
         }
 
         <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- STEP 2c: Forensics Evidence (digital_forensics only)       -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        @if (currentStep() === 'evidence') {
+          <app-wizard-step-evidence
+            [engagementId]="createdEngagementForSamples() || ''"
+            (proceed)="onEvidenceStepProceed($event)"
+            (back)="prevStep()">
+          </app-wizard-step-evidence>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
         <!-- STEP 3: Engagement Details                                 -->
         <!-- ═══════════════════════════════════════════════════════════ -->
         @if (currentStep() === 'details') {

@@ -16,13 +16,14 @@ import { UserProfileService } from '../../../services/core/profile/user-profile.
 import { DirtyFormComponent, beforeUnloadGuard } from '../../../services/core/guards/dirty-form.guard';
 import { FindingSectionMalwareComponent, MalwareFindingPayload } from '../types/malware-analysis';
 import { FindingSectionStandardComponent, StandardFindingPayload } from '../types/default';
+import { FindingSectionForensicsComponent, ForensicsFindingPayload } from '../types/digital-forensics';
 
 @Component({
   selector: 'app-engagement-findings-create',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, RouterLink, FindingSectionMalwareComponent, FindingSectionStandardComponent],
+  imports: [CommonModule, RouterLink, FindingSectionMalwareComponent, FindingSectionStandardComponent, FindingSectionForensicsComponent],
   templateUrl: './engagement-findings-create.component.html',
   styleUrl: './engagement-findings-create.component.css',
 })
@@ -69,6 +70,7 @@ export class EngagementFindingsCreateComponent implements DirtyFormComponent {
 
   // -- Engagement type branching --
   isMalwareFlow = false;
+  isForensicsFlow = false;
 
   constructor() {
     // Load SoW status
@@ -87,6 +89,7 @@ export class EngagementFindingsCreateComponent implements DirtyFormComponent {
     // Determine engagement type
     this.engagement$.pipe(take(1)).subscribe(eng => {
       this.isMalwareFlow = eng?.engagement_type === 'malware_analysis';
+      this.isForensicsFlow = eng?.engagement_type === 'digital_forensics';
       this.cdr.markForCheck();
     });
   }
@@ -174,6 +177,41 @@ export class EngagementFindingsCreateComponent implements DirtyFormComponent {
         title: payload.title,
         sample_id: payload.sample_id,
         analysis_type: payload.analysis_type,
+        description_md: payload.description_md,
+        is_draft: payload.is_draft,
+      })
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.saved = true;
+          this.router.navigate(['/engagements', engagementId, 'findings']);
+        },
+        error: (e) => {
+          this.busy = false;
+          this.cdr.markForCheck();
+          if (e?.status !== 402) {
+            this.notify.error(e?.error?.message || e?.error?.detail || 'Create failed.');
+          }
+        },
+      });
+  }
+
+  onForensicsFindingSubmitted(payload: ForensicsFindingPayload): void {
+    const engagementId = this.route.snapshot.paramMap.get('id');
+    if (!engagementId) return;
+
+    this.busy = true;
+    this.cdr.markForCheck();
+
+    this.findingsService
+      .create(engagementId, {
+        title: payload.title,
+        evidence_source_id: payload.evidence_source_id,
+        mitre_tactic: payload.mitre_tactic,
+        mitre_technique: payload.mitre_technique,
+        ioc_type: payload.ioc_type,
+        ioc_value: payload.ioc_value,
+        occurrence_date: payload.occurrence_date,
         description_md: payload.description_md,
         is_draft: payload.is_draft,
       })

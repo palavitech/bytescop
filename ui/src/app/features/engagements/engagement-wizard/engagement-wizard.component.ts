@@ -14,16 +14,19 @@ import { Engagement, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_MET
 import { Sow } from '../models/sow.model';
 import { WizardStepAssetsComponent, AssetStepResult } from '../types/default';
 import { WizardStepSamplesComponent, MalwareSample } from '../types/malware-analysis';
+import { WizardStepEvidenceComponent, EvidenceStepResult, ForensicsEvidence } from '../types/digital-forensics';
 
-export type WizardStep = 'org' | 'assets' | 'sample' | 'details' | 'sow' | 'review';
+export type WizardStep = 'org' | 'assets' | 'sample' | 'evidence' | 'details' | 'sow' | 'review';
 
 const DEFAULT_STEP_ORDER: WizardStep[] = ['org', 'assets', 'details', 'sow', 'review'];
 const MALWARE_STEP_ORDER: WizardStep[] = ['org', 'sample', 'details', 'sow', 'review'];
+const FORENSICS_STEP_ORDER: WizardStep[] = ['org', 'evidence', 'details', 'sow', 'review'];
 
 const STEP_LABELS: Record<WizardStep, string> = {
   org: 'Organization',
   assets: 'Assets',
   sample: 'Samples',
+  evidence: 'Evidence',
   details: 'Engagement',
   sow: 'Statement of Work',
   review: 'Review & Activate',
@@ -31,13 +34,14 @@ const STEP_LABELS: Record<WizardStep, string> = {
 
 function getStepOrder(type: EngagementType): WizardStep[] {
   if (type === 'malware_analysis') return MALWARE_STEP_ORDER;
+  if (type === 'digital_forensics') return FORENSICS_STEP_ORDER;
   return DEFAULT_STEP_ORDER;
 }
 
 @Component({
   selector: 'app-engagement-wizard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, WizardStepAssetsComponent, WizardStepSamplesComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, WizardStepAssetsComponent, WizardStepSamplesComponent, WizardStepEvidenceComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './engagement-wizard.component.html',
   styleUrl: './engagement-wizard.component.css',
@@ -59,6 +63,7 @@ export class EngagementWizardComponent {
 
   readonly currentStepIndex = computed(() => this.stepOrder().indexOf(this.currentStep()));
   readonly isMalwareFlow = computed(() => this.engagementType() === 'malware_analysis');
+  readonly isForensicsFlow = computed(() => this.engagementType() === 'digital_forensics');
 
   // -- Loading / error --
   readonly submitting = signal(false);
@@ -82,6 +87,9 @@ export class EngagementWizardComponent {
 
   // -- Step 2b: Malware Samples (stored from step component) --
   readonly uploadedSamples = signal<MalwareSample[]>([]);
+
+  // -- Step 2c: Forensics Evidence (stored from step component) --
+  readonly addedEvidence = signal<ForensicsEvidence[]>([]);
 
   // -- Step 3: Engagement details --
   engForm!: FormGroup;
@@ -230,7 +238,7 @@ export class EngagementWizardComponent {
 
   proceedFromOrg(): void {
     if (!this.canProceedFromOrg()) return;
-    if (this.isMalwareFlow()) {
+    if (this.isMalwareFlow() || this.isForensicsFlow()) {
       this.ensureEngagementForSamples();
     }
     this.nextStep();
@@ -248,6 +256,13 @@ export class EngagementWizardComponent {
 
   onSampleStepProceed(samples: MalwareSample[]): void {
     this.uploadedSamples.set(samples);
+    this.nextStep();
+  }
+
+  // ── Step 2c: Forensics Evidence (handled by WizardStepEvidenceComponent) ──
+
+  onEvidenceStepProceed(result: EvidenceStepResult): void {
+    this.addedEvidence.set(result.evidenceSources);
     this.nextStep();
   }
 
@@ -322,7 +337,7 @@ export class EngagementWizardComponent {
 
     // For malware flow, the engagement was already created in the sample step.
     // Update it with the details form values instead of creating a new one.
-    if (this.isMalwareFlow() && this._tempEngagementId) {
+    if ((this.isMalwareFlow() || this.isForensicsFlow()) && this._tempEngagementId) {
       this.engService.update(this._tempEngagementId, formVal).subscribe({
         next: (eng) => {
           this.createdEngagement.set(eng);
