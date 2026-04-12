@@ -19,7 +19,7 @@ import { ClassificationCardComponent } from '../../components/classification-car
 import { Crepe } from '@milkdown/crepe';
 import { getMarkdown } from '@milkdown/utils';
 import { environment } from '../../../../../environments/environment';
-import { wireMilkdownImages, MilkdownImagesDisposer } from '../milkdown-images';
+import { wireMilkdownImages, MilkdownImagesDisposer } from '../../engagement-findings-create/milkdown-images';
 
 export interface StandardFindingPayload {
   title: string;

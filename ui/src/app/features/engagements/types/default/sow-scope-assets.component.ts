@@ -2,8 +2,8 @@ import { Component, ChangeDetectionStrategy, Input, ViewEncapsulation, inject, O
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
-import { SowService } from '../services/sow.service';
-import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS } from '../../assets/models/asset.model';
+import { SowService } from '../../services/sow.service';
+import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS } from '../../../assets/models/asset.model';
 
 type ScopeState = 'init' | 'ready' | 'error';
 
