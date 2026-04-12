@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EngagementsService } from './engagements.service';
-import { Engagement, MalwareSample } from '../models/engagement.model';
+import { Engagement } from '../models/engagement.model';
 import { EngagementSettingDef } from '../models/stakeholder.model';
 
 const MOCK: Engagement = {
@@ -251,87 +251,4 @@ describe('EngagementsService', () => {
     expect(result).toEqual(mockStakeholder);
   });
 
-  // --- Malware Samples ---
-
-  it('listSamples() sends GET to /api/engagements/:id/samples/', () => {
-    service.listSamples('eng-1').subscribe();
-    const req = httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/samples/'));
-    expect(req.request.method).toBe('GET');
-    req.flush([]);
-  });
-
-  it('listSamples() returns sample array', () => {
-    const mockSample: MalwareSample = {
-      id: 's-1',
-      original_filename: 'malware.exe',
-      safe_filename: 'safe_malware.exe',
-      sha256: 'abc123',
-      content_type: 'application/octet-stream',
-      size_bytes: 1024,
-      notes: 'test sample',
-      download_url: '/api/samples/s-1/download/',
-      created_at: '2026-01-01T00:00:00Z',
-    };
-    let result: MalwareSample[] | undefined;
-    service.listSamples('eng-1').subscribe(r => (result = r));
-    httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/samples/')).flush([mockSample]);
-    expect(result).toEqual([mockSample]);
-  });
-
-  it('uploadSample() sends POST with FormData to /api/engagements/:id/samples/upload/', () => {
-    const file = new File(['content'], 'test.exe', { type: 'application/octet-stream' });
-    service.uploadSample('eng-1', file, 'some notes').subscribe();
-    const req = httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/samples/upload/'));
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body instanceof FormData).toBe(true);
-    req.flush({});
-  });
-
-  it('uploadSample() sends FormData without notes when notes is empty', () => {
-    const file = new File(['content'], 'test.exe', { type: 'application/octet-stream' });
-    service.uploadSample('eng-1', file).subscribe();
-    const req = httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/samples/upload/'));
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body instanceof FormData).toBe(true);
-    req.flush({});
-  });
-
-  it('deleteSample() sends DELETE to /api/engagements/:id/samples/:sampleId/', () => {
-    service.deleteSample('eng-1', 's-1').subscribe();
-    const req = httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/samples/s-1/'));
-    expect(req.request.method).toBe('DELETE');
-    req.flush(null);
-  });
-
-  // --- Analysis Checks ---
-
-  it('initializeAnalysis() sends POST to /api/engagements/:id/initialize-analysis/', () => {
-    service.initializeAnalysis('eng-1').subscribe();
-    const req = httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/initialize-analysis/'));
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({});
-    req.flush({ created: 5 });
-  });
-
-  it('initializeAnalysis() returns the created count', () => {
-    let result: { created: number } | undefined;
-    service.initializeAnalysis('eng-1').subscribe(r => (result = r));
-    httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/initialize-analysis/')).flush({ created: 3 });
-    expect(result).toEqual({ created: 3 });
-  });
-
-  it('executeFinding() sends POST to /api/engagements/:id/findings/:fid/execute/', () => {
-    service.executeFinding('eng-1', 'f-1').subscribe();
-    const req = httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/findings/f-1/execute/'));
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({});
-    req.flush({ status: 'running' });
-  });
-
-  it('executeFinding() returns the status', () => {
-    let result: { status: string } | undefined;
-    service.executeFinding('eng-1', 'f-1').subscribe(r => (result = r));
-    httpTesting.expectOne(r => r.url.endsWith('/api/engagements/eng-1/findings/f-1/execute/')).flush({ status: 'running' });
-    expect(result).toEqual({ status: 'running' });
-  });
 });

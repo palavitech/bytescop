@@ -116,7 +116,6 @@ const MOCK_SAMPLE: MalwareSample = {
 function buildTestBed(engagementType: string | null = 'general') {
   const engServiceSpy = jasmine.createSpyObj('EngagementsService', [
     'create', 'update',
-    'uploadSample', 'deleteSample',
   ]);
   const sowServiceSpy = jasmine.createSpyObj('SowService', [
     'get', 'update', 'addScope',

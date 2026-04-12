@@ -5,7 +5,7 @@ import { catchError, map, shareReplay, switchMap, take } from 'rxjs/operators';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 
 import { EngagementsService } from '../services/engagements.service';
-import { Engagement, MalwareSample, FindingsSummary } from '../models/engagement.model';
+import { Engagement, FindingsSummary } from '../models/engagement.model';
 import { SowService } from '../services/sow.service';
 import { Asset } from '../../assets/models/asset.model';
 import { FindingsService } from '../services/findings.service';
@@ -69,10 +69,6 @@ export class EngagementFindingsCreateComponent implements DirtyFormComponent {
 
   // -- Engagement type branching --
   isMalwareFlow = false;
-  readonly samples$: Observable<MalwareSample[]> = this.engagementId$.pipe(
-    switchMap(id => id ? this.engagementsService.listSamples(id) : of([] as MalwareSample[])),
-    shareReplay(1),
-  );
 
   constructor() {
     // Load SoW status

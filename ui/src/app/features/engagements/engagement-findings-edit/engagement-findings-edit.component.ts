@@ -5,7 +5,7 @@ import { finalize, map, shareReplay, switchMap, take } from 'rxjs/operators';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 
 import { EngagementsService } from '../services/engagements.service';
-import { Engagement, MalwareSample } from '../models/engagement.model';
+import { Engagement } from '../models/engagement.model';
 import { SowService } from '../services/sow.service';
 import { Asset } from '../../assets/models/asset.model';
 import { FindingsService } from '../services/findings.service';
@@ -72,11 +72,6 @@ export class EngagementFindingsEditComponent implements OnInit, DirtyFormCompone
   isMalwareFlow = false;
   standardInitialData: Partial<StandardFindingPayload> | null = null;
   malwareInitialData: Partial<MalwareFindingPayload> | null = null;
-
-  readonly samples$: Observable<MalwareSample[]> = this.engagementId$.pipe(
-    switchMap(id => id ? this.engagementsService.listSamples(id) : of([] as MalwareSample[])),
-    shareReplay(1),
-  );
 
   ngOnInit(): void {
     this.finding$.pipe(take(1)).subscribe(f => {

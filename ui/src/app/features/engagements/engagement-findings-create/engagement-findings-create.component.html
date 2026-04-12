@@ -65,7 +65,6 @@
             <ng-container *ngIf="isMalwareFlow">
               <app-finding-section-malware
                 [engagementId]="e.id"
-                [samples$]="samples$"
                 (submitted)="onMalwareFindingSubmitted($event)"
                 (cancelled)="cancel()"
                 (dirtyChange)="onDirtyChange($event)">
