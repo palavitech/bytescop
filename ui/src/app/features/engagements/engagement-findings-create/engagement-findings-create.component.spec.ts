@@ -36,14 +36,13 @@ function buildTestBed(
 ) {
   const paramMap$ = new BehaviorSubject(convertToParamMap(routeParams));
   const locationSpy = jasmine.createSpyObj('Location', ['back']);
-  const engSvc = jasmine.createSpyObj('EngagementsService', ['getById', 'listSamples']);
+  const engSvc = jasmine.createSpyObj('EngagementsService', ['getById']);
   const findSvc = jasmine.createSpyObj('FindingsService', ['create', 'uploadImage']);
   const sowSvc = jasmine.createSpyObj('SowService', ['listScope', 'get']);
   const notifySpy = jasmine.createSpyObj('NotificationService', ['success', 'error']);
   const permSvc = { has: () => overrides.permHas !== false, hasAny$: () => of(true) };
 
   engSvc.getById.and.returnValue(of(MOCK_ENGAGEMENT));
-  engSvc.listSamples.and.returnValue(of([]));
   sowSvc.listScope.and.returnValue(of([]));
   sowSvc.get.and.returnValue(of({ id: 'sow-1', title: 'Test', status: 'approved', created_at: '', updated_at: '' }));
 

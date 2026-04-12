@@ -35,13 +35,12 @@ const MOCK_DRAFT_FINDING: Finding = { ...MOCK_FINDING, is_draft: true };
 function buildTestBed(routeParams: Record<string, string> = { id: 'eng-1', findingId: 'find-1' }) {
   const paramMap$ = new BehaviorSubject(convertToParamMap(routeParams));
   const locationSpy = jasmine.createSpyObj('Location', ['back']);
-  const engSvc = jasmine.createSpyObj('EngagementsService', ['getById', 'listSamples']);
+  const engSvc = jasmine.createSpyObj('EngagementsService', ['getById']);
   const findSvc = jasmine.createSpyObj('FindingsService', ['getById', 'update', 'uploadImage']);
   const sowSvc = jasmine.createSpyObj('SowService', ['listScope']);
   const notifySpy = jasmine.createSpyObj('NotificationService', ['success', 'error']);
 
   engSvc.getById.and.returnValue(of(MOCK_ENGAGEMENT));
-  engSvc.listSamples.and.returnValue(of([]));
   findSvc.getById.and.returnValue(of(MOCK_FINDING));
   sowSvc.listScope.and.returnValue(of([]));
 
@@ -136,7 +135,6 @@ describe('EngagementFindingsEditComponent', () => {
     const ctx = buildTestBed();
     ctx.findSvc.getById.and.returnValue(of(MOCK_DRAFT_FINDING));
     ctx.engSvc.getById.and.returnValue(of(MOCK_ENGAGEMENT));
-    ctx.engSvc.listSamples.and.returnValue(of([]));
     ctx.sowSvc.listScope.and.returnValue(of([]));
 
     TestBed.configureTestingModule({
@@ -340,7 +338,6 @@ describe('EngagementFindingsEditComponent', () => {
     ctx2.findSvc.getById.and.returnValue(of(MOCK_DRAFT_FINDING));
     ctx2.findSvc.update.and.returnValue(of(MOCK_FINDING));
     ctx2.engSvc.getById.and.returnValue(of(MOCK_ENGAGEMENT));
-    ctx2.engSvc.listSamples.and.returnValue(of([]));
     ctx2.sowSvc.listScope.and.returnValue(of([]));
 
     await TestBed.resetTestingModule().configureTestingModule({
@@ -456,7 +453,6 @@ describe('EngagementFindingsEditComponent', () => {
     const ctx = buildTestBed();
     ctx.findSvc.getById.and.returnValue(of({ ...MOCK_FINDING, sample_id: 'sample-1' }));
     ctx.engSvc.getById.and.returnValue(of(MOCK_ENGAGEMENT));
-    ctx.engSvc.listSamples.and.returnValue(of([]));
     ctx.sowSvc.listScope.and.returnValue(of([]));
 
     TestBed.configureTestingModule({
