@@ -93,7 +93,7 @@ export class EngagementWizardComponent {
 
   // -- Step 3: Engagement details --
   engForm!: FormGroup;
-  readonly calendarDays = signal<string>('—');
+  readonly durationLabel = signal<string>('—');
 
   // -- Step 3→4 bridge: created engagement --
   readonly createdEngagement = signal<Engagement | null>(null);
@@ -148,17 +148,24 @@ export class EngagementWizardComponent {
     });
 
     this.engForm.valueChanges.subscribe(val => {
-      this.updateCalendarDays(val.start_date, val.end_date);
+      this.updateDuration(val.start_date, val.end_date);
     });
   }
 
-  private updateCalendarDays(start: string, end: string): void {
-    if (!start || !end) { this.calendarDays.set('—'); return; }
+  private updateDuration(start: string, end: string): void {
+    if (!start || !end) { this.durationLabel.set('—'); return; }
     const s = new Date(`${start}T00:00:00`);
     const e = new Date(`${end}T00:00:00`);
-    if (isNaN(s.getTime()) || isNaN(e.getTime()) || e <= s) { this.calendarDays.set('—'); return; }
-    const days = Math.round((e.getTime() - s.getTime()) / (24 * 60 * 60 * 1000));
-    this.calendarDays.set(`${days} day${days === 1 ? '' : 's'}`);
+    if (isNaN(s.getTime()) || isNaN(e.getTime()) || e <= s) { this.durationLabel.set('—'); return; }
+    const calDays = Math.round((e.getTime() - s.getTime()) / (24 * 60 * 60 * 1000));
+    let workDays = 0;
+    const cursor = new Date(s);
+    while (cursor < e) {
+      const dow = cursor.getDay();
+      if (dow !== 0 && dow !== 6) workDays++;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    this.durationLabel.set(`${calDays}d · ${workDays} work`);
   }
 
   private loadOrganizations(): void {
