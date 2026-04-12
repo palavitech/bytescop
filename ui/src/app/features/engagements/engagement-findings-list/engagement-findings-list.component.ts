@@ -10,7 +10,7 @@ import { FindingsService } from '../services/findings.service';
 import { Finding, FINDING_SEVERITY_LABELS, FINDING_STATUS_LABELS, FindingSeverity, FindingStatus } from '../models/finding.model';
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
 import { NotificationService } from '../../../services/core/notify/notification.service';
-import { getTypeConfig } from '../types/registry';
+import { getTypeConfig, FilterOption } from '../types/registry';
 
 type VmState = 'init' | 'ready' | 'error';
 
@@ -33,6 +33,8 @@ interface ViewModel {
   filter: FilterState;
   timeBar: TimeBar | null;
   findingsTableComponent: Type<any> | null;
+  severityOptions: FilterOption[];
+  statusOptions: FilterOption[];
 }
 
 @Component({
@@ -94,6 +96,7 @@ export class EngagementFindingsListComponent {
   readonly vm$ = combineLatest([this.engagement$, this.findings$, this.filter$]).pipe(
     map(([eng, items, f]): ViewModel => {
       const state: VmState = eng === null ? 'error' : 'ready';
+      const config = eng ? getTypeConfig(eng.engagement_type) : null;
       return {
         state,
         engagement: eng,
@@ -101,7 +104,9 @@ export class EngagementFindingsListComponent {
         total: items.length,
         filter: f,
         timeBar: this.buildTimeBar(eng?.start_date ?? null, eng?.end_date ?? null),
-        findingsTableComponent: eng ? getTypeConfig(eng.engagement_type).findingsTableComponent : null,
+        findingsTableComponent: config?.findingsTableComponent ?? null,
+        severityOptions: config?.severityOptions ?? [],
+        statusOptions: config?.statusOptions ?? [],
       };
     }),
   );

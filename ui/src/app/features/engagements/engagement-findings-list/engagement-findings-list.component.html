@@ -143,11 +143,7 @@
                     [value]="vm.filter.severity"
                     (change)="onSeverityFilterChange($any($event.target).value)">
                     <option value="">Any severity</option>
-                    <option value="critical">Critical</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                    <option value="info">Info</option>
+                    <option *ngFor="let opt of vm.severityOptions" [value]="opt.value">{{ opt.label }}</option>
                   </select>
                 </label>
 
@@ -157,11 +153,7 @@
                     [value]="vm.filter.status"
                     (change)="onStatusFilterChange($any($event.target).value)">
                     <option value="">Any status</option>
-                    <option value="open">Open</option>
-                    <option value="triage">Triage</option>
-                    <option value="accepted">Accepted</option>
-                    <option value="fixed">Fixed</option>
-                    <option value="false_positive">False Positive</option>
+                    <option *ngFor="let opt of vm.statusOptions" [value]="opt.value">{{ opt.label }}</option>
                   </select>
                 </label>
 

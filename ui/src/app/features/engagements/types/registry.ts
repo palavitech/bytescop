@@ -1,5 +1,11 @@
 import { Type } from '@angular/core';
 import { EngagementType } from '../models/engagement.model';
+import { Finding, FINDING_SEVERITIES, FINDING_STATUSES } from '../models/finding.model';
+
+export interface FilterOption {
+  value: string;
+  label: string;
+}
 
 export interface EngagementTypeConfig {
   findingsSectionComponent: Type<any>;
@@ -7,6 +13,13 @@ export interface EngagementTypeConfig {
   wizardStepScopeComponent: Type<any>;
   scopeSummaryComponent: Type<any>;
   sowScopeEditComponent: Type<any>;
+
+  // Metadata for finding view / filters
+  scopeEntityLabel: string;
+  scopeEntityIcon: string | null;
+  scopeEntityField: keyof Finding;
+  severityOptions: FilterOption[];
+  statusOptions: FilterOption[];
 }
 
 // Lazy imports — each type barrel re-exports from current locations
@@ -28,6 +41,11 @@ const DEFAULTS: EngagementTypeConfig = {
   wizardStepScopeComponent: WizardStepAssetsComponent,
   scopeSummaryComponent: SowScopeAssetsComponent,
   sowScopeEditComponent: SowScopeAssetsEditComponent,
+  scopeEntityLabel: 'Asset',
+  scopeEntityIcon: null,
+  scopeEntityField: 'asset_name',
+  severityOptions: FINDING_SEVERITIES,
+  statusOptions: FINDING_STATUSES,
 };
 
 const OVERRIDES: Partial<Record<EngagementType, Partial<EngagementTypeConfig>>> = {
@@ -37,6 +55,9 @@ const OVERRIDES: Partial<Record<EngagementType, Partial<EngagementTypeConfig>>> 
     wizardStepScopeComponent: WizardStepSamplesComponent,
     scopeSummaryComponent: SowScopeSamplesComponent,
     sowScopeEditComponent: SowScopeSamplesEditComponent,
+    scopeEntityLabel: 'Sample',
+    scopeEntityIcon: 'bi bi-file-earmark-binary',
+    scopeEntityField: 'sample_name',
   },
 };
 
