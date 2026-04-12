@@ -83,3 +83,45 @@ class MalwareSample(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.original_filename or str(self.id)
+
+
+class EvidenceSource(TimeStampedModel):
+    """A digital forensics evidence source (disk image, memory dump, etc.)."""
+
+    EVIDENCE_TYPES = [
+        ('disk_image', 'Disk Image'),
+        ('memory_dump', 'Memory Dump'),
+        ('network_capture', 'Network Capture'),
+        ('log_file', 'Log File'),
+        ('mobile_extraction', 'Mobile Extraction'),
+        ('other', 'Other'),
+    ]
+
+    tenant = models.ForeignKey(
+        'tenancy.Tenant', on_delete=models.CASCADE, related_name='evidence_sources',
+    )
+    engagement = models.ForeignKey(
+        'engagements.Engagement', on_delete=models.CASCADE, related_name='evidence_sources',
+    )
+    name = models.CharField(max_length=255)
+    evidence_type = models.CharField(
+        max_length=24, choices=EVIDENCE_TYPES, default='other',
+    )
+    description = models.TextField(blank=True, default='')
+    acquisition_date = models.DateField(null=True, blank=True)
+    sha256 = models.CharField(max_length=64, blank=True, default='')
+    size_bytes = models.BigIntegerField(default=0)
+    chain_of_custody = models.TextField(blank=True, default='')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='evidence_sources_created',
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['tenant', 'engagement']),
+        ]
+
+    def __str__(self) -> str:
+        return self.name or str(self.id)

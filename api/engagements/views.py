@@ -18,8 +18,8 @@ from assets.models import Asset
 from assets.serializers import AssetSerializer
 from evidence.services.attachment_upload import AttachmentUploadService
 from evidence.services.sample_upload import MalwareSampleUploadService
-from evidence.models import Attachment, MalwareSample
-from evidence.serializers import MalwareSampleSerializer
+from evidence.models import Attachment, EvidenceSource, MalwareSample
+from evidence.serializers import EvidenceSourceSerializer, MalwareSampleSerializer
 from evidence.signing import sign_attachment_url, sign_sample_url
 from findings.models import Finding
 from findings.serializers import FindingSerializer
@@ -123,6 +123,9 @@ class EngagementViewSet(AuditedModelViewSet):
         'samples_list': ['engagement.view'],
         'upload_sample': ['engagement.update'],
         'delete_sample': ['engagement.update'],
+        'evidence_sources_list': ['engagement.view'],
+        'evidence_sources_create': ['engagement.update'],
+        'evidence_sources_delete': ['engagement.update'],
         'initialize_analysis': ['engagement.update'],
         'execute_finding': ['engagement.update'],
         'stakeholders': ['engagement.view'],
@@ -791,6 +794,80 @@ class EngagementViewSet(AuditedModelViewSet):
             resource_repr=f"Sample: {sample.original_filename}",
         )
         sample.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # ------------------------------------------------------------------
+    # Evidence Sources: /api/engagements/<pk>/evidence-sources/
+    # ------------------------------------------------------------------
+
+    @action(detail=True, methods=['get', 'post'], url_path='evidence-sources')
+    def evidence_sources(self, request, pk=None):
+        if request.method == 'GET':
+            return self._evidence_sources_list(request, pk)
+        return self._evidence_sources_create(request, pk)
+
+    def _evidence_sources_list(self, request, pk):
+        self.action = 'evidence_sources_list'
+        self.check_permissions(request)
+        engagement = self.get_object()
+        sources = EvidenceSource.objects.filter(
+            tenant=request.tenant, engagement=engagement,
+        ).order_by('-created_at')
+        data = EvidenceSourceSerializer(sources, many=True).data
+        return Response(data)
+
+    def _evidence_sources_create(self, request, pk):
+        self.action = 'evidence_sources_create'
+        self.check_permissions(request)
+        engagement = self.get_object()
+
+        serializer = EvidenceSourceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        source = serializer.save(
+            tenant=request.tenant,
+            engagement=engagement,
+            created_by=request.user,
+        )
+
+        log_audit(
+            request=request, action=AuditAction.CREATE,
+            resource_type="evidence_source", resource_id=source.id,
+            resource_repr=f"Evidence: {source.name}",
+        )
+        logger.info(
+            "Evidence source created id=%s engagement=%s user=%s",
+            source.id, pk, request.user.pk,
+        )
+        return Response(
+            EvidenceSourceSerializer(source).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(
+        detail=True, methods=['delete'],
+        url_path=r'evidence-sources/(?P<evidence_id>[0-9a-f-]+)',
+    )
+    def evidence_sources_delete(self, request, pk=None, evidence_id=None):
+        self.action = 'evidence_sources_delete'
+        self.check_permissions(request)
+        engagement = self.get_object()
+
+        try:
+            source = EvidenceSource.objects.get(
+                pk=evidence_id, tenant=request.tenant, engagement=engagement,
+            )
+        except EvidenceSource.DoesNotExist:
+            return Response(
+                {'detail': 'Evidence source not found.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        log_audit(
+            request=request, action=AuditAction.DELETE,
+            resource_type="evidence_source", resource_id=source.id,
+            resource_repr=f"Evidence: {source.name}",
+        )
+        source.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     # ------------------------------------------------------------------
