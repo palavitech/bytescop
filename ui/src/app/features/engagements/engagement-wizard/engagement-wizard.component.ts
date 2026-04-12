@@ -165,7 +165,7 @@ export class EngagementWizardComponent {
       if (dow !== 0 && dow !== 6) workDays++;
       cursor.setDate(cursor.getDate() + 1);
     }
-    this.durationLabel.set(`${calDays} Days (${workDays} work days)`);
+    this.durationLabel.set(`${calDays} day${calDays === 1 ? '' : 's'} (${workDays} work day${workDays === 1 ? '' : 's'})`);
   }
 
   private loadOrganizations(): void {
