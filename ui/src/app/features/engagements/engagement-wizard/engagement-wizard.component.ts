@@ -10,10 +10,10 @@ import { OrganizationsService } from '../../organizations/services/organizations
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { OrganizationRef, Organization } from '../../organizations/models/organization.model';
 import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS } from '../../assets/models/asset.model';
-import { Engagement, MalwareSample, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
+import { Engagement, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
 import { Sow } from '../models/sow.model';
 import { WizardStepAssetsComponent, AssetStepResult } from '../types/default';
-import { WizardStepSamplesComponent } from '../types/malware-analysis';
+import { WizardStepSamplesComponent, MalwareSample } from '../types/malware-analysis';
 
 export type WizardStep = 'org' | 'assets' | 'sample' | 'details' | 'sow' | 'review';
 

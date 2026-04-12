@@ -1,10 +1,3 @@
-export type AnalysisType = 'static' | 'dynamic' | '';
-
-export const ANALYSIS_TYPE_LABELS: Record<string, string> = {
-  static: 'Static Analysis',
-  dynamic: 'Dynamic Analysis',
-};
-
 export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
 export type FindingStatus =
@@ -15,14 +8,6 @@ export type FindingStatus =
   | 'false_positive';
 
 export type ExecutionStatus = '' | 'pending' | 'running' | 'completed' | 'failed';
-
-export const EXECUTION_STATUS_LABELS: Record<string, string> = {
-  '': '',
-  pending: 'Pending',
-  running: 'Running',
-  completed: 'Completed',
-  failed: 'Failed',
-};
 
 export interface Finding {
   id: string;
