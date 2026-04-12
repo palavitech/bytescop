@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, Type } from '@angular/core';
 import { Location, CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,8 +10,7 @@ import { FindingsService } from '../services/findings.service';
 import { Finding, FINDING_SEVERITY_LABELS, FINDING_STATUS_LABELS, FindingSeverity, FindingStatus } from '../models/finding.model';
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
 import { NotificationService } from '../../../services/core/notify/notification.service';
-import { FindingsTableStandardComponent } from '../types/default';
-import { FindingsTableMalwareComponent } from '../types/malware-analysis';
+import { getTypeConfig } from '../types/registry';
 
 type VmState = 'init' | 'ready' | 'error';
 
@@ -33,13 +32,14 @@ interface ViewModel {
   total: number;
   filter: FilterState;
   timeBar: TimeBar | null;
+  findingsTableComponent: Type<any> | null;
 }
 
 @Component({
   selector: 'app-engagement-findings-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, HasPermissionDirective, FindingsTableStandardComponent, FindingsTableMalwareComponent],
+  imports: [CommonModule, FormsModule, RouterLink, HasPermissionDirective],
   templateUrl: './engagement-findings-list.component.html',
   styleUrl: './engagement-findings-list.component.css',
 })
@@ -50,7 +50,6 @@ export class EngagementFindingsListComponent {
   private readonly engagementsService = inject(EngagementsService);
   private readonly findingsService = inject(FindingsService);
   private readonly notify = inject(NotificationService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   showHelp = false;
   showFilters = false;
@@ -102,6 +101,7 @@ export class EngagementFindingsListComponent {
         total: items.length,
         filter: f,
         timeBar: this.buildTimeBar(eng?.start_date ?? null, eng?.end_date ?? null),
+        findingsTableComponent: eng ? getTypeConfig(eng.engagement_type).findingsTableComponent : null,
       };
     }),
   );

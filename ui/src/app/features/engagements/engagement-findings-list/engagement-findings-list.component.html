@@ -106,21 +106,12 @@
                 <div class="p-4"><div class="bc-sub">No findings yet. Create your first finding to start tracking observations.</div></div>
               </ng-container>
 
-              <!-- Data table — composed per engagement type -->
+              <!-- Data table — resolved per engagement type via registry -->
               <ng-container *ngIf="vm.state === 'ready' && vm.items.length > 0 && vm.engagement as e">
-                <app-findings-table-malware
-                  *ngIf="e.engagement_type === 'malware_analysis'"
-                  [findings]="vm.items"
-                  [engagementId]="e.id"
-                  [requestRefresh]="boundRefresh">
-                </app-findings-table-malware>
-
-                <app-findings-table-standard
-                  *ngIf="e.engagement_type !== 'malware_analysis'"
-                  [findings]="vm.items"
-                  [engagementId]="e.id"
-                  [requestRefresh]="boundRefresh">
-                </app-findings-table-standard>
+                <ng-container *ngIf="vm.findingsTableComponent"
+                  [ngComponentOutlet]="vm.findingsTableComponent"
+                  [ngComponentOutletInputs]="{ findings: vm.items, engagementId: e.id, requestRefresh: boundRefresh }">
+                </ng-container>
               </ng-container>
 
             </div>
