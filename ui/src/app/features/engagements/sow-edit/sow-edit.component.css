@@ -21,36 +21,3 @@
   background: rgba(0, 255, 179, 0.06);
   border-color: rgba(0, 255, 179, 0.15);
 }
-
-.bc-scopeHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(0, 255, 179, 0.1);
-  position: relative;
-}
-
-.bc-scopeAdd {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid rgba(0, 255, 179, 0.06);
-  position: relative;
-}
-
-.bc-scopeAdd select {
-  max-width: 600px;
-}
-
-.bc-typeBadge {
-  font-size: 0.78rem;
-  font-family: 'IBM Plex Mono', monospace;
-  letter-spacing: 0.5px;
-  color: var(--bc-blue);
-}
-
-.bc-removeCell {
-  white-space: nowrap;
-}

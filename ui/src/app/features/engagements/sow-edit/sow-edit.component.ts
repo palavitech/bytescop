@@ -1,27 +1,20 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, OnInit, Type } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { BehaviorSubject, forkJoin, catchError, of } from 'rxjs';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { BehaviorSubject } from 'rxjs';
 import { SowService } from '../services/sow.service';
 import { EngagementsService } from '../services/engagements.service';
-import { AssetsService } from '../../assets/services/assets.service';
 import { SowStatus, SOW_STATUS_LABELS } from '../models/sow.model';
 import { Engagement } from '../models/engagement.model';
-import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS } from '../../assets/models/asset.model';
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
-
-interface ScopeVm {
-  state: 'init' | 'ready' | 'error';
-  assets: Asset[];
-  total: number;
-}
+import { getTypeConfig } from '../types/registry';
 
 @Component({
   selector: 'app-sow-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, HasPermissionDirective],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, HasPermissionDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sow-edit.component.html',
   styleUrls: ['./sow-edit.component.css'],
@@ -29,7 +22,6 @@ interface ScopeVm {
 export class SowEditComponent implements OnInit {
   private readonly sowService = inject(SowService);
   private readonly engagementsService = inject(EngagementsService);
-  private readonly assetsService = inject(AssetsService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
@@ -43,7 +35,8 @@ export class SowEditComponent implements OnInit {
   readonly saving$ = new BehaviorSubject(false);
   readonly serverError$ = new BehaviorSubject<string | null>(null);
 
-  private engagementId = '';
+  engagementId = '';
+  clientId = '';
   readonly engagement$ = new BehaviorSubject<Engagement | null>(null);
   form!: FormGroup;
 
@@ -51,19 +44,8 @@ export class SowEditComponent implements OnInit {
   readonly currentStatus$ = new BehaviorSubject<SowStatus>('draft');
   readonly toggling$ = new BehaviorSubject(false);
 
-  // Scope management
-  scopeVm$ = new BehaviorSubject<ScopeVm>({ state: 'init', assets: [], total: 0 });
-  availableAssets$ = new BehaviorSubject<Asset[]>([]);
-  selectedAssetId = '';
-  addingScope$ = new BehaviorSubject(false);
-  confirmingRemoveId$ = new BehaviorSubject<string | null>(null);
-  removingAssetId$ = new BehaviorSubject<string | null>(null);
-
-  private clientAssets: Asset[] = [];
-
-  readonly typeLabels = ASSET_TYPE_LABELS;
-  readonly envLabels = ASSET_ENV_LABELS;
-  readonly critLabels = ASSET_CRIT_LABELS;
+  // Scope edit component resolved from registry
+  sowScopeEditComponent: Type<any> | null = null;
 
   readonly statusLabels = SOW_STATUS_LABELS;
 
@@ -91,44 +73,17 @@ export class SowEditComponent implements OnInit {
       },
     });
 
-    // Load engagement context, then load scope + client assets
+    // Load engagement context and resolve scope edit component
     this.engagementsService.getById(this.engagementId).subscribe({
       next: (eng) => {
         this.engagement$.next(eng);
-        this._loadScopeData(eng.client_id);
+        this.clientId = eng.client_id || '';
+        this.sowScopeEditComponent = getTypeConfig(eng.engagement_type).sowScopeEditComponent;
+        this.cdr.markForCheck();
       },
       error: () => {
         // Non-blocking — header links just won't show
       },
-    });
-  }
-
-  private _loadScopeData(clientId: string | null): void {
-    forkJoin({
-      scope: this.sowService.listScope(this.engagementId).pipe(
-        catchError(err => {
-          console.error('[sow-edit] failed to load scope', err?.status);
-          return of(null as Asset[] | null);
-        }),
-      ),
-      assets: clientId
-        ? this.assetsService.list(clientId).pipe(catchError(err => {
-            console.warn('[sow-edit] failed to load client assets', err?.status);
-            return of([] as Asset[]);
-          }))
-        : of([] as Asset[]),
-    }).subscribe(({ scope, assets }) => {
-      this.clientAssets = assets;
-
-      if (scope === null) {
-        this.scopeVm$.next({ state: 'error', assets: [], total: 0 });
-        this.availableAssets$.next(assets);
-      } else {
-        this.scopeVm$.next({ state: 'ready', assets: scope, total: scope.length });
-        const scopeIds = new Set(scope.map(a => a.id));
-        this.availableAssets$.next(assets.filter(a => !scopeIds.has(a.id)));
-      }
-      this.cdr.markForCheck();
     });
   }
 
@@ -174,68 +129,6 @@ export class SowEditComponent implements OnInit {
         this.toggling$.next(false);
         const detail = err?.error?.message || err?.error?.detail || 'Failed to update status.';
         this.serverError$.next(detail);
-        this.notify.error(detail);
-      },
-    });
-  }
-
-  // ------------------------------------------------------------------
-  // Scope management
-  // ------------------------------------------------------------------
-
-  refreshScope(): void {
-    this.scopeVm$.next({ state: 'init', assets: [], total: 0 });
-    this.sowService.listScope(this.engagementId).subscribe({
-      next: (scope) => {
-        this.scopeVm$.next({ state: 'ready', assets: scope, total: scope.length });
-        const scopeIds = new Set(scope.map(a => a.id));
-        this.availableAssets$.next(this.clientAssets.filter(a => !scopeIds.has(a.id)));
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.scopeVm$.next({ state: 'error', assets: [], total: 0 });
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  addAsset(): void {
-    if (!this.selectedAssetId) return;
-    this.addingScope$.next(true);
-    this.sowService.addScope(this.engagementId, this.selectedAssetId).subscribe({
-      next: () => {
-        this.selectedAssetId = '';
-        this.addingScope$.next(false);
-        this.refreshScope();
-      },
-      error: (err) => {
-        this.addingScope$.next(false);
-        const detail = err?.error?.message || err?.error?.detail || 'Failed to add asset to scope.';
-        this.notify.error(detail);
-      },
-    });
-  }
-
-  confirmRemove(assetId: string): void {
-    this.confirmingRemoveId$.next(assetId);
-  }
-
-  cancelRemove(): void {
-    this.confirmingRemoveId$.next(null);
-  }
-
-  removeAsset(assetId: string): void {
-    this.removingAssetId$.next(assetId);
-    this.sowService.removeScope(this.engagementId, assetId).subscribe({
-      next: () => {
-        this.removingAssetId$.next(null);
-        this.confirmingRemoveId$.next(null);
-        this.refreshScope();
-      },
-      error: (err) => {
-        this.removingAssetId$.next(null);
-        this.confirmingRemoveId$.next(null);
-        const detail = err?.error?.message || err?.error?.detail || 'Failed to remove asset from scope.';
         this.notify.error(detail);
       },
     });

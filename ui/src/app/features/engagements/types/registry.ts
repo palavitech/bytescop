@@ -6,6 +6,7 @@ export interface EngagementTypeConfig {
   findingsTableComponent: Type<any>;
   wizardStepScopeComponent: Type<any>;
   scopeSummaryComponent: Type<any>;
+  sowScopeEditComponent: Type<any>;
 }
 
 // Lazy imports — each type barrel re-exports from current locations
@@ -13,17 +14,20 @@ import { FindingSectionStandardComponent } from './default';
 import { FindingsTableStandardComponent } from './default';
 import { WizardStepAssetsComponent } from './default';
 import { SowScopeAssetsComponent } from './default';
+import { SowScopeAssetsEditComponent } from './default';
 
 import { FindingSectionMalwareComponent } from './malware-analysis';
 import { FindingsTableMalwareComponent } from './malware-analysis';
 import { WizardStepSamplesComponent } from './malware-analysis';
 import { SowScopeSamplesComponent } from './malware-analysis';
+import { SowScopeSamplesEditComponent } from './malware-analysis';
 
 const DEFAULTS: EngagementTypeConfig = {
   findingsSectionComponent: FindingSectionStandardComponent,
   findingsTableComponent: FindingsTableStandardComponent,
   wizardStepScopeComponent: WizardStepAssetsComponent,
   scopeSummaryComponent: SowScopeAssetsComponent,
+  sowScopeEditComponent: SowScopeAssetsEditComponent,
 };
 
 const OVERRIDES: Partial<Record<EngagementType, Partial<EngagementTypeConfig>>> = {
@@ -32,6 +36,7 @@ const OVERRIDES: Partial<Record<EngagementType, Partial<EngagementTypeConfig>>> 
     findingsTableComponent: FindingsTableMalwareComponent,
     wizardStepScopeComponent: WizardStepSamplesComponent,
     scopeSummaryComponent: SowScopeSamplesComponent,
+    sowScopeEditComponent: SowScopeSamplesEditComponent,
   },
 };
 
