@@ -239,7 +239,7 @@ export class EngagementWizardComponent {
   proceedFromOrg(): void {
     if (!this.canProceedFromOrg()) return;
     if (this.isMalwareFlow() || this.isForensicsFlow()) {
-      this.ensureEngagementForSamples();
+      this.ensureEarlyEngagement();
     }
     this.nextStep();
   }
@@ -273,11 +273,11 @@ export class EngagementWizardComponent {
    */
   private _tempEngagementId: string | null = null;
 
-  createdEngagementForSamples(): string | null {
+  earlyEngagementId(): string | null {
     return this._tempEngagementId;
   }
 
-  ensureEngagementForSamples(): void {
+  ensureEarlyEngagement(): void {
     if (this._tempEngagementId) return;
     this.submitting.set(true);
     this.error.set('');

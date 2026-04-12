@@ -174,7 +174,7 @@
         <!-- ═══════════════════════════════════════════════════════════ -->
         @if (currentStep() === 'sample') {
           <app-wizard-step-samples
-            [engagementId]="createdEngagementForSamples() || ''"
+            [engagementId]="earlyEngagementId() || ''"
             [submitting]="submitting()"
             (proceed)="onSampleStepProceed($event)"
             (back)="prevStep()">
@@ -186,7 +186,7 @@
         <!-- ═══════════════════════════════════════════════════════════ -->
         @if (currentStep() === 'evidence') {
           <app-wizard-step-evidence
-            [engagementId]="createdEngagementForSamples() || ''"
+            [engagementId]="earlyEngagementId() || ''"
             (proceed)="onEvidenceStepProceed($event)"
             (back)="prevStep()">
           </app-wizard-step-evidence>

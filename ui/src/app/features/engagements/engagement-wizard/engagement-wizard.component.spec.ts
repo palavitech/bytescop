@@ -899,28 +899,28 @@ describe('EngagementWizardComponent', () => {
       expect(component.currentStep()).toBe('sample');
     }));
 
-    it('ensureEngagementForSamples does not create again if already created', fakeAsync(() => {
+    it('ensureEarlyEngagement does not create again if already created', fakeAsync(() => {
       spies.engServiceSpy.create.and.returnValue(of(MOCK_MALWARE_ENGAGEMENT));
       component.selectOrg('org-1', 'Acme Corp');
 
       // First call
-      component.ensureEngagementForSamples();
+      component.ensureEarlyEngagement();
       tick();
       expect(spies.engServiceSpy.create).toHaveBeenCalledTimes(1);
 
       // Second call — should not create again
-      component.ensureEngagementForSamples();
+      component.ensureEarlyEngagement();
       tick();
       expect(spies.engServiceSpy.create).toHaveBeenCalledTimes(1);
     }));
 
-    it('ensureEngagementForSamples handles non-402 error', fakeAsync(() => {
+    it('ensureEarlyEngagement handles non-402 error', fakeAsync(() => {
       spies.engServiceSpy.create.and.returnValue(
         throwError(() => ({ status: 500, error: { message: 'Server error' } }))
       );
       component.selectOrg('org-1', 'Acme Corp');
 
-      component.ensureEngagementForSamples();
+      component.ensureEarlyEngagement();
       tick();
 
       expect(component.submitting()).toBeFalse();
@@ -928,13 +928,13 @@ describe('EngagementWizardComponent', () => {
       expect(spies.notifySpy.error).toHaveBeenCalledWith('Server error');
     }));
 
-    it('ensureEngagementForSamples handles 402 error silently', fakeAsync(() => {
+    it('ensureEarlyEngagement handles 402 error silently', fakeAsync(() => {
       spies.engServiceSpy.create.and.returnValue(
         throwError(() => ({ status: 402, error: { detail: 'Payment required' } }))
       );
       component.selectOrg('org-1', 'Acme Corp');
 
-      component.ensureEngagementForSamples();
+      component.ensureEarlyEngagement();
       tick();
 
       expect(component.submitting()).toBeFalse();
@@ -942,25 +942,25 @@ describe('EngagementWizardComponent', () => {
       expect(spies.notifySpy.error).not.toHaveBeenCalled();
     }));
 
-    it('ensureEngagementForSamples handles error with detail fallback', fakeAsync(() => {
+    it('ensureEarlyEngagement handles error with detail fallback', fakeAsync(() => {
       spies.engServiceSpy.create.and.returnValue(
         throwError(() => ({ status: 500, error: { detail: 'Something wrong' } }))
       );
       component.selectOrg('org-1', 'Acme Corp');
 
-      component.ensureEngagementForSamples();
+      component.ensureEarlyEngagement();
       tick();
 
       expect(component.error()).toBe('Something wrong');
     }));
 
-    it('ensureEngagementForSamples handles error with generic fallback', fakeAsync(() => {
+    it('ensureEarlyEngagement handles error with generic fallback', fakeAsync(() => {
       spies.engServiceSpy.create.and.returnValue(
         throwError(() => ({ status: 500, error: {} }))
       );
       component.selectOrg('org-1', 'Acme Corp');
 
-      component.ensureEngagementForSamples();
+      component.ensureEarlyEngagement();
       tick();
 
       expect(component.error()).toBe('Failed to create engagement for samples.');
@@ -987,7 +987,7 @@ describe('EngagementWizardComponent', () => {
 
       // First create temp engagement
       component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
+      component.ensureEarlyEngagement();
       tick();
 
       component.engForm.get('name')?.setValue('Updated MA');
@@ -1000,7 +1000,7 @@ describe('EngagementWizardComponent', () => {
         'eng-ma-1',
         jasmine.objectContaining({ name: 'Updated MA' })
       );
-      // Should NOT call create again (the create call is from ensureEngagementForSamples)
+      // Should NOT call create again (the create call is from ensureEarlyEngagement)
       expect(spies.engServiceSpy.create).toHaveBeenCalledTimes(1);
       expect(component.createdEngagement()?.name).toBe('Updated MA');
       expect(component.currentStep()).toBe('sow');
@@ -1013,7 +1013,7 @@ describe('EngagementWizardComponent', () => {
       );
 
       component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
+      component.ensureEarlyEngagement();
       tick();
 
       component.engForm.get('name')?.setValue('Updated');
@@ -1034,7 +1034,7 @@ describe('EngagementWizardComponent', () => {
       );
 
       component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
+      component.ensureEarlyEngagement();
       tick();
 
       component.engForm.get('name')?.setValue('Updated');
@@ -1053,7 +1053,7 @@ describe('EngagementWizardComponent', () => {
       );
 
       component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
+      component.ensureEarlyEngagement();
       tick();
 
       component.engForm.get('name')?.setValue('Updated');
@@ -1072,7 +1072,7 @@ describe('EngagementWizardComponent', () => {
       );
 
       component.selectOrg('org-1', 'Acme Corp');
-      component.ensureEngagementForSamples();
+      component.ensureEarlyEngagement();
       tick();
 
       component.engForm.get('name')?.setValue('Updated');
