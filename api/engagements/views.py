@@ -32,6 +32,38 @@ from .serializers import EngagementSerializer, SowSerializer
 logger = logging.getLogger("bytescop.engagements")
 
 
+def _check_scope_for_approval(engagement, sow, tenant):
+    """Return (has_scope, error_message) based on engagement type.
+
+    Each engagement type defines what constitutes a valid scope.
+    Default types use SowAsset; specialized types check their own entities.
+    """
+    _SCOPE_CHECKS = {
+        'malware_analysis': (
+            lambda eng, sow, t: MalwareSample.objects.filter(
+                tenant=t, engagement=eng,
+            ).exists(),
+            'Cannot approve SoW with no malware samples uploaded.',
+        ),
+        'digital_forensics': (
+            lambda eng, sow, t: EvidenceSource.objects.filter(
+                tenant=t, engagement=eng,
+            ).exists(),
+            'Cannot approve SoW with no evidence sources added.',
+        ),
+    }
+
+    check = _SCOPE_CHECKS.get(engagement.engagement_type)
+    if check:
+        checker, error_msg = check
+        return checker(engagement, sow, tenant), error_msg
+
+    # Default: check SowAsset scope
+    has_scope = SowAsset.objects.filter(sow=sow, in_scope=True).exists()
+    return has_scope, 'Cannot approve SoW with no assets in scope.'
+
+
+
 def seed_analysis_findings(engagement, tenant, user):
     """Create placeholder findings for each analysis check that doesn't already exist.
 
@@ -281,17 +313,12 @@ class EngagementViewSet(AuditedModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Block approval if no assets/samples are in scope
+        # Block approval if scope is empty (type-specific check)
         new_status = request.data.get('status')
         if new_status == 'approved' and sow.status != 'approved':
-            if engagement.engagement_type == 'malware_analysis':
-                has_scope = MalwareSample.objects.filter(
-                    tenant=request.tenant, engagement=engagement,
-                ).exists()
-                scope_error = 'Cannot approve SoW with no malware samples uploaded.'
-            else:
-                has_scope = SowAsset.objects.filter(sow=sow, in_scope=True).exists()
-                scope_error = 'Cannot approve SoW with no assets in scope.'
+            has_scope, scope_error = _check_scope_for_approval(
+                engagement, sow, request.tenant,
+            )
             if not has_scope:
                 return Response(
                     {'detail': scope_error},
