@@ -85,6 +85,7 @@ import { MarkdownPipe } from '../../../../components/pipes/markdown.pipe';
 export class FindingsTableStandardComponent {
   @Input({ required: true }) findings: Finding[] = [];
   @Input({ required: true }) engagementId = '';
+  @Input() requestRefresh?: () => void;
 
   expandedId: string | null = null;
 

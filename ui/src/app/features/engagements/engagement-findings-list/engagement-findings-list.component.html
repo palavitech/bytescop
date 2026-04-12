@@ -112,15 +112,14 @@
                   *ngIf="e.engagement_type === 'malware_analysis'"
                   [findings]="vm.items"
                   [engagementId]="e.id"
-                  (refresh)="refresh()"
-                  (scheduleRefresh)="scheduleRefresh($event)"
-                  (delete)="deleteFinding($event, e)">
+                  [requestRefresh]="boundRefresh">
                 </app-findings-table-malware>
 
                 <app-findings-table-standard
                   *ngIf="e.engagement_type !== 'malware_analysis'"
                   [findings]="vm.items"
-                  [engagementId]="e.id">
+                  [engagementId]="e.id"
+                  [requestRefresh]="boundRefresh">
                 </app-findings-table-standard>
               </ng-container>
 

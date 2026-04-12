@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { Location, CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -43,7 +43,7 @@ interface ViewModel {
   templateUrl: './engagement-findings-list.component.html',
   styleUrl: './engagement-findings-list.component.css',
 })
-export class EngagementFindingsListComponent implements OnDestroy {
+export class EngagementFindingsListComponent {
   private readonly location = inject(Location);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -57,7 +57,7 @@ export class EngagementFindingsListComponent implements OnDestroy {
 
   private readonly refresh$ = new BehaviorSubject<number>(0);
   private readonly filter$ = new BehaviorSubject<FilterState>({ severity: '', status: '' });
-  private refreshTimer?: ReturnType<typeof setTimeout>;
+  readonly boundRefresh = () => this.refresh();
 
   private readonly engagementId$ = this.route.paramMap.pipe(
     map(p => p.get('id') || ''),
@@ -158,26 +158,6 @@ export class EngagementFindingsListComponent implements OnDestroy {
     }
 
     this.router.navigate(['/engagements', engagement.id, 'findings', 'create']);
-  }
-
-  deleteFinding(finding: Finding, engagement: Engagement | null): void {
-    if (!engagement) return;
-
-    this.findingsService.delete(engagement.id, finding.id).subscribe({
-      next: () => this.refresh(),
-      error: (err) => {
-        this.notify.error(err?.error?.message || err?.error?.detail || 'Failed to delete finding.');
-      },
-    });
-  }
-
-  scheduleRefresh(delayMs: number): void {
-    clearTimeout(this.refreshTimer);
-    this.refreshTimer = setTimeout(() => this.refresh(), delayMs);
-  }
-
-  ngOnDestroy(): void {
-    clearTimeout(this.refreshTimer);
   }
 
   private buildTimeBar(startDate: string | null, endDate: string | null): TimeBar | null {

@@ -520,54 +520,16 @@ describe('EngagementFindingsListComponent', () => {
     expect(result.timeBar.label).toBe('1 day remaining');
   }));
 
-  // --- deleteFinding ---
+  // --- boundRefresh ---
 
-  it('deleteFinding() does nothing when engagement is null', () => {
-    component.deleteFinding(MOCK_FINDINGS[0], null);
-    expect(findingsServiceSpy.delete).not.toHaveBeenCalled();
-  });
-
-  it('deleteFinding() calls service and refreshes on success', fakeAsync(() => {
-    findingsServiceSpy.delete.and.returnValue(of(undefined as any));
+  it('boundRefresh() triggers findings reload', fakeAsync(() => {
     fixture.detectChanges();
     tick();
 
     findingsServiceSpy.list.calls.reset();
-    component.deleteFinding(MOCK_FINDINGS[0], MOCK_ENGAGEMENT);
+    component.boundRefresh();
     tick();
 
-    expect(findingsServiceSpy.delete).toHaveBeenCalledWith('eng-1', 'f1');
     expect(findingsServiceSpy.list).toHaveBeenCalled();
-  }));
-
-  it('deleteFinding() shows error on failure', fakeAsync(() => {
-    findingsServiceSpy.delete.and.returnValue(
-      throwError(() => ({ error: { message: 'Cannot delete' } })),
-    );
-    fixture.detectChanges();
-    tick();
-
-    component.deleteFinding(MOCK_FINDINGS[0], MOCK_ENGAGEMENT);
-    tick();
-
-    expect(notifySpy.error).toHaveBeenCalledWith('Cannot delete');
-  }));
-
-  // --- ngOnDestroy ---
-
-  it('ngOnDestroy() clears pending refresh timer', fakeAsync(() => {
-    fixture.detectChanges();
-    tick();
-
-    // Schedule a delayed refresh
-    component.scheduleRefresh(3000);
-
-    // Destroy before the 3000ms timer fires
-    findingsServiceSpy.list.calls.reset();
-    component.ngOnDestroy();
-    tick(3000);
-
-    // Refresh should NOT have been triggered since we destroyed
-    expect(findingsServiceSpy.list).not.toHaveBeenCalled();
   }));
 });
