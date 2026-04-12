@@ -93,6 +93,7 @@ export class EngagementWizardComponent {
 
   // -- Step 3: Engagement details --
   engForm!: FormGroup;
+  readonly calendarDays = signal<string>('—');
 
   // -- Step 3→4 bridge: created engagement --
   readonly createdEngagement = signal<Engagement | null>(null);
@@ -145,6 +146,19 @@ export class EngagementWizardComponent {
       description: ['', Validators.maxLength(5000)],
       notes: ['', Validators.maxLength(5000)],
     });
+
+    this.engForm.valueChanges.subscribe(val => {
+      this.updateCalendarDays(val.start_date, val.end_date);
+    });
+  }
+
+  private updateCalendarDays(start: string, end: string): void {
+    if (!start || !end) { this.calendarDays.set('—'); return; }
+    const s = new Date(`${start}T00:00:00`);
+    const e = new Date(`${end}T00:00:00`);
+    if (isNaN(s.getTime()) || isNaN(e.getTime()) || e <= s) { this.calendarDays.set('—'); return; }
+    const days = Math.round((e.getTime() - s.getTime()) / (24 * 60 * 60 * 1000));
+    this.calendarDays.set(`${days} day${days === 1 ? '' : 's'}`);
   }
 
   private loadOrganizations(): void {

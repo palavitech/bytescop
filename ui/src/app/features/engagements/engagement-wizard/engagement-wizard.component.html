@@ -243,16 +243,20 @@
                 </div>
 
                 <div class="row g-3 mb-3">
-                  <div class="col-md-6">
+                  <div class="col-md-4">
                     <label for="wizEngStart" class="form-label bc-label">Start Date <span class="bc-required">*</span></label>
                     <input id="wizEngStart" type="date" class="form-control bc-input" formControlName="start_date">
                     @if (isEngFormInvalid('start_date')) {
                       <div class="bc-fieldError">Start date is required.</div>
                     }
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-md-4">
                     <label for="wizEngEnd" class="form-label bc-label">End Date</label>
                     <input id="wizEngEnd" type="date" class="form-control bc-input" formControlName="end_date">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label bc-label">Duration</label>
+                    <div class="form-control-plaintext bc-sub">{{ calendarDays() }}</div>
                   </div>
                 </div>
 
