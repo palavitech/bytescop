@@ -276,6 +276,18 @@
                     <div class="bc-sub mb-2" style="font-size:0.8rem">
                       {{ eng.project_id ? 'Move to a different project or remove:' : 'Select a project to assign this engagement to:' }}
                     </div>
+                    @if (eng.project_id) {
+                      <div class="mb-3">
+                        <button class="btn btn-sm btn-outline-danger bc-btnSoft" type="button"
+                          [disabled]="savingProject()"
+                          (click)="removeProject(eng)">
+                          @if (savingProject()) {
+                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                          }
+                          <i class="bi bi-x-circle me-1" *ngIf="!savingProject()"></i> Remove from Project
+                        </button>
+                      </div>
+                    }
                     <div class="d-flex align-items-end gap-2 flex-wrap">
                       <div style="min-width:240px">
                         <select class="form-select form-select-sm bc-input"
@@ -283,26 +295,18 @@
                           (ngModelChange)="onProjectSelectChange($event)">
                           <option value="" disabled selected>Choose project...</option>
                           @for (proj of projectRefs(); track proj.id) {
-                            <option [value]="proj.id">{{ proj.name }}</option>
+                            @if (proj.id !== eng.project_id) {
+                              <option [value]="proj.id">{{ proj.name }}</option>
+                            }
                           }
                         </select>
                       </div>
                       <button class="btn btn-sm btn-success bc-btn" type="button"
                         [disabled]="!selectedProjectId() || savingProject()"
                         (click)="assignProject(eng)">
-                        @if (savingProject()) {
-                          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                        }
-                        <i class="bi bi-check-lg me-1" *ngIf="!savingProject()"></i>
+                        <i class="bi bi-check-lg me-1"></i>
                         {{ eng.project_id ? 'Move' : 'Assign' }}
                       </button>
-                      @if (eng.project_id) {
-                        <button class="btn btn-sm btn-outline-danger bc-btnSoft" type="button"
-                          [disabled]="savingProject()"
-                          (click)="removeProject(eng)">
-                          <i class="bi bi-x-circle me-1"></i> Remove from Project
-                        </button>
-                      }
                     </div>
                   </div>
                 }
