@@ -12,7 +12,6 @@
 
 .bc-widgetCell {
   min-width: 0;
-  display: flex;
 }
 
 @media (max-width: 767.98px) {
