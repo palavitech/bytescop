@@ -45,7 +45,7 @@ export class VisualizeChartComponent implements AfterViewInit, OnDestroy {
     if (d.chart_type !== 'bar') return null;
     if (d.horizontal === false) return 280;
     const count = d.labels?.length ?? 0;
-    return Math.max(168, count * 42);
+    return Math.max(240, count * 42);
   }
 
   ngAfterViewInit(): void {
