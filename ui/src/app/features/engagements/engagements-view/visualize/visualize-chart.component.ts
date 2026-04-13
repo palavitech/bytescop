@@ -43,6 +43,7 @@ export class VisualizeChartComponent implements AfterViewInit, OnDestroy {
   get chartHeight(): number | null {
     const d = this.chartData;
     if (d.chart_type !== 'bar') return null;
+    if (!d.horizontal) return 280;
     const count = d.labels?.length ?? 0;
     return Math.max(168, count * 42);
   }
@@ -112,6 +113,7 @@ export class VisualizeChartComponent implements AfterViewInit, OnDestroy {
   private buildBarChart(ctx: CanvasRenderingContext2D, d: VizChartData): void {
     const multiDataset = !!d.datasets;
     const stacked = !!d.stacked;
+    const horizontal = d.horizontal !== false;
     const datasets = d.datasets
       ? d.datasets.map(ds => ({
           label: ds.label,
@@ -120,16 +122,16 @@ export class VisualizeChartComponent implements AfterViewInit, OnDestroy {
           borderWidth: 0,
           borderRadius: stacked ? 0 : 4,
           borderSkipped: false as const,
-          barThickness: 28,
-          maxBarThickness: 28,
+          barThickness: horizontal ? 28 : undefined,
+          maxBarThickness: horizontal ? 28 : 40,
         }))
       : [{
           data: d.values ?? [],
           backgroundColor: d.colors ?? [],
           borderWidth: 0,
           borderRadius: 4,
-          barThickness: 28,
-          maxBarThickness: 28,
+          barThickness: horizontal ? 28 : undefined,
+          maxBarThickness: horizontal ? 28 : 40,
         }];
 
     if (stacked && datasets.length > 0) {
@@ -142,7 +144,7 @@ export class VisualizeChartComponent implements AfterViewInit, OnDestroy {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        indexAxis: 'y',
+        ...(horizontal ? { indexAxis: 'y' as const } : {}),
         plugins: {
           legend: {
             display: multiDataset,
@@ -154,7 +156,7 @@ export class VisualizeChartComponent implements AfterViewInit, OnDestroy {
             bodyFont: CHART_FONT,
           },
         },
-        scales: {
+        scales: horizontal ? {
           x: {
             stacked,
             ticks: { color: LABEL_COLOR, font: CHART_FONT, stepSize: 1 },
@@ -164,6 +166,17 @@ export class VisualizeChartComponent implements AfterViewInit, OnDestroy {
             stacked,
             ticks: { color: LABEL_COLOR, font: CHART_FONT },
             grid: { display: false },
+          },
+        } : {
+          x: {
+            stacked,
+            ticks: { color: LABEL_COLOR, font: CHART_FONT, maxRotation: 45 },
+            grid: { display: false },
+          },
+          y: {
+            stacked,
+            ticks: { color: LABEL_COLOR, font: CHART_FONT, stepSize: 1 },
+            grid: { color: 'rgba(201,212,255,0.08)' },
           },
         },
       },

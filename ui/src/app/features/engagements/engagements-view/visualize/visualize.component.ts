@@ -201,7 +201,7 @@ export class VisualizeComponent implements OnChanges, OnDestroy {
         color: SEV_COLORS[sev],
       }));
 
-    return { chart_type: 'bar', labels: sortedDates, datasets, stacked: true };
+    return { chart_type: 'bar', labels: sortedDates, datasets, stacked: true, horizontal: false };
   }
 
   private computeDoughnut(

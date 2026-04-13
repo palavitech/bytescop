@@ -28,6 +28,7 @@ export interface VizChartData {
   colors?: string[];
   datasets?: VizDatasetEntry[];
   stacked?: boolean;
+  horizontal?: boolean;
 }
 
 export const GRID_COLS = 6;
