@@ -2,13 +2,27 @@ export interface ForensicsEvidence {
   id: string;
   name: string;
   evidence_type: EvidenceSourceType;
+  source_path: string;
   description: string;
   acquisition_date: string;
+  acquisition_method: AcquisitionMethod;
+  acquisition_tool: string;
+  source_device: string;
   sha256: string;
   size_bytes: number;
   chain_of_custody: string;
   created_at: string;
 }
+
+export type AcquisitionMethod = 'live' | 'dead' | 'network_tap' | 'manual_export' | 'other' | '';
+
+export const ACQUISITION_METHOD_LABELS: Record<string, string> = {
+  live: 'Live Acquisition',
+  dead: 'Dead / Offline',
+  network_tap: 'Network Tap',
+  manual_export: 'Manual Export',
+  other: 'Other',
+};
 
 export type EvidenceSourceType =
   | 'disk_image'

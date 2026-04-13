@@ -29,11 +29,15 @@ class EvidenceSourceSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'evidence_type',
+            'source_path',
             'description',
             'acquisition_date',
+            'acquisition_method',
+            'acquisition_tool',
+            'source_device',
             'sha256',
             'size_bytes',
             'chain_of_custody',
             'created_at',
         ]
-        read_only_fields = ['id', 'sha256', 'size_bytes', 'created_at']
+        read_only_fields = ['id', 'created_at']

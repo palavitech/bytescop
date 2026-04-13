@@ -86,7 +86,12 @@ class MalwareSample(TimeStampedModel):
 
 
 class EvidenceSource(TimeStampedModel):
-    """A digital forensics evidence source (disk image, memory dump, etc.)."""
+    """A digital forensics evidence source (disk image, memory dump, etc.).
+
+    Evidence files are typically too large to upload through the app
+    (50 GB+ disk images, memory dumps, etc.). Instead the user stages
+    them on a shared mount or storage bucket and registers the path here.
+    """
 
     EVIDENCE_TYPES = [
         ('disk_image', 'Disk Image'),
@@ -94,6 +99,14 @@ class EvidenceSource(TimeStampedModel):
         ('network_capture', 'Network Capture'),
         ('log_file', 'Log File'),
         ('mobile_extraction', 'Mobile Extraction'),
+        ('other', 'Other'),
+    ]
+
+    ACQUISITION_METHODS = [
+        ('live', 'Live Acquisition'),
+        ('dead', 'Dead / Offline'),
+        ('network_tap', 'Network Tap'),
+        ('manual_export', 'Manual Export'),
         ('other', 'Other'),
     ]
 
@@ -107,8 +120,23 @@ class EvidenceSource(TimeStampedModel):
     evidence_type = models.CharField(
         max_length=24, choices=EVIDENCE_TYPES, default='other',
     )
+    source_path = models.CharField(
+        max_length=1024, blank=True, default='',
+        help_text='File path or URI where the evidence is stored.',
+    )
     description = models.TextField(blank=True, default='')
     acquisition_date = models.DateField(null=True, blank=True)
+    acquisition_method = models.CharField(
+        max_length=24, choices=ACQUISITION_METHODS, blank=True, default='',
+    )
+    acquisition_tool = models.CharField(
+        max_length=255, blank=True, default='',
+        help_text='Tool used for acquisition (e.g. FTK Imager, Volatility).',
+    )
+    source_device = models.CharField(
+        max_length=255, blank=True, default='',
+        help_text='Source device identifier (hostname, serial, asset tag).',
+    )
     sha256 = models.CharField(max_length=64, blank=True, default='')
     size_bytes = models.BigIntegerField(default=0)
     chain_of_custody = models.TextField(blank=True, default='')

@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, Input, ViewEncapsulation, inject, O
 import { CommonModule } from '@angular/common';
 
 import { ForensicsEvidenceService } from './forensics-evidence.service';
-import { ForensicsEvidence, EVIDENCE_SOURCE_TYPE_LABELS } from './forensics.model';
+import { ForensicsEvidence, EVIDENCE_SOURCE_TYPE_LABELS, ACQUISITION_METHOD_LABELS } from './forensics.model';
 
 type ScopeState = 'init' | 'ready' | 'error';
 
@@ -50,6 +50,7 @@ type ScopeState = 'init' | 'ready' | 'error';
             <tr>
               <th>Name</th>
               <th>Type</th>
+              <th>Source Path</th>
               <th>Acquired</th>
               <th>SHA-256</th>
             </tr>
@@ -59,10 +60,24 @@ type ScopeState = 'init' | 'ready' | 'error';
               <td>
                 <i class="bi bi-search me-1" style="color:var(--bc-accent2)"></i>
                 {{ e.name }}
+                <div class="bc-sub" style="font-size:0.7rem" *ngIf="e.source_device">
+                  <i class="bi bi-pc-display-horizontal me-1"></i>{{ e.source_device }}
+                </div>
               </td>
-              <td>{{ typeLabels[e.evidence_type] || e.evidence_type }}</td>
+              <td>
+                {{ typeLabels[e.evidence_type] || e.evidence_type }}
+                <div class="bc-sub" style="font-size:0.7rem" *ngIf="e.acquisition_method">
+                  {{ methodLabels[e.acquisition_method] || e.acquisition_method }}
+                </div>
+              </td>
+              <td><code class="bc-sub" style="font-size:0.75rem; word-break:break-all">{{ e.source_path || '—' }}</code></td>
               <td class="bc-sub">{{ e.acquisition_date || '—' }}</td>
-              <td><code class="bc-sub" style="font-size:0.75rem">{{ e.sha256 | slice:0:16 }}...</code></td>
+              <td>
+                <ng-container *ngIf="e.sha256">
+                  <code class="bc-sub" style="font-size:0.75rem">{{ e.sha256 | slice:0:16 }}...</code>
+                </ng-container>
+                <span class="bc-sub" *ngIf="!e.sha256">—</span>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -77,6 +92,7 @@ export class SowScopeEvidenceComponent implements OnInit, OnChanges {
   @Input() refreshTrigger = 0;
 
   readonly typeLabels = EVIDENCE_SOURCE_TYPE_LABELS;
+  readonly methodLabels = ACQUISITION_METHOD_LABELS;
   readonly state = signal<ScopeState>('init');
   readonly items = signal<ForensicsEvidence[]>([]);
 
