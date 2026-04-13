@@ -1,0 +1,191 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <ng-container *ngIf="vm$ | async as vm">
+
+      <!-- Loading -->
+      <div *ngIf="vm.state === 'init'" class="bc-card p-4">
+        <div class="bc-sub">Loading project...</div>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="vm.state === 'error'" class="bc-card p-4">
+        <div class="alert alert-danger mb-0">Could not load project.</div>
+      </div>
+
+      <!-- Not found -->
+      <div *ngIf="vm.state === 'missing'" class="bc-card p-4">
+        <div class="alert alert-warning mb-0">Project not found.</div>
+      </div>
+
+      <!-- Ready -->
+      <ng-container *ngIf="vm.state === 'ready' && vm.project as project">
+
+        <!-- Header card -->
+        <div class="bc-pageCard mb-3">
+          <div class="bc-pageCardHead">
+            <div class="bc-pageCardTitle">
+              <div class="bc-h1">{{ project.name }}</div>
+              <div class="bc-sub">Project with {{ project.engagements.length }} engagement{{ project.engagements.length === 1 ? '' : 's' }}</div>
+            </div>
+            <div class="bc-pageCardTools">
+              <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back</span>
+              </button>
+              <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="refresh()">
+                <i class="bi bi-arrow-repeat"></i>
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="bc-pageCardFoot">
+            <div class="bc-pageCardFootLeft">
+              <span class="bc-pillStatus" [ngClass]="statusClass(project.status)">
+                <span class="bc-pillDot"></span>
+                <span>{{ prettyStatus(project.status) }}</span>
+              </span>
+              <span class="bc-badge ms-2" *ngIf="project.client_name">
+                <i class="bi bi-building me-1"></i>
+                <a [routerLink]="['/organizations', project.client_id]" class="bc-rowLink">{{ project.client_name }}</a>
+              </span>
+            </div>
+
+            <div class="bc-pageCardFootRight">
+              <a class="btn btn-outline-light bc-iconBtn" [routerLink]="['/projects', project.id, 'edit']"
+                *bcHasPermission="'project.update'">
+                <i class="bi bi-pencil"></i>
+                <span>Edit</span>
+              </a>
+              <button class="btn btn-outline-danger bc-iconBtn" type="button" (click)="confirmDelete()"
+                *bcHasPermission="'project.delete'">
+                <i class="bi bi-trash"></i>
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delete confirmation -->
+        <div class="alert alert-danger d-flex align-items-center gap-3 mb-3" *ngIf="confirmingDelete$ | async">
+          <div class="flex-grow-1">
+            <strong>Delete this project?</strong> Engagements will not be deleted &mdash; they will become standalone.
+          </div>
+          <button class="btn btn-sm btn-outline-light" type="button" (click)="cancelDelete()">Cancel</button>
+          <button class="btn btn-sm btn-danger" type="button" [disabled]="deleting$ | async"
+            (click)="deleteProject(project)">
+            <span *ngIf="deleting$ | async" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            Delete
+          </button>
+        </div>
+
+        <!-- Project details card -->
+        <div class="bc-card mb-3">
+          <div class="bc-cardInner p-4">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <div class="bc-detailField">
+                  <span class="bc-detailLabel">Start Date</span>
+                  <span class="bc-detailValue">{{ project.start_date | bcDate }}</span>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="bc-detailField">
+                  <span class="bc-detailLabel">End Date</span>
+                  <span class="bc-detailValue">{{ project.end_date | bcDate }}</span>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="bc-detailField">
+                  <span class="bc-detailLabel">Created</span>
+                  <span class="bc-detailValue">{{ project.created_at | bcDate }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="row g-3 mt-2" *ngIf="project.description">
+              <div class="col-12">
+                <div class="bc-detailField">
+                  <span class="bc-detailLabel">Description</span>
+                  <p class="bc-detailValue mb-0" style="white-space:pre-line">{{ project.description }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Engagements section -->
+        <div class="bc-card">
+          <div class="bc-cardHeader d-flex justify-content-between align-items-center p-3">
+            <div>
+              <span class="bc-cardHeaderTitle">Engagements</span>
+              <span class="bc-badge ms-2">{{ project.engagements.length }}</span>
+            </div>
+            <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button"
+              (click)="toggleAddEngagement()" *bcHasPermission="'project.update'">
+              <i class="bi me-1" [ngClass]="showAddEngagement ? 'bi-x-lg' : 'bi-plus-circle'"></i>
+              {{ showAddEngagement ? 'Cancel' : 'Add Engagement' }}
+            </button>
+          </div>
+
+          <!-- Add engagement dropdown -->
+          <div class="bc-addEngagementPanel p-3" *ngIf="showAddEngagement">
+            <div class="bc-sub mb-2" style="font-size:0.8rem">Select an engagement type to add:</div>
+            <div class="d-flex flex-wrap gap-2">
+              @for (type of engagementTypes; track type.key) {
+                <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button"
+                  [disabled]="addingEngagement$ | async"
+                  (click)="addEngagement(project, type.key)">
+                  <i class="bi {{ type.icon }} me-1"></i>
+                  {{ type.label }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="bc-cardInner p-0">
+            <div class="table-responsive">
+              <table class="table table-dark mb-0 align-middle bc-table">
+                <thead>
+                  <tr>
+                    <th style="min-width:220px">Name</th>
+                    <th style="min-width:160px">Type</th>
+                    <th style="min-width:120px">Status</th>
+                    <th style="min-width:120px">Start</th>
+                    <th style="min-width:120px">End</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngIf="project.engagements.length === 0">
+                    <td colspan="5" class="p-4">
+                      <div class="bc-sub">No engagements yet.</div>
+                    </td>
+                  </tr>
+                  <tr *ngFor="let eng of project.engagements">
+                    <td>
+                      <a class="bc-rowLink" [routerLink]="['/engagements', eng.id]">
+                        {{ eng.name }}
+                      </a>
+                    </td>
+                    <td class="bc-sub">{{ prettyType(eng.engagement_type) }}</td>
+                    <td>
+                      <span class="bc-pillStatus" [ngClass]="engStatusClass(eng.status)">
+                        <span class="bc-pillDot"></span>
+                        <span>{{ prettyEngStatus(eng.status) }}</span>
+                      </span>
+                    </td>
+                    <td class="bc-sub">{{ eng.start_date | bcDate }}</td>
+                    <td class="bc-sub">{{ eng.end_date | bcDate }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+
+    </ng-container>
+
+  </div>
+</div>

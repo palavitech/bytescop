@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'tenancy',
     'clients',
     'assets',
+    'projects',
     'engagements',
     'findings',
     'evidence',

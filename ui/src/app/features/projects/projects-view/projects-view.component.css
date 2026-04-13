@@ -1,0 +1,42 @@
+/* ── Detail fields ─────────────────────────────────────────────────── */
+
+.bc-detailField {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bc-detailLabel {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(201, 212, 255, 0.45);
+  font-weight: 600;
+}
+
+.bc-detailValue {
+  font-size: 0.85rem;
+  color: var(--bc-textPrimary, #e0e6f0);
+}
+
+/* ── Card header ──────────────────────────────────────────────────── */
+
+.bc-cardHeader {
+  border-bottom: 1px solid rgba(0, 255, 179, 0.12);
+}
+
+.bc-cardHeaderTitle {
+  font-family: var(--bc-fontHead, 'Orbitron', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--bc-accent, #00ffb3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Add engagement panel ─────────────────────────────────────────── */
+
+.bc-addEngagementPanel {
+  border-bottom: 1px solid rgba(0, 255, 179, 0.1);
+  background: rgba(0, 255, 179, 0.02);
+}

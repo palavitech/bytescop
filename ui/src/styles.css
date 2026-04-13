@@ -1576,6 +1576,40 @@ body.bc-sidebar-collapsed .bc-navLink.active {
    box-shadow: 0 0 0 3px rgba(201, 212, 255, 0.06);
 }
 
+/* 21b) Project status pills */
+.bc-statusProject--active {
+   border-color: var(--bc-accent);
+   background: rgba(0, 255, 179, 0.06);
+   color: var(--bc-accent);
+}
+
+.bc-statusProject--active .bc-pillDot {
+   background: var(--bc-accent);
+   box-shadow: 0 0 0 3px rgba(0, 255, 179, 0.10);
+}
+
+.bc-statusProject--on_hold {
+   border-color: #f0ad4e;
+   background: rgba(240, 173, 78, 0.06);
+   color: #f0ad4e;
+}
+
+.bc-statusProject--on_hold .bc-pillDot {
+   background: #f0ad4e;
+   box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.10);
+}
+
+.bc-statusProject--completed {
+   border-color: var(--bc-muted);
+   background: rgba(201, 212, 255, 0.04);
+   color: var(--bc-muted);
+}
+
+.bc-statusProject--completed .bc-pillDot {
+   background: var(--bc-muted);
+   box-shadow: 0 0 0 3px rgba(201, 212, 255, 0.06);
+}
+
 /* ===== Markdown rendered content (.bc-md) — global so [innerHTML] picks it up ===== */
 
 .bc-md :where(h1, h2, h3, h4, h5, h6) {

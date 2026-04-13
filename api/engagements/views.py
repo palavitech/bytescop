@@ -173,7 +173,7 @@ class EngagementViewSet(AuditedModelViewSet):
         from authorization.scoping import scope_engagements
         qs = Engagement.objects.filter(
             tenant=self.request.tenant,
-        ).select_related('client').order_by('-created_at')
+        ).select_related('client', 'project').order_by('-created_at')
 
         qs = scope_engagements(qs, self.request)
 

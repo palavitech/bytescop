@@ -25,6 +25,12 @@
                         <span *ngIf="!vm.engagement.client_id">{{ vm.engagement.client_name || '—' }}</span>
                       </span>
                     </div>
+                    <div class="bc-metaRow" *ngIf="vm.engagement.project_id">
+                      <span class="bc-metaLabel">Project</span>
+                      <span class="bc-metaValue">
+                        <a class="bc-link" [routerLink]="['/projects', vm.engagement.project_id]">{{ vm.engagement.project_name }}</a>
+                      </span>
+                    </div>
                   </div>
                 </ng-container>
               </div>

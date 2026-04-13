@@ -43,11 +43,13 @@ def _get_tenant_usage(tenant):
     from clients.models import Client
     from assets.models import Asset
     from engagements.models import Engagement
+    from projects.models import Project
 
     return {
         'members': TenantMember.objects.filter(tenant=tenant).count(),
         'clients': Client.objects.filter(tenant=tenant).count(),
         'assets': Asset.objects.filter(tenant=tenant).count(),
+        'projects': Project.objects.filter(tenant=tenant).count(),
         'engagements': Engagement.objects.filter(tenant=tenant).count(),
     }
 
@@ -71,6 +73,7 @@ def get_subscription_info(tenant):
             'max_members': plan.max_members,
             'max_clients': plan.max_clients,
             'max_assets': plan.max_assets,
+            'max_projects': plan.max_projects,
             'max_engagements': plan.max_engagements,
             'max_findings_per_engagement': plan.max_findings_per_engagement,
             'max_images_per_finding': plan.max_images_per_finding,

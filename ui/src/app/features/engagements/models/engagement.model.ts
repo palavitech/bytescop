@@ -60,6 +60,8 @@ export interface Engagement {
   id: string;
   name: string;
   engagement_type: EngagementType;
+  project_id: string | null;
+  project_name: string | null;
   client_id: string | null;
   client_name: string;
   status: EngagementStatus;

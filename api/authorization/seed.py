@@ -7,6 +7,11 @@ from authorization.models import Permission, PermissionCategory, TenantGroup
 # ---------------------------------------------------------------------------
 
 PERMISSIONS = [
+    # Model CRUD — project
+    ("project.view", "View projects", PermissionCategory.MODEL, "project"),
+    ("project.create", "Create projects", PermissionCategory.MODEL, "project"),
+    ("project.update", "Update projects", PermissionCategory.MODEL, "project"),
+    ("project.delete", "Delete projects", PermissionCategory.MODEL, "project"),
     # Model CRUD — client
     ("client.view", "View clients", PermissionCategory.MODEL, "client"),
     ("client.create", "Create clients", PermissionCategory.MODEL, "client"),
@@ -74,7 +79,7 @@ PERMISSIONS = [
 # Default group definitions
 # ---------------------------------------------------------------------------
 
-MODEL_RESOURCES = ["client", "asset", "engagement", "finding", "evidence", "sow", "scope", "comment"]
+MODEL_RESOURCES = ["project", "client", "asset", "engagement", "finding", "evidence", "sow", "scope", "comment"]
 
 # Permissions restricted to Owner only (not given to Administrators)
 OWNER_ONLY_PERMISSIONS = {

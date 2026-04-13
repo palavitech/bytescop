@@ -99,6 +99,12 @@ export const routes: Routes = [
         data: { breadcrumb: 'Clients' },
       },
       {
+        path: 'projects',
+        canActivate: [RequireAuthGuard, MfaSetupGuard, PasswordResetGuard, requirePermission('project.view')],
+        loadChildren: () => import('./features/projects/projects.routes').then(m => m.PROJECT_ROUTES),
+        data: { breadcrumb: 'Projects' },
+      },
+      {
         path: 'engagements',
         canActivate: [RequireAuthGuard, MfaSetupGuard, PasswordResetGuard, requirePermission('engagement.view')],
         loadChildren: () => import('./features/engagements/engagements.routes').then(m => m.ENGAGEMENT_ROUTES),

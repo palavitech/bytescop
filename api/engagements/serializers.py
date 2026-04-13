@@ -12,6 +12,8 @@ class EngagementSerializer(serializers.ModelSerializer):
         required=False,
     )
     client_name = serializers.CharField(read_only=True)
+    project_id = serializers.UUIDField(source='project.id', read_only=True, default=None)
+    project_name = serializers.CharField(source='project.name', read_only=True, default=None)
     findings_summary = serializers.SerializerMethodField()
 
     class Meta:
@@ -20,6 +22,8 @@ class EngagementSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'engagement_type',
+            'project_id',
+            'project_name',
             'client_id',
             'client_name',
             'status',
@@ -31,7 +35,7 @@ class EngagementSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'client_name', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'client_name', 'project_id', 'project_name', 'created_at', 'updated_at']
 
     def get_findings_summary(self, obj):
         if not hasattr(obj, 'findings_critical'):
