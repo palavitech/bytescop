@@ -112,21 +112,11 @@ describe('EngagementsViewComponent OnPush', () => {
     return spyOn((component as any).cdr, 'markForCheck');
   }
 
-  it('renderCharts should call markForCheck after findings load', fakeAsync(() => {
-    markSpy = getMarkSpy();
-
-    const findingsSubject = new Subject<Finding[]>();
-    findingsServiceSpy.list.and.returnValue(findingsSubject.asObservable());
-
-    // toggleSummary calls renderCharts internally
+  it('toggleSummary should toggle showSummary flag', () => {
+    expect(component.showSummary).toBe(false);
     component.toggleSummary();
-
-    findingsSubject.next(mockFindings);
-    findingsSubject.complete();
-
-    // renderCharts uses setTimeout internally for canvas render
-    tick(0);
-
-    expect(markSpy).toHaveBeenCalled();
-  }));
+    expect(component.showSummary).toBe(true);
+    component.toggleSummary();
+    expect(component.showSummary).toBe(false);
+  });
 });

@@ -140,111 +140,11 @@
             </div>
           </div>
 
-          <!-- Visualization card -->
-          <div class="bc-card mb-3" *ngIf="showSummary && vm.state === 'ready'">
-            <div class="bc-sectionHead">
-              <div class="d-flex align-items-center gap-2">
-                <h3 class="bc-sectionLabel mb-0">Visualization</h3>
-                <span class="bc-sub" *ngIf="summaryTotal > 0">({{ summaryTotal }} findings)</span>
-              </div>
-              <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleSummary()">
-                <i class="bi bi-x-lg"></i>
-              </button>
-            </div>
-            <div class="bc-cardInner p-3">
-              <!-- Timeline histogram -->
-              <div class="bc-timelineChart mb-3" *ngIf="summaryTotal > 0">
-                <div class="bc-chartLabel">Findings Over Time</div>
-                <canvas #timelineChart></canvas>
-              </div>
-
-              <div class="bc-summaryGrid" *ngIf="summaryTotal > 0">
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Findings by Severity</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #sevChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Findings by Status</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #statChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Assets by Severity</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #assetChart></canvas>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bc-summaryGrid mt-3" *ngIf="summaryTotal > 0">
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Findings by CWE</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #cweChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Findings by Assessment Area</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #areaChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Findings by OWASP Top 10</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #owaspChart></canvas>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bc-summaryGrid mt-3" *ngIf="summaryTotal > 0">
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Assets by Finding Status</h6>
-                    <div class="bc-chartWrap" [style.height.px]="assetStatusChartHeight">
-                      <canvas #assetStatusChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Asset Type Distribution</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #assetTypeChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Asset Criticality vs Findings</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #assetCritChart></canvas>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bc-chartEmpty" *ngIf="summaryTotal === 0">
-                <i class="bi bi-bar-chart"></i>
-                <span>No findings to visualize</span>
-              </div>
-            </div>
-          </div>
+          <!-- Visualization widget grid -->
+          <app-visualize *ngIf="vm.state === 'ready'"
+            [engagementId]="engagementId"
+            [visible]="showSummary">
+          </app-visualize>
 
           <!-- Details -->
           <ng-container *ngIf="vm.state === 'ready' && vm.engagement as eng">

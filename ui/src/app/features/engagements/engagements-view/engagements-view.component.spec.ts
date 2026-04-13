@@ -271,64 +271,39 @@ describe('EngagementsViewComponent', () => {
     expect(component.showHelp).toBe(false);
   });
 
-  it('toggleHelp() hides summary and destroys charts when opening help', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(of([]));
+  it('toggleHelp() hides summary when opening help', () => {
     fixture.detectChanges();
 
     // Open summary first
     component.toggleSummary();
-    tick();
     expect(component.showSummary).toBe(true);
 
     // Toggle help should close summary
     component.toggleHelp();
     expect(component.showHelp).toBe(true);
     expect(component.showSummary).toBe(false);
-  }));
+  });
 
   // --- toggleSummary ---
 
-  it('toggleSummary() toggles showSummary flag', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(of([]));
+  it('toggleSummary() toggles showSummary flag', () => {
     fixture.detectChanges();
 
     component.toggleSummary();
-    tick();
     expect(component.showSummary).toBe(true);
 
     component.toggleSummary();
     expect(component.showSummary).toBe(false);
-  }));
+  });
 
-  it('toggleSummary() opens summary without affecting help', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(of([]));
+  it('toggleSummary() opens summary without affecting help', () => {
     fixture.detectChanges();
 
     component.showHelp = true;
     component.toggleSummary();
-    tick();
     expect(component.showSummary).toBe(true);
     expect(component.showHelp).toBe(true);
-  }));
-
-  it('toggleSummary() renders charts and sets summaryTotal', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(of(MOCK_FINDINGS));
-    fixture.detectChanges();
-
-    component.toggleSummary();
-    tick();
-    expect(component.summaryTotal).toBe(3);
-  }));
-
-  it('toggleSummary() destroys charts when closing summary', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(of([]));
-    fixture.detectChanges();
-
-    component.toggleSummary(); // open
-    tick();
-    component.toggleSummary(); // close
-    expect(component.showSummary).toBe(false);
-  }));
+  });
 
   // --- refresh ---
 
@@ -554,60 +529,6 @@ describe('EngagementsViewComponent', () => {
     expect(result).toContain('day(s) past end');
   });
 
-  // --- prettySeverity / prettyFindingStatus ---
-
-  it('prettySeverity() returns label for known severities', () => {
-    expect(component.prettySeverity('critical')).toBe('Critical');
-    expect(component.prettySeverity('high')).toBe('High');
-    expect(component.prettySeverity('medium')).toBe('Medium');
-    expect(component.prettySeverity('low')).toBe('Low');
-    expect(component.prettySeverity('info')).toBe('Info');
-  });
-
-  it('prettySeverity() returns raw string for unknown severity', () => {
-    expect(component.prettySeverity('unknown')).toBe('unknown');
-  });
-
-  it('prettyFindingStatus() returns label for known statuses', () => {
-    expect(component.prettyFindingStatus('open')).toBe('Open');
-    expect(component.prettyFindingStatus('triage')).toBe('Triage');
-    expect(component.prettyFindingStatus('accepted')).toBe('Accepted');
-    expect(component.prettyFindingStatus('fixed')).toBe('Fixed');
-    expect(component.prettyFindingStatus('false_positive')).toBe('False Positive');
-  });
-
-  it('prettyFindingStatus() returns raw string for unknown status', () => {
-    expect(component.prettyFindingStatus('xyz')).toBe('xyz');
-  });
-
-  // --- ngOnDestroy ---
-
-  it('ngOnDestroy() does not throw', () => {
-    fixture.detectChanges();
-    expect(() => component.ngOnDestroy()).not.toThrow();
-  });
-
-  it('ngOnDestroy() destroys charts after summary was opened', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(of(MOCK_FINDINGS));
-    fixture.detectChanges();
-
-    component.toggleSummary();
-    tick();
-
-    expect(() => component.ngOnDestroy()).not.toThrow();
-  }));
-
-  // --- Charts: renderCharts handles empty findings ---
-
-  it('renderCharts sets summaryTotal to 0 with no findings', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(of([]));
-    fixture.detectChanges();
-
-    component.toggleSummary();
-    tick();
-
-    expect(component.summaryTotal).toBe(0);
-  }));
 
   // --- Route param fallback ---
 
@@ -662,65 +583,6 @@ describe('EngagementsViewComponent', () => {
     expect(component.daysRemaining(null, pastStr)).toBe('3 day(s) past end');
   });
 
-  // --- renderCharts with asset-level data ---
-
-  it('renderCharts builds asset severity bar chart with multiple assets and Unlinked', fakeAsync(() => {
-    const findingsMultiAsset: Finding[] = [
-      ...MOCK_FINDINGS,
-      {
-        id: 'f4',
-        engagement_id: 'eng-1',
-        asset_id: 'asset-2',
-        asset_name: 'API Server',
-        title: 'SSRF',
-        severity: 'medium',
-        assessment_area: 'application_security',
-        owasp_category: 'A10:2021',
-        cwe_id: 'CWE-918',
-        status: 'accepted',
-        description_md: '',
-        recommendation_md: '',
-        is_draft: false,
-        sample_id: null,
-        sample_name: '',
-        analysis_type: '',
-        analysis_check_key: '',
-        execution_status: '',
-        created_at: '2025-01-04T00:00:00Z',
-        updated_at: '2025-01-04T00:00:00Z',
-      },
-    ];
-    findingsServiceSpy.list.and.returnValue(of(findingsMultiAsset));
-    fixture.detectChanges();
-
-    component.toggleSummary();
-    tick();
-
-    expect(component.summaryTotal).toBe(4);
-    // assetChartHeight should be at minimum 168px
-    expect(component.assetChartHeight).toBeGreaterThanOrEqual(168);
-  }));
-
-  it('renderCharts handles findingsService error by using empty array', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(throwError(() => new Error('network')));
-    fixture.detectChanges();
-
-    component.toggleSummary();
-    tick();
-
-    expect(component.summaryTotal).toBe(0);
-  }));
-
-  // --- Additional branch coverage tests ---
-
-  // Test destroyCharts when charts are null (optional chaining ?.destroy() null path)
-  it('destroyCharts handles null charts gracefully on repeated calls', fakeAsync(() => {
-    fixture.detectChanges();
-    // Call ngOnDestroy twice — second call has all charts already null
-    component.ngOnDestroy();
-    expect(() => component.ngOnDestroy()).not.toThrow();
-  }));
-
   // Test toggleHelp when showHelp is already true (closing help — does NOT set showSummary)
   it('toggleHelp() closing help does not touch showSummary', () => {
     component.showHelp = true;
@@ -728,220 +590,6 @@ describe('EngagementsViewComponent', () => {
     component.toggleHelp();
     expect(component.showHelp).toBe(false);
     expect(component.showSummary).toBe(false);
-  });
-
-  // Test toggleSummary closing path explicitly destroys charts
-  it('toggleSummary() closing calls destroyCharts without error', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(of(MOCK_FINDINGS));
-    fixture.detectChanges();
-
-    component.toggleSummary(); // open
-    tick();
-    // Now close — exercises the else branch of toggleSummary
-    component.toggleSummary();
-    expect(component.showSummary).toBe(false);
-    // Charts should be cleaned up; no error
-  }));
-
-  // Test chart creation with real DOM rendering (canvas elements available via ViewChild)
-  it('renderCharts creates severity, status, and asset charts when canvas refs are available', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(of(MOCK_FINDINGS));
-    fixture.detectChanges();
-
-    // Toggle summary to open the aside with canvas elements
-    component.toggleSummary();
-    // Render the template so *ngIf="showSummary" exposes the canvas elements
-    fixture.detectChanges();
-    // Flush the setTimeout inside renderCharts that creates actual Chart instances
-    tick();
-
-    expect(component.summaryTotal).toBe(3);
-    // After tick, the ViewChild refs should have resolved and charts created.
-    // Verify by destroying — if charts were created, destroy is a no-op that doesn't throw.
-    expect(() => component.ngOnDestroy()).not.toThrow();
-  }));
-
-  // Test chart creation and destruction lifecycle: open summary, render charts, close summary
-  it('toggleSummary() open then close destroys previously-created charts', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(of(MOCK_FINDINGS));
-    fixture.detectChanges();
-
-    // Open summary
-    component.toggleSummary();
-    fixture.detectChanges();
-    tick();
-
-    // Close summary — should destroy charts that were actually created
-    component.toggleSummary();
-    expect(component.showSummary).toBe(false);
-    // No errors from destroying real chart instances
-  }));
-
-  // Test chart creation with all severity levels and multiple assets to exercise all chart branches
-  it('renderCharts creates charts with all severity levels and multiple assets', fakeAsync(() => {
-    const allSevFindings: Finding[] = [
-      { id: 'fc', engagement_id: 'eng-1', asset_id: 'a1', asset_name: 'App', title: 'C', severity: 'critical', assessment_area: '', owasp_category: '', cwe_id: '', status: 'open', description_md: '', recommendation_md: '', is_draft: false, sample_id: null, sample_name: '', analysis_type: '', analysis_check_key: '', execution_status: '', created_at: '', updated_at: '' },
-      { id: 'fh', engagement_id: 'eng-1', asset_id: 'a1', asset_name: 'App', title: 'H', severity: 'high', assessment_area: '', owasp_category: '', cwe_id: '', status: 'triage', description_md: '', recommendation_md: '', is_draft: false, sample_id: null, sample_name: '', analysis_type: '', analysis_check_key: '', execution_status: '', created_at: '', updated_at: '' },
-      { id: 'fm', engagement_id: 'eng-1', asset_id: 'a2', asset_name: 'API', title: 'M', severity: 'medium', assessment_area: '', owasp_category: '', cwe_id: '', status: 'accepted', description_md: '', recommendation_md: '', is_draft: false, sample_id: null, sample_name: '', analysis_type: '', analysis_check_key: '', execution_status: '', created_at: '', updated_at: '' },
-      { id: 'fl', engagement_id: 'eng-1', asset_id: 'a2', asset_name: 'API', title: 'L', severity: 'low', assessment_area: '', owasp_category: '', cwe_id: '', status: 'fixed', description_md: '', recommendation_md: '', is_draft: false, sample_id: null, sample_name: '', analysis_type: '', analysis_check_key: '', execution_status: '', created_at: '', updated_at: '' },
-      { id: 'fi', engagement_id: 'eng-1', asset_id: null, asset_name: '', title: 'I', severity: 'info', assessment_area: '', owasp_category: '', cwe_id: '', status: 'false_positive', description_md: '', recommendation_md: '', is_draft: false, sample_id: null, sample_name: '', analysis_type: '', analysis_check_key: '', execution_status: '', created_at: '', updated_at: '' },
-    ];
-    findingsServiceSpy.list.and.returnValue(of(allSevFindings));
-    fixture.detectChanges();
-
-    component.toggleSummary();
-    fixture.detectChanges();
-    tick();
-
-    expect(component.summaryTotal).toBe(5);
-    // Asset bar chart groups: App (2 findings), API (2 findings), Unlinked (1 finding)
-    // This exercises: assetMap.has() true branch, m.get(sev)||0 existing value branch,
-    // f.asset_name || 'Unlinked' both truthy and falsy branches
-  }));
-
-  // Test chart creation with findings that have empty/falsy severity and status
-  it('renderCharts handles findings with empty severity/status via real DOM', fakeAsync(() => {
-    const findingsWithEmpty: Finding[] = [
-      {
-        id: 'f-empty',
-        engagement_id: 'eng-1',
-        asset_id: 'asset-1',
-        asset_name: 'Web App',
-        title: 'Empty Sev',
-        severity: '' as any,
-        assessment_area: 'application_security',
-        owasp_category: '',
-        cwe_id: '',
-        status: '' as any,
-        description_md: '',
-        recommendation_md: '',
-        is_draft: false,
-        sample_id: null,
-        sample_name: '',
-        analysis_type: '',
-        analysis_check_key: '',
-        execution_status: '',
-        created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-01T00:00:00Z',
-      },
-    ];
-    findingsServiceSpy.list.and.returnValue(of(findingsWithEmpty));
-    fixture.detectChanges();
-
-    component.toggleSummary();
-    fixture.detectChanges();
-    tick();
-
-    expect(component.summaryTotal).toBe(1);
-  }));
-
-  // Test chart creation with many unique assets to trigger dynamic height > 168
-  it('renderCharts sets dynamic assetChartHeight for many assets', fakeAsync(() => {
-    const manyAssetFindings: Finding[] = [];
-    for (let i = 0; i < 6; i++) {
-      manyAssetFindings.push({
-        id: `f-multi-${i}`,
-        engagement_id: 'eng-1',
-        asset_id: `asset-${i}`,
-        asset_name: `Asset ${i}`,
-        title: `Finding ${i}`,
-        severity: 'high',
-        assessment_area: 'application_security',
-        owasp_category: '',
-        cwe_id: '',
-        status: 'open',
-        description_md: '',
-        recommendation_md: '',
-        is_draft: false,
-        sample_id: null,
-        sample_name: '',
-        analysis_type: '',
-        analysis_check_key: '',
-        execution_status: '',
-        created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-01T00:00:00Z',
-      });
-    }
-    findingsServiceSpy.list.and.returnValue(of(manyAssetFindings));
-    fixture.detectChanges();
-
-    component.toggleSummary();
-    fixture.detectChanges();
-    tick();
-
-    expect(component.summaryTotal).toBe(6);
-    // 6 unique assets * 42px = 252, so height should be > 168
-    expect(component.assetChartHeight).toBeGreaterThanOrEqual(168);
-  }));
-
-  // Test chart creation with multiple findings on the same asset (aggregation branches)
-  it('renderCharts aggregates multiple findings per asset in chart', fakeAsync(() => {
-    const sameAssetFindings: Finding[] = [
-      {
-        id: 'f-sa1', engagement_id: 'eng-1', asset_id: 'asset-1', asset_name: 'Web App',
-        title: 'F1', severity: 'critical', assessment_area: '', owasp_category: '', cwe_id: '',
-        status: 'open', description_md: '', recommendation_md: '', is_draft: false,
-        sample_id: null, sample_name: '', analysis_type: '', analysis_check_key: '', execution_status: '',
-        created_at: '2025-01-01T00:00:00Z', updated_at: '2025-01-01T00:00:00Z',
-      },
-      {
-        id: 'f-sa2', engagement_id: 'eng-1', asset_id: 'asset-1', asset_name: 'Web App',
-        title: 'F2', severity: 'critical', assessment_area: '', owasp_category: '', cwe_id: '',
-        status: 'open', description_md: '', recommendation_md: '', is_draft: false,
-        sample_id: null, sample_name: '', analysis_type: '', analysis_check_key: '', execution_status: '',
-        created_at: '2025-01-02T00:00:00Z', updated_at: '2025-01-02T00:00:00Z',
-      },
-      {
-        id: 'f-sa3', engagement_id: 'eng-1', asset_id: 'asset-1', asset_name: 'Web App',
-        title: 'F3', severity: 'high', assessment_area: '', owasp_category: '', cwe_id: '',
-        status: 'triage', description_md: '', recommendation_md: '', is_draft: false,
-        sample_id: null, sample_name: '', analysis_type: '', analysis_check_key: '', execution_status: '',
-        created_at: '2025-01-03T00:00:00Z', updated_at: '2025-01-03T00:00:00Z',
-      },
-    ];
-    findingsServiceSpy.list.and.returnValue(of(sameAssetFindings));
-    fixture.detectChanges();
-
-    component.toggleSummary();
-    fixture.detectChanges();
-    tick();
-
-    expect(component.summaryTotal).toBe(3);
-  }));
-
-  // Test renderCharts error path via catchError (findings service fails) with real DOM
-  it('renderCharts uses empty findings when service errors with real DOM', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(throwError(() => new Error('fail')));
-    fixture.detectChanges();
-
-    component.toggleSummary();
-    fixture.detectChanges();
-    tick();
-
-    expect(component.summaryTotal).toBe(0);
-  }));
-
-  // Test ngOnDestroy after charts were actually created via real DOM
-  it('ngOnDestroy() destroys real chart instances', fakeAsync(() => {
-    findingsServiceSpy.list.and.returnValue(of(MOCK_FINDINGS));
-    fixture.detectChanges();
-
-    component.toggleSummary();
-    fixture.detectChanges();
-    tick();
-
-    // Charts should be created now. Destroy should clean them up.
-    expect(() => component.ngOnDestroy()).not.toThrow();
-  }));
-
-  // Test prettySeverity with undefined/null-like input (covers ?? fallback)
-  it('prettySeverity() returns raw string for empty string', () => {
-    expect(component.prettySeverity('')).toBe('');
-  });
-
-  // Test prettyFindingStatus with empty string
-  it('prettyFindingStatus() returns raw string for empty string', () => {
-    expect(component.prettyFindingStatus('')).toBe('');
   });
 
   // Test prettyStatus with empty string (exercises ?? fallback)
