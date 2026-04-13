@@ -1,0 +1,130 @@
+@if (visible) {
+  <div class="bc-card mb-3">
+    <div class="bc-sectionHead">
+      <div class="d-flex align-items-center gap-2">
+        <h3 class="bc-sectionLabel mb-0">Visualization</h3>
+        @if (summaryTotal > 0 && !editMode()) {
+          <span class="bc-sub">({{ summaryTotal }} findings)</span>
+        }
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        @if (editMode()) {
+          <button class="btn btn-sm btn-outline-light bc-iconBtn" type="button"
+            (click)="resetLayout()">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            <span>Reset</span>
+          </button>
+          <button class="btn btn-sm btn-outline-light bc-iconBtn" type="button"
+            (click)="cancelEditMode()">
+            <i class="bi bi-x-lg"></i>
+            <span>Cancel</span>
+          </button>
+          <button class="btn btn-sm bc-btnPrimary bc-iconBtn" type="button"
+            (click)="saveLayout()">
+            <i class="bi bi-check-lg"></i>
+            <span>Save</span>
+          </button>
+        } @else {
+          @if (summaryTotal > 0) {
+            <button class="btn btn-sm btn-outline-light bc-iconBtn" type="button"
+              (click)="enterEditMode()">
+              <i class="bi bi-pencil-square"></i>
+              <span>Edit</span>
+            </button>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="bc-cardInner p-3">
+      @if (loading) {
+        <div class="bc-chartEmpty text-center py-5">
+          <div class="spinner-border spinner-border-sm text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <span class="mt-2">Loading charts...</span>
+        </div>
+      } @else if (summaryTotal === 0) {
+        <div class="bc-chartEmpty text-center py-5">
+          <i class="bi bi-bar-chart fs-3 d-block mb-2"></i>
+          <span>No findings to visualize</span>
+        </div>
+      } @else {
+        <div class="bc-vizLayout" [class.bc-vizLayout--catalogOpen]="showCatalog() && editMode()">
+          <main>
+            @if (editMode()) {
+              <!-- Edit mode: draggable grid -->
+              @if (editLayout().length > 0) {
+                <div class="bc-widgetGrid"
+                  (dragover)="onGridDragOver($event)"
+                  (drop)="onGridDrop($event)">
+                  @for (item of editLayout(); track item.widget_id) {
+                    <div class="bc-widgetCell"
+                      [style.grid-column]="(item.col + 1) + ' / span ' + colSpanFor(getWidgetType(item.widget_id))"
+                      [style.grid-row]="item.row + 1"
+                      [class.bc-dragging]="dragWidgetId() === item.widget_id"
+                      draggable="true"
+                      (dragstart)="onDragStart(item.widget_id, $event)"
+                      (dragend)="onDragEnd()">
+                      <div class="bc-editWidgetWrap">
+                        <div class="bc-editWidgetPreview">
+                          <div class="bc-editWidgetLabel">
+                            <i class="bi"
+                              [class.bi-bar-chart]="getWidgetType(item.widget_id) === 'timeline'"
+                              [class.bi-pie-chart]="getWidgetType(item.widget_id) === 'chart'"></i>
+                            {{ getWidgetTitle(item.widget_id) }}
+                          </div>
+                        </div>
+                        <app-widget-edit-overlay
+                          (remove)="removeWidget(item.widget_id)">
+                        </app-widget-edit-overlay>
+                      </div>
+                    </div>
+                  }
+                  @if (dropGhost(); as ghost) {
+                    <div class="bc-dropGhost"
+                      [style.grid-column]="(ghost.col + 1) + ' / span ' + ghost.colSpan"
+                      [style.grid-row]="ghost.row + 1">
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="text-center py-5">
+                  <i class="bi bi-grid fs-1 d-block mb-3" style="color: var(--bc-muted)"></i>
+                  <h6 class="bc-sub mb-2">No charts selected</h6>
+                  <p class="bc-sub mb-0" style="font-size: 0.8rem;">
+                    Add charts from the library panel.
+                  </p>
+                </div>
+              }
+            } @else {
+              <!-- Normal mode: render widgets -->
+              <div class="bc-widgetGrid">
+                @for (w of widgets; track w.id) {
+                  <div class="bc-widgetCell"
+                    [style.grid-column]="(w.col + 1) + ' / span ' + w.col_span"
+                    [style.grid-row]="w.row + 1">
+                    <app-visualize-chart
+                      [title]="w.title"
+                      [chartData]="w.chartData">
+                    </app-visualize-chart>
+                  </div>
+                }
+              </div>
+            }
+          </main>
+
+          @if (showCatalog() && editMode()) {
+            <aside class="bc-helpPane">
+              <app-visualize-catalog
+                [widgets]="catalogWidgets()"
+                [activeIds]="activeWidgetIds()"
+                (addWidget)="addFromCatalog($event)">
+              </app-visualize-catalog>
+            </aside>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,22 @@
+.bc-chartWrap {
+  position: relative;
+  width: 100%;
+}
+
+.bc-chartWrap--sm {
+  height: 240px;
+}
+
+.bc-chartWrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.bc-chartEmpty {
+  color: var(--bc-muted);
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
