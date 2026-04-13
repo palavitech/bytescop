@@ -95,11 +95,18 @@ export class ProjectsViewComponent {
   }
 
   deleteProject(project: ProjectDetail): void {
+    if (project.engagements.length > 0) {
+      this.confirmingDelete$.next(false);
+      this.notify.error(
+        `This project has ${project.engagements.length} engagement${project.engagements.length === 1 ? '' : 's'} and cannot be deleted. Remove all engagements first.`
+      );
+      return;
+    }
     this.deleting$.next(true);
     this.projectsService.delete(project.id).subscribe({
       next: () => {
         this.deleting$.next(false);
-        this.notify.success(`Project "${project.name}" deleted. Engagements are now standalone.`);
+        this.notify.success(`Project "${project.name}" deleted.`);
         this.router.navigate(['/projects']);
       },
       error: () => {
