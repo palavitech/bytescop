@@ -1,10 +1,29 @@
+:host {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+:host .bc-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+:host .bc-cardInner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .bc-chartWrap {
   position: relative;
   width: 100%;
+  flex: 1;
 }
 
 .bc-chartWrap--sm {
-  height: 240px;
+  min-height: 240px;
 }
 
 .bc-chartWrap canvas {
@@ -17,6 +36,7 @@
   min-height: 200px;
   display: flex;
   flex-direction: column;
+  flex: 1;
   align-items: center;
   justify-content: center;
 }
