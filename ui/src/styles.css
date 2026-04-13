@@ -360,6 +360,7 @@ body.bc-sidebar-collapsed .bc-main {
    background: conic-gradient(from 220deg, transparent 0 25%, rgba(0, 255, 179, .18), transparent 55%, rgba(0, 183, 255, .14), transparent 85%, rgba(255, 59, 122, .10));
    opacity: .20;
    filter: blur(18px);
+   pointer-events: none;
 }
 
 .bc-cardInner {
