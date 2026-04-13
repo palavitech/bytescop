@@ -2,26 +2,7 @@
   display: block;
 }
 
-/* ── Layout: main + catalog sidebar ────────────────────────── */
-
-.bc-vizLayout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
-.bc-vizLayout--catalogOpen {
-  grid-template-columns: 1fr 320px;
-}
-
-@media (max-width: 991.98px) {
-  .bc-vizLayout--catalogOpen {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ── CSS Grid (6 columns, explicit placement) ─────────────── */
+/* ── CSS Grid (6 columns, explicit placement, no auto-flow) ── */
 
 .bc-widgetGrid {
   display: grid;
@@ -107,13 +88,4 @@
   gap: 0.5rem;
   color: rgba(201, 212, 255, 0.4);
   padding: 3rem 1rem;
-}
-
-/* ── Help Pane (catalog sidebar) ───────────────────────────── */
-
-.bc-helpPane {
-  background: var(--bc-card, #0d1117);
-  border: 1px solid var(--bc-border, rgba(0, 255, 179, 0.06));
-  border-radius: 12px;
-  overflow: hidden;
 }

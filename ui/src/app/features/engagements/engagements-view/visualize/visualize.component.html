@@ -9,24 +9,24 @@
       </div>
       <div class="d-flex align-items-center gap-2">
         @if (editMode()) {
-          <button class="btn btn-sm btn-outline-light bc-iconBtn" type="button"
+          <button class="btn btn-outline-light bc-iconBtn" type="button"
             (click)="resetLayout()">
             <i class="bi bi-arrow-counterclockwise"></i>
             <span>Reset</span>
           </button>
-          <button class="btn btn-sm btn-outline-light bc-iconBtn" type="button"
+          <button class="btn btn-outline-light bc-iconBtn" type="button"
             (click)="cancelEditMode()">
             <i class="bi bi-x-lg"></i>
             <span>Cancel</span>
           </button>
-          <button class="btn btn-sm bc-btnPrimary bc-iconBtn" type="button"
+          <button class="btn bc-btnPrimary bc-iconBtn" type="button"
             (click)="saveLayout()">
             <i class="bi bi-check-lg"></i>
             <span>Save</span>
           </button>
         } @else {
           @if (summaryTotal > 0) {
-            <button class="btn btn-sm btn-outline-light bc-iconBtn" type="button"
+            <button class="btn btn-outline-light bc-iconBtn" type="button"
               (click)="enterEditMode()">
               <i class="bi bi-pencil-square"></i>
               <span>Edit</span>
@@ -50,7 +50,8 @@
           <span>No findings to visualize</span>
         </div>
       } @else {
-        <div class="bc-vizLayout" [class.bc-vizLayout--catalogOpen]="showCatalog() && editMode()">
+        <div class="bc-helpLayout bc-helpLayoutRight"
+          [class.is-helpOpen]="showCatalog() && editMode()">
           <main>
             @if (editMode()) {
               <!-- Edit mode: draggable grid -->
@@ -89,12 +90,14 @@
                   }
                 </div>
               } @else {
-                <div class="text-center py-5">
-                  <i class="bi bi-grid fs-1 d-block mb-3" style="color: var(--bc-muted)"></i>
-                  <h6 class="bc-sub mb-2">No charts selected</h6>
-                  <p class="bc-sub mb-0" style="font-size: 0.8rem;">
-                    Add charts from the library panel.
-                  </p>
+                <div class="bc-card p-4">
+                  <div class="bc-cardInner text-center py-5">
+                    <i class="bi bi-grid fs-1 d-block mb-3" style="color: var(--bc-muted)"></i>
+                    <h2 class="bc-h2 mb-2">No charts selected</h2>
+                    <p class="bc-sub mb-0">
+                      Add charts from the library panel to build your visualization.
+                    </p>
+                  </div>
                 </div>
               }
             } @else {
