@@ -134,9 +134,6 @@ export class VisualizeChartComponent implements AfterViewInit, OnDestroy {
           maxBarThickness: horizontal ? 28 : 40,
         }];
 
-    if (stacked && datasets.length > 0) {
-      datasets[datasets.length - 1].borderRadius = 4;
-    }
 
     this.chart = new Chart(ctx, {
       type: 'bar',
