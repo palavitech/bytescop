@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, OnInit, signal, Type } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { BehaviorSubject, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { EngagementsService } from '../services/engagements.service';
 import { Engagement, EngagementStatus, EngagementType, ENGAGEMENT_STATUS_LABELS, ENGAGEMENT_TYPE_LABELS } from '../models/engagement.model';
@@ -10,6 +11,8 @@ import { Asset } from '../../assets/models/asset.model';
 import { FindingsService } from '../services/findings.service';
 import { ReportService } from '../services/report.service';
 import { Finding } from '../models/finding.model';
+import { ProjectRef } from '../../projects/models/project.model';
+import { ProjectsService } from '../../projects/services/projects.service';
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { BcDatePipe } from '../../../components/pipes/bc-date.pipe';
@@ -32,7 +35,7 @@ interface SowViewModel {
 @Component({
   selector: 'app-engagements-view',
   standalone: true,
-  imports: [CommonModule, RouterLink, HasPermissionDirective, BcDatePipe, BcCommentsComponent, VisualizeComponent],
+  imports: [CommonModule, RouterLink, FormsModule, HasPermissionDirective, BcDatePipe, BcCommentsComponent, VisualizeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './engagements-view.component.html',
   styleUrl: './engagements-view.component.css',
@@ -47,9 +50,16 @@ export class EngagementsViewComponent implements OnInit {
   private readonly location = inject(Location);
   private readonly notify = inject(NotificationService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly projectsService = inject(ProjectsService);
 
   showHelp = false;
   showSummary = false;
+
+  // -- Project assignment --
+  readonly projectRefs = signal<ProjectRef[]>([]);
+  readonly showProjectAssign = signal(false);
+  readonly selectedProjectId = signal<string | null>(null);
+  readonly savingProject = signal(false);
 
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
   private readonly refreshSow$ = new BehaviorSubject<void>(undefined);
@@ -152,6 +162,57 @@ export class EngagementsViewComponent implements OnInit {
         this.deleting$.next(false);
         this.confirmingDelete$.next(false);
         this.notify.error(err?.error?.detail || 'Failed to delete engagement.');
+      },
+    });
+  }
+
+  // -- Project assignment --
+
+  toggleProjectAssign(): void {
+    const show = !this.showProjectAssign();
+    this.showProjectAssign.set(show);
+    if (show && this.projectRefs().length === 0) {
+      this.projectsService.ref().subscribe({
+        next: refs => this.projectRefs.set(refs),
+        error: () => this.projectRefs.set([]),
+      });
+    }
+  }
+
+  onProjectSelectChange(value: string): void {
+    this.selectedProjectId.set(value || null);
+  }
+
+  assignProject(eng: Engagement): void {
+    const projectId = this.selectedProjectId();
+    if (!projectId) return;
+    this.savingProject.set(true);
+    this.engagementsService.update(eng.id, { project_id: projectId } as any).subscribe({
+      next: () => {
+        this.savingProject.set(false);
+        this.showProjectAssign.set(false);
+        this.notify.success('Engagement assigned to project.');
+        this.refresh$.next();
+      },
+      error: () => {
+        this.savingProject.set(false);
+        this.notify.error('Failed to assign project.');
+      },
+    });
+  }
+
+  removeProject(eng: Engagement): void {
+    this.savingProject.set(true);
+    this.engagementsService.update(eng.id, { project_id: null } as any).subscribe({
+      next: () => {
+        this.savingProject.set(false);
+        this.showProjectAssign.set(false);
+        this.notify.success('Engagement removed from project.');
+        this.refresh$.next();
+      },
+      error: () => {
+        this.savingProject.set(false);
+        this.notify.error('Failed to remove from project.');
       },
     });
   }
