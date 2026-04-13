@@ -43,7 +43,7 @@ export class VisualizeChartComponent implements AfterViewInit, OnDestroy {
   get chartHeight(): number | null {
     const d = this.chartData;
     if (d.chart_type !== 'bar') return null;
-    if (!d.horizontal) return 280;
+    if (d.horizontal === false) return 280;
     const count = d.labels?.length ?? 0;
     return Math.max(168, count * 42);
   }
