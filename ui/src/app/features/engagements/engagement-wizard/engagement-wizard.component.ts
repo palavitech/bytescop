@@ -65,6 +65,9 @@ export class EngagementWizardComponent {
   readonly isMalwareFlow = computed(() => this.engagementType() === 'malware_analysis');
   readonly isForensicsFlow = computed(() => this.engagementType() === 'digital_forensics');
 
+  // -- Activation mode (existing engagement from project) --
+  readonly activationMode = signal(false);
+
   // -- Loading / error --
   readonly submitting = signal(false);
   readonly error = signal('');
@@ -115,6 +118,7 @@ export class EngagementWizardComponent {
     this.initOrgForm();
     this.initEngForm();
     this.loadOrganizations();
+    this.initActivationMode();
   }
 
   // ── Initialization ─────────────────────────────────────────────────
@@ -172,6 +176,38 @@ export class EngagementWizardComponent {
     this.orgService.ref().subscribe({
       next: (orgs) => this.organizations.set(orgs),
       error: () => this.notify.error('Failed to load organizations.'),
+    });
+  }
+
+  private initActivationMode(): void {
+    const engId = this.route.snapshot.queryParamMap.get('engagementId');
+    if (!engId) return;
+
+    this.activationMode.set(true);
+    this._tempEngagementId = engId;
+
+    this.engService.getById(engId).subscribe({
+      next: (eng) => {
+        this.createdEngagement.set(eng);
+        this.selectedOrgId.set(eng.client_id);
+        this.selectedOrgName.set(eng.client_name);
+
+        this.engForm.patchValue({
+          name: eng.name,
+          start_date: eng.start_date || new Date().toISOString().slice(0, 10),
+          end_date: eng.end_date || '',
+          description: eng.description || '',
+          notes: eng.notes || '',
+        });
+
+        // Skip org step — start at step 2
+        const order = this.stepOrder();
+        this.currentStep.set(order[1]);
+      },
+      error: () => {
+        this.notify.error('Failed to load engagement.');
+        this.router.navigate(['/engagements']);
+      },
     });
   }
 
@@ -356,13 +392,16 @@ export class EngagementWizardComponent {
 
     const formVal = this.engForm.getRawValue();
 
-    // For malware flow, the engagement was already created in the sample step.
-    // Update it with the details form values instead of creating a new one.
-    if ((this.isMalwareFlow() || this.isForensicsFlow()) && this._tempEngagementId) {
+    // Update existing engagement (activation mode or malware/forensics early creation)
+    if (this._tempEngagementId) {
       this.engService.update(this._tempEngagementId, formVal).subscribe({
         next: (eng) => {
           this.createdEngagement.set(eng);
-          this.fetchSowAndAdvance(eng.id);
+          if (this.isMalwareFlow() || this.isForensicsFlow()) {
+            this.fetchSowAndAdvance(eng.id);
+          } else {
+            this.addAssetsToScopeAndFetchSow(eng.id);
+          }
         },
         error: (err) => {
           this.submitting.set(false);

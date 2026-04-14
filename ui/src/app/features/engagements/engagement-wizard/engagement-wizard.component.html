@@ -5,8 +5,13 @@
     <div class="bc-pageCard mb-3">
       <div class="bc-pageCardHead">
         <div class="bc-pageCardTitle">
-          <div class="bc-h1">New Engagement</div>
-          <div class="bc-sub">Create a new security assessment engagement step by step.</div>
+          @if (activationMode()) {
+            <div class="bc-h1">Setup Engagement</div>
+            <div class="bc-sub">Configure scope, details, and activate this engagement.</div>
+          } @else {
+            <div class="bc-h1">New Engagement</div>
+            <div class="bc-sub">Create a new security assessment engagement step by step.</div>
+          }
         </div>
         <div class="bc-pageCardTools">
           <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
@@ -71,75 +76,93 @@
                 <i class="bi bi-building me-2"></i>Choose Client
               </h3>
               <span class="bc-sub" style="font-size:0.8rem">
-                Select an existing client or create a new one.
+                @if (activationMode()) {
+                  Client is set from the project and cannot be changed.
+                } @else {
+                  Select an existing client or create a new one.
+                }
               </span>
             </div>
             <div class="bc-cardInner p-4">
 
-              <!-- Org list -->
-              <div class="mb-3">
-                <label class="form-label bc-label">Client <span class="bc-required">*</span></label>
-                <select class="form-select bc-input"
-                  [ngModel]="selectedOrgId()"
-                  (ngModelChange)="onOrgDropdownChange($event)">
-                  <option [ngValue]="null" disabled>Select client...</option>
-                  @for (org of organizations(); track org.id) {
-                    <option [ngValue]="org.id">{{ org.name }}</option>
-                  }
-                </select>
-              </div>
-
-              <!-- Create new org toggle -->
-              <div class="mb-3">
-                <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleOrgForm()">
-                  <i class="bi me-1" [ngClass]="showOrgForm() ? 'bi-x-lg' : 'bi-plus-circle'"></i>
-                  {{ showOrgForm() ? 'Cancel' : 'Create New Client' }}
-                </button>
-              </div>
-
-              <!-- Inline org form -->
-              @if (showOrgForm()) {
-                <div class="bc-wizardInlineForm">
-                  <form [formGroup]="orgForm" (ngSubmit)="submitNewOrg()" autocomplete="off">
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-6">
-                        <label class="form-label bc-label">Name <span class="bc-required">*</span></label>
-                        <input type="text" class="form-control bc-input" formControlName="name"
-                          placeholder="Client name">
-                        @if (orgForm.get('name')?.touched && orgForm.get('name')?.hasError('required')) {
-                          <div class="bc-fieldError">Name is required.</div>
-                        }
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label bc-label">Website</label>
-                        <input type="url" class="form-control bc-input" formControlName="website"
-                          placeholder="https://example.com">
-                      </div>
-                    </div>
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-12">
-                        <label class="form-label bc-label">Notes</label>
-                        <textarea class="form-control bc-input" formControlName="notes" rows="2"
-                          placeholder="Optional notes"></textarea>
-                      </div>
-                    </div>
-                    <button type="submit" class="btn btn-sm btn-success bc-btn" [disabled]="orgSaving()">
-                      @if (orgSaving()) {
-                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                      }
-                      <i class="bi bi-plus-circle me-1" *ngIf="!orgSaving()"></i>
-                      Create Client
-                    </button>
-                  </form>
+              @if (activationMode()) {
+                <!-- Activation mode: read-only client display -->
+                <div class="mb-3">
+                  <label class="form-label bc-label">Client</label>
+                  <input type="text" class="form-control bc-input" [value]="selectedOrgName()" disabled readonly>
                 </div>
-              }
 
-              <!-- Selected org badge -->
-              @if (selectedOrgId()) {
                 <div class="bc-wizardSelection mt-3">
-                  <i class="bi bi-check-circle-fill me-2" style="color:var(--bc-accent)"></i>
-                  <strong>{{ selectedOrgName() }}</strong> selected
+                  <i class="bi bi-lock-fill me-2" style="color:var(--bc-accent)"></i>
+                  <strong>{{ selectedOrgName() }}</strong> — assigned from project
                 </div>
+              } @else {
+                <!-- Normal mode: org selection -->
+                <!-- Org list -->
+                <div class="mb-3">
+                  <label class="form-label bc-label">Client <span class="bc-required">*</span></label>
+                  <select class="form-select bc-input"
+                    [ngModel]="selectedOrgId()"
+                    (ngModelChange)="onOrgDropdownChange($event)">
+                    <option [ngValue]="null" disabled>Select client...</option>
+                    @for (org of organizations(); track org.id) {
+                      <option [ngValue]="org.id">{{ org.name }}</option>
+                    }
+                  </select>
+                </div>
+
+                <!-- Create new org toggle -->
+                <div class="mb-3">
+                  <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleOrgForm()">
+                    <i class="bi me-1" [ngClass]="showOrgForm() ? 'bi-x-lg' : 'bi-plus-circle'"></i>
+                    {{ showOrgForm() ? 'Cancel' : 'Create New Client' }}
+                  </button>
+                </div>
+
+                <!-- Inline org form -->
+                @if (showOrgForm()) {
+                  <div class="bc-wizardInlineForm">
+                    <form [formGroup]="orgForm" (ngSubmit)="submitNewOrg()" autocomplete="off">
+                      <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                          <label class="form-label bc-label">Name <span class="bc-required">*</span></label>
+                          <input type="text" class="form-control bc-input" formControlName="name"
+                            placeholder="Client name">
+                          @if (orgForm.get('name')?.touched && orgForm.get('name')?.hasError('required')) {
+                            <div class="bc-fieldError">Name is required.</div>
+                          }
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label bc-label">Website</label>
+                          <input type="url" class="form-control bc-input" formControlName="website"
+                            placeholder="https://example.com">
+                        </div>
+                      </div>
+                      <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                          <label class="form-label bc-label">Notes</label>
+                          <textarea class="form-control bc-input" formControlName="notes" rows="2"
+                            placeholder="Optional notes"></textarea>
+                        </div>
+                      </div>
+                      <button type="submit" class="btn btn-sm btn-success bc-btn" [disabled]="orgSaving()">
+                        @if (orgSaving()) {
+                          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        }
+                        <i class="bi bi-plus-circle me-1" *ngIf="!orgSaving()"></i>
+                        Create Client
+                      </button>
+                    </form>
+                  </div>
+                }
+
+                <!-- Selected org badge -->
+                @if (selectedOrgId()) {
+                  <div class="bc-wizardSelection mt-3">
+                    <i class="bi bi-check-circle-fill me-2" style="color:var(--bc-accent)"></i>
+                    <strong>{{ selectedOrgName() }}</strong> selected
+                  </div>
+                }
               }
 
               <!-- Navigation -->

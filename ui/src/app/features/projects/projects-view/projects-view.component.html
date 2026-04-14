@@ -179,11 +179,12 @@
                     <th style="min-width:120px">Status</th>
                     <th style="min-width:120px">Start</th>
                     <th style="min-width:120px">End</th>
+                    <th style="min-width:160px" class="text-end">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngIf="project.engagements.length === 0">
-                    <td colspan="5" class="p-4">
+                    <td colspan="6" class="p-4">
                       <div class="bc-sub">No engagements yet.</div>
                     </td>
                   </tr>
@@ -202,6 +203,17 @@
                     </td>
                     <td class="bc-sub">{{ eng.start_date | bcDate }}</td>
                     <td class="bc-sub">{{ eng.end_date | bcDate }}</td>
+                    <td class="text-end">
+                      <ng-container *ngIf="eng.status === 'planned'">
+                        <a class="btn btn-sm btn-outline-light bc-btnSoft bc-tableActionBtn"
+                          [routerLink]="['/engagements', 'create', 'wizard']"
+                          [queryParams]="{ type: eng.engagement_type, engagementId: eng.id }"
+                          *bcHasPermission="'engagement.update'">
+                          <i class="bi bi-rocket-takeoff"></i>
+                          <span class="ms-1">Setup Wizard</span>
+                        </a>
+                      </ng-container>
+                    </td>
                   </tr>
                 </tbody>
               </table>
