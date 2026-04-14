@@ -213,6 +213,14 @@
                           <span class="ms-1">Setup Wizard</span>
                         </a>
                       </ng-container>
+                      <ng-container *ngIf="eng.status !== 'planned'">
+                        <a class="btn btn-sm btn-outline-light bc-btnSoft bc-tableActionBtn"
+                          [routerLink]="['/engagements', eng.id, 'findings']"
+                          *bcHasPermission="'finding.view'">
+                          <i class="bi bi-bug"></i>
+                          <span class="ms-1">Findings</span>
+                        </a>
+                      </ng-container>
                     </td>
                   </tr>
                 </tbody>
