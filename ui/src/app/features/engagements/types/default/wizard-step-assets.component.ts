@@ -137,7 +137,7 @@ export class WizardStepAssetsComponent implements OnInit {
           next.add(asset.id);
           return next;
         });
-        this.notify.success(`Asset "${asset.name}" created.`);
+
       },
       error: (err) => {
         this.assetSaving.set(false);

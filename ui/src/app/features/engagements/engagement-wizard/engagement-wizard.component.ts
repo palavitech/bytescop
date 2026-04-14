@@ -281,7 +281,7 @@ export class EngagementWizardComponent {
         // Add to list and select it
         this.organizations.update((list) => [...list, { id: org.id, name: org.name }]);
         this.selectOrg(org.id, org.name);
-        this.notify.success(`Organization "${org.name}" created.`);
+
       },
       error: (err) => {
         this.orgSaving.set(false);

@@ -128,7 +128,7 @@ export class ProjectsViewComponent {
       next: eng => {
         this.addingEngagement$.next(false);
         this.showAddEngagement = false;
-        this.notify.success(`Engagement "${eng.name}" added to project.`);
+
         this.refresh$.next();
       },
       error: () => {

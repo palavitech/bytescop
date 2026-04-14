@@ -191,7 +191,7 @@ export class ProjectWizardComponent {
         this.showOrgForm.set(false);
         this.orgSaving.set(false);
         this.orgForm.reset();
-        this.notify.success(`Client "${org.name}" created.`);
+
       },
       error: () => {
         this.orgSaving.set(false);
@@ -260,7 +260,7 @@ export class ProjectWizardComponent {
     }).subscribe({
       next: project => {
         this.submitting.set(false);
-        this.notify.success(`Project "${project.name}" created with ${this.selectedTypes().length} engagement(s).`);
+
         this.router.navigate(['/projects', project.id]);
       },
       error: (err) => {
