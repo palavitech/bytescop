@@ -15,6 +15,7 @@ git fetch --tags --quiet
 
 # Determine target version
 TARGET_TAG="${1:-}"
+CODE_UPDATE_NEEDED=false
 
 if [ -z "$TARGET_TAG" ]; then
     # No argument — find the latest release tag
@@ -26,20 +27,19 @@ if [ -z "$TARGET_TAG" ]; then
         exit 1
     fi
 
-    if [ "$LATEST_TAG" = "v${CURRENT_VERSION}" ]; then
-        echo "[+] Already running the latest version (v${CURRENT_VERSION})."
-        echo "    To force a rebuild: docker compose build && docker compose up -d"
-        exit 0
-    fi
-
-    echo "[*] New version available: ${LATEST_TAG} (current: v${CURRENT_VERSION})"
-    read -rp "[?] Update to ${LATEST_TAG}? (yes/no): " confirm
-    if [ "$confirm" != "yes" ]; then
-        echo "[-] Update cancelled."
-        exit 0
-    fi
-
     TARGET_TAG="$LATEST_TAG"
+
+    if [ "$LATEST_TAG" != "v${CURRENT_VERSION}" ]; then
+        CODE_UPDATE_NEEDED=true
+        echo "[*] New version available: ${LATEST_TAG} (current: v${CURRENT_VERSION})"
+        read -rp "[?] Update to ${LATEST_TAG}? (yes/no): " confirm
+        if [ "$confirm" != "yes" ]; then
+            echo "[-] Update cancelled."
+            exit 0
+        fi
+    else
+        echo "[i] Code is already at the latest version (v${CURRENT_VERSION})."
+    fi
 else
     # Argument provided — validate it exists
     if ! git rev-parse "$TARGET_TAG" >/dev/null 2>&1; then
@@ -48,26 +48,63 @@ else
         git tag -l 'v*' --sort=-version:refname | head -n 10 | sed 's/^/      /'
         exit 1
     fi
+
+    if [ "$TARGET_TAG" != "v${CURRENT_VERSION}" ]; then
+        CODE_UPDATE_NEEDED=true
+    else
+        echo "[i] Code is already at ${TARGET_TAG}."
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Detect whether services are deployed and running
+# ---------------------------------------------------------------------------
+SERVICES_RUNNING=false
+if docker compose ps --status running -q 2>/dev/null | grep -q .; then
+    SERVICES_RUNNING=true
+    echo "[i] Docker services are running."
+else
+    echo "[i] Docker services are not running."
+fi
+
+# ---------------------------------------------------------------------------
+# Decide what to do
+# ---------------------------------------------------------------------------
+if [ "$CODE_UPDATE_NEEDED" = false ] && [ "$SERVICES_RUNNING" = true ]; then
+    echo "[+] Already running the latest version (v${CURRENT_VERSION}) and all services are up. Nothing to do."
+    exit 0
 fi
 
 echo
 
-# Create backup first
-echo "[*] Creating pre-update backup..."
-./backup.sh
+# ---------------------------------------------------------------------------
+# Code update (backup + checkout) — only when version changed
+# ---------------------------------------------------------------------------
+if [ "$CODE_UPDATE_NEEDED" = true ]; then
+    echo "[*] Creating pre-update backup..."
+    ./backup.sh
 
-echo
-echo "[*] Updating to ${TARGET_TAG}..."
-git checkout "$TARGET_TAG"
+    echo
+    echo "[*] Updating code to ${TARGET_TAG}..."
+    git checkout "$TARGET_TAG"
+else
+    echo "[i] Skipping backup and code checkout — already at ${TARGET_TAG}."
+fi
 
-# Read the new version
+# ---------------------------------------------------------------------------
+# Build, deploy, migrate, seed — always runs if we got this far
+# ---------------------------------------------------------------------------
 APP_VERSION=$(cat VERSION 2>/dev/null || echo "dev")
 export APP_VERSION
 
-echo "[*] Rebuilding Docker images (v${APP_VERSION})..."
+echo "[*] Building Docker images (v${APP_VERSION})..."
 docker compose build
 
-echo "[*] Restarting services..."
+if [ "$SERVICES_RUNNING" = true ]; then
+    echo "[*] Restarting services..."
+else
+    echo "[*] Starting services..."
+fi
 docker compose up -d
 
 echo "[*] Waiting for database to be ready..."
@@ -93,8 +130,10 @@ docker compose exec -T api python manage.py ensure_classification_entries
 
 echo
 echo "========================================="
-echo "  [+] BytesCop updated to v${APP_VERSION}!"
+echo "  [+] BytesCop v${APP_VERSION} is ready!"
 echo "========================================="
 echo
-echo "  To roll back: ./update.sh v${CURRENT_VERSION}"
-echo
+if [ "$CODE_UPDATE_NEEDED" = true ]; then
+    echo "  To roll back: ./update.sh v${CURRENT_VERSION}"
+    echo
+fi
