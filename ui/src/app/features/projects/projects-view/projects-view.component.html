@@ -207,7 +207,7 @@
                       <ng-container *ngIf="eng.status === 'planned'">
                         <a class="btn btn-sm btn-outline-light bc-btnSoft bc-tableActionBtn"
                           [routerLink]="['/engagements', 'create', 'wizard']"
-                          [queryParams]="{ type: eng.engagement_type, engagementId: eng.id }"
+                          [queryParams]="{ type: eng.engagement_type, engagementId: eng.id, returnUrl: '/projects/' + project.id }"
                           *bcHasPermission="'engagement.update'">
                           <i class="bi bi-rocket-takeoff"></i>
                           <span class="ms-1">Setup Wizard</span>

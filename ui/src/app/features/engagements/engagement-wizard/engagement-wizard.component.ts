@@ -67,6 +67,7 @@ export class EngagementWizardComponent {
 
   // -- Activation mode (existing engagement from project) --
   readonly activationMode = signal(false);
+  private readonly returnUrl: string | null = null;
 
   // -- Loading / error --
   readonly submitting = signal(false);
@@ -114,6 +115,7 @@ export class EngagementWizardComponent {
   showHelp = false;
 
   constructor() {
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     this.initEngagementType();
     this.initOrgForm();
     this.initEngForm();
@@ -501,7 +503,7 @@ export class EngagementWizardComponent {
   keepPlanned(): void {
     const eng = this.createdEngagement();
     if (!eng) return;
-    this.router.navigate(['/engagements', eng.id]);
+    this.router.navigateByUrl(this.returnUrl ?? `/engagements/${eng.id}`);
   }
 
   activateEngagement(): void {
@@ -515,7 +517,7 @@ export class EngagementWizardComponent {
       next: (updated) => {
         this.createdEngagement.set(updated);
         this.submitting.set(false);
-        this.router.navigate(['/engagements', updated.id]);
+        this.router.navigateByUrl(this.returnUrl ?? `/engagements/${updated.id}`);
       },
       error: (err) => {
         this.submitting.set(false);
