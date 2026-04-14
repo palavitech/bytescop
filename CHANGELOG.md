@@ -4,6 +4,11 @@ All notable changes to BytesCop will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-04-14
+
+### Fixed
+- Fix 22 spec files to match updated Engagement and Subscription types (1280378)
+
 ## [1.2.0] - 2026-04-14
 
 ### Added
