@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     'events',
     'jobs',
     'licensing',
+    'feedback',
     'api',
 ]
 
