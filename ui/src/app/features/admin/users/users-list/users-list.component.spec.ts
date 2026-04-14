@@ -317,9 +317,9 @@ describe('UsersListComponent', () => {
     profileServiceSpy.currentSubscription.and.returnValue({
       plan_code: 'free',
       plan_name: 'Free',
-      limits: { max_members: 0, max_clients: 0, max_assets: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
+      limits: { max_members: 0, max_clients: 0, max_assets: 0, max_projects: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
       features: { audit_log: false, data_export: false, custom_branding: false },
-      usage: { members: 5, clients: 0, assets: 0, engagements: 0 },
+      usage: { members: 5, clients: 0, assets: 0, projects: 0, engagements: 0 },
     });
 
     component.createUser();
@@ -332,9 +332,9 @@ describe('UsersListComponent', () => {
     profileServiceSpy.currentSubscription.and.returnValue({
       plan_code: 'free',
       plan_name: 'Free',
-      limits: { max_members: 5, max_clients: 0, max_assets: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
+      limits: { max_members: 5, max_clients: 0, max_assets: 0, max_projects: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
       features: { audit_log: false, data_export: false, custom_branding: false },
-      usage: { members: 3, clients: 0, assets: 0, engagements: 0 },
+      usage: { members: 3, clients: 0, assets: 0, projects: 0, engagements: 0 },
     });
 
     component.createUser();
@@ -347,9 +347,9 @@ describe('UsersListComponent', () => {
     profileServiceSpy.currentSubscription.and.returnValue({
       plan_code: 'free',
       plan_name: 'Free',
-      limits: { max_members: 3, max_clients: 0, max_assets: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
+      limits: { max_members: 3, max_clients: 0, max_assets: 0, max_projects: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
       features: { audit_log: false, data_export: false, custom_branding: false },
-      usage: { members: 3, clients: 0, assets: 0, engagements: 0 },
+      usage: { members: 3, clients: 0, assets: 0, projects: 0, engagements: 0 },
     });
 
     component.createUser();
@@ -362,7 +362,7 @@ describe('UsersListComponent', () => {
     profileServiceSpy.currentSubscription.and.returnValue({
       plan_code: 'free',
       plan_name: 'Free',
-      limits: { max_members: 5, max_clients: 0, max_assets: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
+      limits: { max_members: 5, max_clients: 0, max_assets: 0, max_projects: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
       features: { audit_log: false, data_export: false, custom_branding: false },
       usage: undefined as any,
     });
@@ -377,9 +377,9 @@ describe('UsersListComponent', () => {
     profileServiceSpy.currentSubscription.and.returnValue({
       plan_code: 'free',
       plan_name: 'Free',
-      limits: { max_members: 3, max_clients: 0, max_assets: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
+      limits: { max_members: 3, max_clients: 0, max_assets: 0, max_projects: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
       features: { audit_log: false, data_export: false, custom_branding: false },
-      usage: { members: 4, clients: 0, assets: 0, engagements: 0 },
+      usage: { members: 4, clients: 0, assets: 0, projects: 0, engagements: 0 },
     });
 
     component.createUser();

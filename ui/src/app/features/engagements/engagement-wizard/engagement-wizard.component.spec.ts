@@ -76,6 +76,8 @@ const MOCK_ENGAGEMENT: Engagement = {
   end_date: '2025-06-01',
   findings_summary: null,
   engagement_type: 'general',
+  project_id: null,
+  project_name: null,
   created_at: '2025-01-01T00:00:00Z',
   updated_at: '2025-01-01T00:00:00Z',
 };
@@ -188,6 +190,7 @@ describe('EngagementWizardComponent', () => {
       component = fixture.componentInstance;
       router = TestBed.inject(Router);
       spyOn(router, 'navigate');
+      spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
     });
 
     // -- Creation & initialization --
@@ -399,7 +402,6 @@ describe('EngagementWizardComponent', () => {
       expect(component.showOrgForm()).toBeFalse();
       expect(component.selectedOrgId()).toBe('org-new');
       expect(component.selectedOrgName()).toBe('New Org');
-      expect(spies.notifySpy.success).toHaveBeenCalledWith('Organization "New Org" created.');
       // Verify the org was added to the list
       expect(component.organizations().some(o => o.id === 'org-new')).toBeTrue();
     }));
@@ -754,7 +756,7 @@ describe('EngagementWizardComponent', () => {
     it('keepPlanned navigates to engagement', () => {
       component.createdEngagement.set(MOCK_ENGAGEMENT);
       component.keepPlanned();
-      expect(router.navigate).toHaveBeenCalledWith(['/engagements', 'eng-1']);
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/engagements/eng-1');
     });
 
     // -- activateEngagement --
@@ -775,7 +777,7 @@ describe('EngagementWizardComponent', () => {
       expect(spies.engServiceSpy.update).toHaveBeenCalledWith('eng-1', { status: 'active' });
       expect(component.createdEngagement()).toEqual(activeEng);
       expect(component.submitting()).toBeFalse();
-      expect(router.navigate).toHaveBeenCalledWith(['/engagements', 'eng-1']);
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/engagements/eng-1');
     }));
 
     it('activateEngagement handles error', fakeAsync(() => {

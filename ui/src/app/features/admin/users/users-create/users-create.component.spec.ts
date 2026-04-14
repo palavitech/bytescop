@@ -217,9 +217,9 @@ describe('UsersCreateComponent', () => {
     profileSpy.currentSubscription.and.returnValue({
       plan_code: 'free',
       plan_name: 'Free',
-      limits: { max_members: 3, max_clients: 5, max_assets: 10, max_engagements: 5, max_findings_per_engagement: 20, max_images_per_finding: 5 },
+      limits: { max_members: 3, max_clients: 5, max_assets: 10, max_projects: 0, max_engagements: 5, max_findings_per_engagement: 20, max_images_per_finding: 5 },
       features: { audit_log: false, data_export: false, custom_branding: false },
-      usage: { members: 3, clients: 2, assets: 0, engagements: 0 },
+      usage: { members: 3, clients: 2, assets: 0, projects: 0, engagements: 0 },
     });
 
     component.onSubmit({

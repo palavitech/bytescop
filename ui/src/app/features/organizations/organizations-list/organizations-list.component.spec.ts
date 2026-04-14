@@ -266,9 +266,9 @@ describe('OrganizationsListComponent', () => {
     profileServiceSpy.currentSubscription.and.returnValue({
       plan_code: 'free',
       plan_name: 'Free',
-      limits: { max_clients: 0, max_members: 0, max_assets: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
+      limits: { max_clients: 0, max_members: 0, max_assets: 0, max_projects: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
       features: { audit_log: false, data_export: false, custom_branding: false },
-      usage: { members: 0, clients: 10, assets: 0, engagements: 0 },
+      usage: { members: 0, clients: 10, assets: 0, projects: 0, engagements: 0 },
     });
     const router = TestBed.inject(Router);
     spyOn(router, 'navigate');
@@ -283,9 +283,9 @@ describe('OrganizationsListComponent', () => {
     profileServiceSpy.currentSubscription.and.returnValue({
       plan_code: 'free',
       plan_name: 'Free',
-      limits: { max_clients: 5, max_members: 0, max_assets: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
+      limits: { max_clients: 5, max_members: 0, max_assets: 0, max_projects: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
       features: { audit_log: false, data_export: false, custom_branding: false },
-      usage: { members: 0, clients: 3, assets: 0, engagements: 0 },
+      usage: { members: 0, clients: 3, assets: 0, projects: 0, engagements: 0 },
     });
     const router = TestBed.inject(Router);
     spyOn(router, 'navigate');
@@ -300,9 +300,9 @@ describe('OrganizationsListComponent', () => {
     profileServiceSpy.currentSubscription.and.returnValue({
       plan_code: 'free',
       plan_name: 'Free',
-      limits: { max_clients: 5, max_members: 0, max_assets: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
+      limits: { max_clients: 5, max_members: 0, max_assets: 0, max_projects: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
       features: { audit_log: false, data_export: false, custom_branding: false },
-      usage: { members: 0, clients: 5, assets: 0, engagements: 0 },
+      usage: { members: 0, clients: 5, assets: 0, projects: 0, engagements: 0 },
     });
     const router = TestBed.inject(Router);
     spyOn(router, 'navigate');
@@ -319,9 +319,9 @@ describe('OrganizationsListComponent', () => {
     profileServiceSpy.currentSubscription.and.returnValue({
       plan_code: 'free',
       plan_name: 'Free',
-      limits: { max_clients: 5, max_members: 0, max_assets: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
+      limits: { max_clients: 5, max_members: 0, max_assets: 0, max_projects: 0, max_engagements: 0, max_findings_per_engagement: 0, max_images_per_finding: 0 },
       features: { audit_log: false, data_export: false, custom_branding: false },
-      usage: { members: 0, clients: 7, assets: 0, engagements: 0 },
+      usage: { members: 0, clients: 7, assets: 0, projects: 0, engagements: 0 },
     });
     const router = TestBed.inject(Router);
     spyOn(router, 'navigate');

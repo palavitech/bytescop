@@ -29,6 +29,8 @@ const MOCK_ENGAGEMENTS: Engagement[] = [
     end_date: '2025-06-01',
     findings_summary: { critical: 2, high: 3, medium: 1, low: 0, info: 0 },
     engagement_type: 'general',
+    project_id: null,
+    project_name: null,
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
   },
@@ -44,6 +46,8 @@ const MOCK_ENGAGEMENTS: Engagement[] = [
     end_date: null,
     findings_summary: null,
     engagement_type: 'general',
+    project_id: null,
+    project_name: null,
     created_at: '2025-02-01T00:00:00Z',
     updated_at: '2025-02-01T00:00:00Z',
   },
@@ -311,7 +315,7 @@ describe('EngagementsListComponent', () => {
     fixture.detectChanges();
     component.clearAllFilters();
     expect(router.navigate).toHaveBeenCalledWith([], jasmine.objectContaining({
-      queryParams: { client: null, status: null },
+      queryParams: { client: null, status: null, type: null },
     }));
   });
 

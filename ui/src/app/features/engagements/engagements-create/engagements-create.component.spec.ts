@@ -26,6 +26,8 @@ const MOCK_ENGAGEMENT: Engagement = {
   end_date: null,
   findings_summary: null,
   engagement_type: 'general',
+  project_id: null,
+  project_name: null,
   created_at: '2025-03-01T00:00:00Z',
   updated_at: '2025-03-01T00:00:00Z',
 };
@@ -238,9 +240,9 @@ describe('EngagementsCreateComponent', () => {
     profileSpy.currentSubscription.and.returnValue({
       plan_code: 'free',
       plan_name: 'Free',
-      limits: { max_members: 3, max_clients: 5, max_assets: 10, max_engagements: 5, max_findings_per_engagement: 20, max_images_per_finding: 5 },
+      limits: { max_members: 3, max_clients: 5, max_assets: 10, max_projects: 0, max_engagements: 5, max_findings_per_engagement: 20, max_images_per_finding: 5 },
       features: { audit_log: false, data_export: false, custom_branding: false },
-      usage: { members: 1, clients: 2, assets: 3, engagements: 5 },
+      usage: { members: 1, clients: 2, assets: 3, projects: 0, engagements: 5 },
     });
     fixture.detectChanges();
 

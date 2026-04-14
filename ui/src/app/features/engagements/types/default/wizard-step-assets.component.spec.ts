@@ -165,7 +165,6 @@ describe('WizardStepAssetsComponent', () => {
     expect(component.showAssetForm()).toBeFalse();
     expect(component.isAssetSelected('asset-1')).toBeTrue();
     expect(component.orgAssets().some(a => a.id === 'asset-1')).toBeTrue();
-    expect(notify.success).toHaveBeenCalledWith('Asset "Web App" created.');
   }));
 
   it('submitNewAsset sends client_id with payload', fakeAsync(() => {

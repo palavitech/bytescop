@@ -37,6 +37,8 @@ const MOCK_ENGAGEMENT: Engagement = {
   updated_at: '2026-01-01T00:00:00Z',
   findings_summary: null,
   engagement_type: 'general',
+  project_id: null,
+  project_name: null,
 };
 
 const MOCK_ASSET: Asset = {

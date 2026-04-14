@@ -17,7 +17,7 @@ const MOCK_ENGAGEMENT: Engagement = {
   id: 'eng-1', name: 'Test Engagement', client_id: 'client-1', client_name: 'Acme Corp',
   status: 'active', description: 'desc', notes: '', start_date: '2026-01-01', end_date: '2026-03-01',
   created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
-  findings_summary: null, engagement_type: 'general',
+  findings_summary: null, engagement_type: 'general', project_id: null, project_name: null,
 };
 
 const MOCK_FINDING: Finding = {

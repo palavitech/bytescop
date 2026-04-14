@@ -38,6 +38,8 @@ describe('EngagementsViewComponent OnPush', () => {
     end_date: '2025-06-01',
     findings_summary: null,
     engagement_type: 'general',
+    project_id: null,
+    project_name: null,
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
   };
