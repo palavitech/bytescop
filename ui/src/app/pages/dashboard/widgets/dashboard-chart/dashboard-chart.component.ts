@@ -43,6 +43,13 @@ export class DashboardChartComponent implements AfterViewInit, OnDestroy {
     return d.values?.some(v => v > 0) ?? false;
   }
 
+  get chartHeight(): number | null {
+    const d = this.chartData;
+    if (d.chart_type !== 'bar') return null;
+    const count = d.labels?.length ?? 0;
+    return Math.max(168, count * 42);
+  }
+
   ngAfterViewInit(): void {
     if (!this.hasData) return;
     this.buildChart();
@@ -123,6 +130,7 @@ export class DashboardChartComponent implements AfterViewInit, OnDestroy {
           backgroundColor: d.colors ?? [],
           borderWidth: 0,
           borderRadius: 4,
+          barThickness: 28,
         }];
 
     // Round the right edge of the last dataset in stacked mode

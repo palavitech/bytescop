@@ -74,7 +74,10 @@ export class OrganizationsViewComponent implements OnInit {
       switchMap(() =>
         this.assetsService.list(this.orgId).pipe(
           map(assets => ({ state: 'ready' as AssetsState, assets, total: assets.length })),
-          catchError(() => of({ state: 'error' as AssetsState, assets: [] as Asset[], total: 0 })),
+          catchError(err => {
+            console.error('[org-view] failed to load assets', err?.status);
+            return of({ state: 'error' as AssetsState, assets: [] as Asset[], total: 0 });
+          }),
         ),
       ),
     );

@@ -74,14 +74,6 @@
           </div>
 
           <div class="bc-pageCardFootRight">
-            <button class="btn btn-outline-light bc-btn bc-btnCtaFoot"
-              type="button"
-              *ngIf="vm.engagement?.engagement_type === 'malware_analysis'"
-              (click)="initializeAnalysis(vm.engagement)"
-              [disabled]="!vm.engagement || initializingAnalysis">
-              <i class="bi bi-cpu"></i>
-              <span class="ms-2">{{ initializingAnalysis ? 'Initializing...' : 'Initialize Analysis' }}</span>
-            </button>
             <button class="btn btn-success bc-btn bc-btnCtaFoot"
               type="button"
               *bcHasPermission="'finding.create'"
@@ -114,21 +106,12 @@
                 <div class="p-4"><div class="bc-sub">No findings yet. Create your first finding to start tracking observations.</div></div>
               </ng-container>
 
-              <!-- Data table — composed per engagement type -->
+              <!-- Data table — resolved per engagement type via registry -->
               <ng-container *ngIf="vm.state === 'ready' && vm.items.length > 0 && vm.engagement as e">
-                <app-findings-table-malware
-                  *ngIf="e.engagement_type === 'malware_analysis'"
-                  [findings]="vm.items"
-                  [engagementId]="e.id"
-                  (execute)="executeFinding($event, e)"
-                  (delete)="deleteFinding($event, e)">
-                </app-findings-table-malware>
-
-                <app-findings-table-standard
-                  *ngIf="e.engagement_type !== 'malware_analysis'"
-                  [findings]="vm.items"
-                  [engagementId]="e.id">
-                </app-findings-table-standard>
+                <ng-container *ngIf="vm.findingsTableComponent"
+                  [ngComponentOutlet]="vm.findingsTableComponent"
+                  [ngComponentOutletInputs]="{ findings: vm.items, engagementId: e.id, requestRefresh: boundRefresh }">
+                </ng-container>
               </ng-container>
 
             </div>
@@ -160,11 +143,7 @@
                     [value]="vm.filter.severity"
                     (change)="onSeverityFilterChange($any($event.target).value)">
                     <option value="">Any severity</option>
-                    <option value="critical">Critical</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                    <option value="info">Info</option>
+                    <option *ngFor="let opt of vm.severityOptions" [value]="opt.value">{{ opt.label }}</option>
                   </select>
                 </label>
 
@@ -174,11 +153,7 @@
                     [value]="vm.filter.status"
                     (change)="onStatusFilterChange($any($event.target).value)">
                     <option value="">Any status</option>
-                    <option value="open">Open</option>
-                    <option value="triage">Triage</option>
-                    <option value="accepted">Accepted</option>
-                    <option value="fixed">Fixed</option>
-                    <option value="false_positive">False Positive</option>
+                    <option *ngFor="let opt of vm.statusOptions" [value]="opt.value">{{ opt.label }}</option>
                   </select>
                 </label>
 

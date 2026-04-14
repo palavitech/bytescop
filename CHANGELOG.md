@@ -4,6 +4,42 @@ All notable changes to BytesCop will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-04-14
+
+### Added
+- Project feature to group related engagements with client/date inheritance
+- Project assignment card on engagement view (assign/remove from project)
+- Setup Wizard action on project engagements table for planned engagements
+- Projects can be created without engagements (add/assign later)
+- Digital forensics engagement type with evidence source model and metadata fields
+- Engagement type registry with NgComponentOutlet for type-specific components
+- Interactive widget grid for engagement visualize section
+- Engagement type filter on engagements list page
+- Expandable description panel on findings list tables
+- PE analysis templates: File Type, Compile Time, Packer Detection, PE Sections, Special Strings, Extract Strings
+- Overlay anomaly detection for PE Sections and Packer Detection analysis checks
+
+### Changed
+- Engagement type components moved to `types/` directory with registry pattern
+- SoW scope, findings tables, and finding forms extracted into composable type-specific components
+- Wizard returns to project view when launched from project context
+- Success toast notifications removed where result is visually obvious
+- Duration field in wizard shows calendar days and work days
+- Community Edition limit set to 5 users per workspace
+
+### Fixed
+- Project card: hide current project from dropdown, separate remove action
+- Drop zone hover and clicks blocked by bc-card::before overlay
+- Visual gap between stacked bar segments in charts
+- Horizontal bar charts inheriting wrong height
+- Oversized bar chart when dashboard has few items
+- Markdown heading font sizes in expand panel
+- Wizard evidence table showing raw JSON instead of type label
+
+### Tests
+- 476 new API unit tests (87% → 93% coverage)
+- 399 new UI unit tests (85% → 97% coverage)
+
 ## [1.1.0] - 2026-03-31
 
 ### Added

@@ -36,6 +36,7 @@ class SubscriptionPlan(TimeStampedModel):
     max_members = models.PositiveIntegerField(default=0)
     max_clients = models.PositiveIntegerField(default=0)
     max_assets = models.PositiveIntegerField(default=0)
+    max_projects = models.PositiveIntegerField(default=0)
     max_engagements = models.PositiveIntegerField(default=0)
     max_findings_per_engagement = models.PositiveIntegerField(default=0)
     max_images_per_finding = models.PositiveIntegerField(default=0)

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from clients.models import Client
+from projects.models import Project
 from .models import Engagement, Sow
 
 
@@ -12,6 +13,13 @@ class EngagementSerializer(serializers.ModelSerializer):
         required=False,
     )
     client_name = serializers.CharField(read_only=True)
+    project_id = serializers.PrimaryKeyRelatedField(
+        source='project',
+        queryset=Project.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+    project_name = serializers.SerializerMethodField()
     findings_summary = serializers.SerializerMethodField()
 
     class Meta:
@@ -20,6 +28,8 @@ class EngagementSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'engagement_type',
+            'project_id',
+            'project_name',
             'client_id',
             'client_name',
             'status',
@@ -31,7 +41,10 @@ class EngagementSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'client_name', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'client_name', 'project_name', 'created_at', 'updated_at']
+
+    def get_project_name(self, obj):
+        return obj.project.name if obj.project else None
 
     def get_findings_summary(self, obj):
         if not hasattr(obj, 'findings_critical'):
@@ -49,6 +62,9 @@ class EngagementSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and hasattr(request, 'tenant'):
             self.fields['client_id'].queryset = Client.objects.filter(
+                tenant=request.tenant,
+            )
+            self.fields['project_id'].queryset = Project.objects.filter(
                 tenant=request.tenant,
             )
         # On create, status is always defaulted to PLANNED by the model

@@ -38,7 +38,7 @@
                 </div>
 
                 <!-- Active filter pills -->
-                <ng-container *ngIf="vm.state === 'ready' && (vm.filterLabels.clientName || vm.filterLabels.statusLabel)">
+                <ng-container *ngIf="vm.state === 'ready' && (vm.filterLabels.clientName || vm.filterLabels.statusLabel || vm.filterLabels.typeName)">
                   <div class="bc-activeFilters mt-2">
                     <div class="bc-activeLabel">Filtered by:</div>
                     <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -53,6 +53,13 @@
                         <span class="bc-pillText">Status: {{ vm.filterLabels.statusLabel }}</span>
                         <button type="button" class="bc-pillX" (click)="clearStatusFilter()"
                           aria-label="Remove status filter">
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </span>
+                      <span class="bc-pillBadge" *ngIf="vm.filterLabels.typeName">
+                        <span class="bc-pillText">Type: {{ vm.filterLabels.typeName }}</span>
+                        <button type="button" class="bc-pillX" (click)="clearTypeFilter()"
+                          aria-label="Remove type filter">
                           <i class="bi bi-x-lg"></i>
                         </button>
                       </span>
@@ -226,9 +233,19 @@
                   </select>
                 </label>
 
+                <label class="bc-filterField">
+                  <span class="bc-filterLabel">Type</span>
+                  <select class="form-select form-select-sm bc-filterSelect"
+                    [value]="vm.filters.engagementType || ''"
+                    (change)="onTypeFilterChange($event)">
+                    <option value="">Any type</option>
+                    <option *ngFor="let t of engagementTypes" [value]="t.key">{{ t.label }}</option>
+                  </select>
+                </label>
+
                 <button class="btn btn-outline-light bc-btnSm" type="button"
                   (click)="clearAllFilters()"
-                  [disabled]="!(vm.filters.client || vm.filters.status)">
+                  [disabled]="!(vm.filters.client || vm.filters.status || vm.filters.engagementType)">
                   <i class="bi bi-eraser"></i>
                   <span class="ms-2">Clear</span>
                 </button>

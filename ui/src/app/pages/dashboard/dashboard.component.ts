@@ -135,11 +135,14 @@ export class DashboardComponent {
 
       return this.dashboardService.getDashboard(view).pipe(
         map(resp => this.toVm(resp.widgets, resp.alerts, resp.layout?.customized ?? false)),
-        catchError(err => of({
-          ...EMPTY_VM,
-          state: 'error' as DashboardState,
-          error: err?.error?.detail ?? 'Failed to load dashboard',
-        })),
+        catchError(err => {
+          console.error('[dashboard] failed to load', err?.status, err?.error?.detail ?? err?.message);
+          return of({
+            ...EMPTY_VM,
+            state: 'error' as DashboardState,
+            error: err?.error?.detail ?? 'Failed to load dashboard',
+          });
+        }),
         startWith(EMPTY_VM),
       );
     }),
@@ -241,7 +244,8 @@ export class DashboardComponent {
         this.saving.set(false);
         this.refresh();
       },
-      error: () => {
+      error: (err: unknown) => {
+        console.error('[dashboard] failed to save layout', err);
         this.saving.set(false);
       },
     });

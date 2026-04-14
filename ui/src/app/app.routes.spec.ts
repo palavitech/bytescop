@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { Router, provideRouter, UrlTree } from '@angular/router';
 import { routes } from './app.routes';
+import { TokenService } from './services/core/auth/token.service';
 
 /** Helper: find a route by path (searches top-level and first-level children). */
 function findRoute(path: string) {
@@ -171,5 +172,101 @@ describe('App Routes', () => {
 
   it('/login has loadComponent', () => {
     expect(findRoute('login')!.loadComponent).toBeDefined();
+  });
+
+  // --- AuthDefaultRedirectGuard (root path '' guard) ---
+
+  it('root route redirects to /dashboard when authenticated', () => {
+    const tokenService = TestBed.inject(TokenService);
+    tokenService.setAuthenticated();
+
+    // The root '' route with pathMatch is nested inside the parent container
+    const parentRoute = routes.find(r => r.path === '' && r.children);
+    const rootChild = parentRoute!.children!.find(c => c.path === '' && c.pathMatch === 'full');
+    expect(rootChild).toBeDefined();
+    expect(rootChild!.canActivate).toBeDefined();
+
+    const guard = rootChild!.canActivate![0];
+    const result = TestBed.runInInjectionContext(() => (guard as any)());
+    expect(result).toBeInstanceOf(UrlTree);
+    expect(router.serializeUrl(result as UrlTree)).toBe('/dashboard');
+  });
+
+  it('root route redirects to /login when not authenticated', () => {
+    const tokenService = TestBed.inject(TokenService);
+    tokenService.clear();
+
+    const parentRoute = routes.find(r => r.path === '' && r.children);
+    const rootChild = parentRoute!.children!.find(c => c.path === '' && c.pathMatch === 'full');
+    const guard = rootChild!.canActivate![0];
+    const result = TestBed.runInInjectionContext(() => (guard as any)());
+    expect(result).toBeInstanceOf(UrlTree);
+    expect(router.serializeUrl(result as UrlTree)).toBe('/login');
+  });
+
+  // --- Lazy load functions execute ---
+
+  it('/setup has loadComponent', () => {
+    const route = findRoute('setup');
+    expect(route!.loadComponent).toBeDefined();
+  });
+
+  it('/closing has loadComponent', () => {
+    const route = findRoute('closing');
+    expect(route!.loadComponent).toBeDefined();
+  });
+
+  it('/verify-email has loadComponent', () => {
+    expect(findRoute('verify-email')!.loadComponent).toBeDefined();
+  });
+
+  it('/forgot-password has loadComponent', () => {
+    expect(findRoute('forgot-password')!.loadComponent).toBeDefined();
+  });
+
+  it('/reset-password has loadComponent', () => {
+    expect(findRoute('reset-password')!.loadComponent).toBeDefined();
+  });
+
+  it('/accept-invite has loadComponent', () => {
+    expect(findRoute('accept-invite')!.loadComponent).toBeDefined();
+  });
+
+  it('/mfa/setup has loadComponent', () => {
+    expect(findRoute('mfa/setup')!.loadComponent).toBeDefined();
+  });
+
+  it('/privacy has loadComponent', () => {
+    expect(findRoute('privacy')!.loadComponent).toBeDefined();
+  });
+
+  it('/terms has loadComponent', () => {
+    expect(findRoute('terms')!.loadComponent).toBeDefined();
+  });
+
+  // --- Setup gate guard on parent route ---
+
+  it('parent container route has canActivateChild with SetupGateGuard', () => {
+    const parentRoute = routes.find(r => r.path === '' && r.children);
+    expect(parentRoute).toBeDefined();
+    expect(parentRoute!.canActivateChild).toBeDefined();
+    expect(parentRoute!.canActivateChild!.length).toBe(1);
+  });
+
+  // --- Route data completeness ---
+
+  it('/setup has hideSidebar true', () => {
+    const route = findRoute('setup');
+    expect(route!.data!['hideSidebar']).toBe(true);
+  });
+
+  it('/closing has hideSidebar true', () => {
+    const route = findRoute('closing');
+    expect(route!.data!['hideSidebar']).toBe(true);
+  });
+
+  it('/dashboard has hideBreadcrumb true', () => {
+    const route = findRoute('dashboard');
+    expect(route!.data!['hideBreadcrumb']).toBe(true);
   });
 });

@@ -43,7 +43,10 @@ export class OrganizationsListComponent implements OnInit {
       switchMap(() =>
         this.orgService.list().pipe(
           map(organizations => ({ state: 'ready' as ViewState, organizations })),
-          catchError(() => of({ state: 'error' as ViewState, organizations: [] as Organization[] })),
+          catchError(err => {
+            console.error('[orgs-list] failed to load organizations', err?.status);
+            return of({ state: 'error' as ViewState, organizations: [] as Organization[] });
+          }),
         ),
       ),
     ),

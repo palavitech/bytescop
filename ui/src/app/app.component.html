@@ -146,7 +146,7 @@
                 <span class="bc-navLabel">Dashboard</span>
               </a>
 
-              <ng-container *bcHasPermission="['client.view', 'engagement.view']">
+              <ng-container *bcHasPermission="['client.view', 'engagement.view', 'project.view']">
                 <button class="bc-navGroupBtn" type="button" data-bs-toggle="collapse"
                     data-bs-target="#bcNavOps" aria-expanded="true" aria-controls="bcNavOps">
                     <span class="bc-navIco"><i class="bi bi-briefcase"></i></span>
@@ -160,6 +160,11 @@
                           *bcHasPermission="'client.view'">
                           <span class="bc-navIco"><i class="bi bi-building"></i></span>
                           <span class="bc-navLabel">Clients</span>
+                        </a>
+                        <a class="bc-navLink bc-navLinkSub" routerLink="/projects" routerLinkActive="active"
+                          *bcHasPermission="'project.view'">
+                          <span class="bc-navIco"><i class="bi bi-folder2-open"></i></span>
+                          <span class="bc-navLabel">Projects</span>
                         </a>
                         <a class="bc-navLink bc-navLinkSub" routerLink="/engagements" routerLinkActive="active"
                           *bcHasPermission="'engagement.view'">

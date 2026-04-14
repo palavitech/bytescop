@@ -284,6 +284,7 @@ def closure_status(request):
             ping_result = celery_app.control.ping(timeout=2)
             workers_healthy = len(ping_result) > 0
         except Exception:
+            logger.warning("Celery worker health check failed during closure status")
             workers_healthy = False
 
     # Count remaining active tenants for this owner email

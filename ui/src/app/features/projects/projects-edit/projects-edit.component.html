@@ -1,0 +1,110 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <!-- Header card -->
+    <div class="bc-pageCard mb-3">
+      <div class="bc-pageCardHead">
+        <div class="bc-pageCardTitle">
+          <div class="bc-h1">Edit Project</div>
+          <div class="bc-sub">Update project details.</div>
+        </div>
+        <div class="bc-pageCardTools">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading$ | async" class="bc-card p-4">
+      <div class="bc-sub">Loading...</div>
+    </div>
+
+    <!-- Form -->
+    <div class="bc-card" *ngIf="!(loading$ | async)">
+      <div class="bc-cardInner p-4">
+
+        <!-- Server error -->
+        <div class="alert alert-danger py-2 mb-3" *ngIf="serverError$ | async as err" style="font-size:0.82rem">
+          {{ err }}
+        </div>
+
+        <!-- Client (read-only) -->
+        <div class="mb-3" *ngIf="project$ | async as project">
+          <label class="form-label bc-label">Client</label>
+          <div class="form-control-plaintext bc-sub">{{ project.client_name || '—' }}</div>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-8">
+              <label for="editProjName" class="form-label bc-label">Name <span class="bc-required">*</span></label>
+              <input id="editProjName" type="text" class="form-control bc-input" formControlName="name"
+                minlength="3" maxlength="200">
+              @if (isInvalid('name')) {
+                <div class="bc-fieldError">
+                  @if (form.get('name')?.hasError('required')) {
+                    <span>Name is required.</span>
+                  }
+                  @if (form.get('name')?.hasError('minlength')) {
+                    <span>Name must be at least 3 characters.</span>
+                  }
+                </div>
+              }
+            </div>
+            <div class="col-md-4">
+              <label for="editProjStatus" class="form-label bc-label">Status</label>
+              <select id="editProjStatus" class="form-select bc-input" formControlName="status">
+                @for (opt of statusOptions; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <label for="editProjStart" class="form-label bc-label">Start Date</label>
+              <input id="editProjStart" type="date" class="form-control bc-input" formControlName="start_date">
+            </div>
+            <div class="col-md-3">
+              <label for="editProjEnd" class="form-label bc-label">End Date</label>
+              <input id="editProjEnd" type="date" class="form-control bc-input" formControlName="end_date">
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-12">
+              <label for="editProjDesc" class="form-label bc-label">Description</label>
+              <textarea id="editProjDesc" class="form-control bc-input" formControlName="description" rows="3"
+                maxlength="5000"></textarea>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="d-flex justify-content-between align-items-center mt-4 pt-3"
+            style="border-top: 1px solid rgba(255,255,255,0.06)">
+            <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+              <i class="bi bi-x-lg me-1"></i> Cancel
+            </button>
+            <button class="btn btn-success bc-btn" type="submit" [disabled]="saving$ | async">
+              @if (saving$ | async) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                Saving...
+              } @else {
+                <i class="bi bi-check-lg me-1"></i>
+                Save Changes
+              }
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>

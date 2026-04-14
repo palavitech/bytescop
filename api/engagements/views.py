@@ -18,8 +18,8 @@ from assets.models import Asset
 from assets.serializers import AssetSerializer
 from evidence.services.attachment_upload import AttachmentUploadService
 from evidence.services.sample_upload import MalwareSampleUploadService
-from evidence.models import Attachment, MalwareSample
-from evidence.serializers import MalwareSampleSerializer
+from evidence.models import Attachment, EvidenceSource, MalwareSample
+from evidence.serializers import EvidenceSourceSerializer, MalwareSampleSerializer
 from evidence.signing import sign_attachment_url, sign_sample_url
 from findings.models import Finding
 from findings.serializers import FindingSerializer
@@ -30,6 +30,38 @@ from .models import Engagement, EngagementSetting, EngagementStakeholder, Sow, S
 from .serializers import EngagementSerializer, SowSerializer
 
 logger = logging.getLogger("bytescop.engagements")
+
+
+def _check_scope_for_approval(engagement, sow, tenant):
+    """Return (has_scope, error_message) based on engagement type.
+
+    Each engagement type defines what constitutes a valid scope.
+    Default types use SowAsset; specialized types check their own entities.
+    """
+    _SCOPE_CHECKS = {
+        'malware_analysis': (
+            lambda eng, sow, t: MalwareSample.objects.filter(
+                tenant=t, engagement=eng,
+            ).exists(),
+            'Cannot approve SoW with no malware samples uploaded.',
+        ),
+        'digital_forensics': (
+            lambda eng, sow, t: EvidenceSource.objects.filter(
+                tenant=t, engagement=eng,
+            ).exists(),
+            'Cannot approve SoW with no evidence sources added.',
+        ),
+    }
+
+    check = _SCOPE_CHECKS.get(engagement.engagement_type)
+    if check:
+        checker, error_msg = check
+        return checker(engagement, sow, tenant), error_msg
+
+    # Default: check SowAsset scope
+    has_scope = SowAsset.objects.filter(sow=sow, in_scope=True).exists()
+    return has_scope, 'Cannot approve SoW with no assets in scope.'
+
 
 
 def seed_analysis_findings(engagement, tenant, user):
@@ -123,6 +155,9 @@ class EngagementViewSet(AuditedModelViewSet):
         'samples_list': ['engagement.view'],
         'upload_sample': ['engagement.update'],
         'delete_sample': ['engagement.update'],
+        'evidence_sources_list': ['engagement.view'],
+        'evidence_sources_create': ['engagement.update'],
+        'evidence_sources_delete': ['engagement.update'],
         'initialize_analysis': ['engagement.update'],
         'execute_finding': ['engagement.update'],
         'stakeholders': ['engagement.view'],
@@ -138,7 +173,7 @@ class EngagementViewSet(AuditedModelViewSet):
         from authorization.scoping import scope_engagements
         qs = Engagement.objects.filter(
             tenant=self.request.tenant,
-        ).select_related('client').order_by('-created_at')
+        ).select_related('client', 'project').order_by('-created_at')
 
         qs = scope_engagements(qs, self.request)
 
@@ -204,7 +239,7 @@ class EngagementViewSet(AuditedModelViewSet):
         findings_count = Finding.objects.filter(engagement=instance).count()
         if findings_count > 0:
             return Response(
-                {'detail': f'Cannot delete engagement with {findings_count} finding{"s" if findings_count != 1 else ""}. Remove all findings first.'},
+                {'detail': f'This engagement has {findings_count} finding{"s" if findings_count != 1 else ""} and cannot be deleted. Remove all findings first.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return super().destroy(request, *args, **kwargs)
@@ -278,17 +313,12 @@ class EngagementViewSet(AuditedModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Block approval if no assets/samples are in scope
+        # Block approval if scope is empty (type-specific check)
         new_status = request.data.get('status')
         if new_status == 'approved' and sow.status != 'approved':
-            if engagement.engagement_type == 'malware_analysis':
-                has_scope = MalwareSample.objects.filter(
-                    tenant=request.tenant, engagement=engagement,
-                ).exists()
-                scope_error = 'Cannot approve SoW with no malware samples uploaded.'
-            else:
-                has_scope = SowAsset.objects.filter(sow=sow, in_scope=True).exists()
-                scope_error = 'Cannot approve SoW with no assets in scope.'
+            has_scope, scope_error = _check_scope_for_approval(
+                engagement, sow, request.tenant,
+            )
             if not has_scope:
                 return Response(
                     {'detail': scope_error},
@@ -550,6 +580,7 @@ class EngagementViewSet(AuditedModelViewSet):
                 id=finding_id,
             )
         except Finding.DoesNotExist:
+            logger.debug("Finding not found: id=%s engagement=%s", finding_id, pk)
             return None
 
     def _finding_retrieve(self, request, pk, finding_id):
@@ -771,6 +802,7 @@ class EngagementViewSet(AuditedModelViewSet):
                 pk=sample_id, tenant=request.tenant, engagement=engagement,
             )
         except MalwareSample.DoesNotExist:
+            logger.warning("Sample not found: id=%s engagement=%s", sample_id, pk)
             return Response(
                 {'detail': 'Sample not found.'},
                 status=status.HTTP_404_NOT_FOUND,
@@ -789,6 +821,80 @@ class EngagementViewSet(AuditedModelViewSet):
             resource_repr=f"Sample: {sample.original_filename}",
         )
         sample.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # ------------------------------------------------------------------
+    # Evidence Sources: /api/engagements/<pk>/evidence-sources/
+    # ------------------------------------------------------------------
+
+    @action(detail=True, methods=['get', 'post'], url_path='evidence-sources')
+    def evidence_sources(self, request, pk=None):
+        if request.method == 'GET':
+            return self._evidence_sources_list(request, pk)
+        return self._evidence_sources_create(request, pk)
+
+    def _evidence_sources_list(self, request, pk):
+        self.action = 'evidence_sources_list'
+        self.check_permissions(request)
+        engagement = self.get_object()
+        sources = EvidenceSource.objects.filter(
+            tenant=request.tenant, engagement=engagement,
+        ).order_by('-created_at')
+        data = EvidenceSourceSerializer(sources, many=True).data
+        return Response(data)
+
+    def _evidence_sources_create(self, request, pk):
+        self.action = 'evidence_sources_create'
+        self.check_permissions(request)
+        engagement = self.get_object()
+
+        serializer = EvidenceSourceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        source = serializer.save(
+            tenant=request.tenant,
+            engagement=engagement,
+            created_by=request.user,
+        )
+
+        log_audit(
+            request=request, action=AuditAction.CREATE,
+            resource_type="evidence_source", resource_id=source.id,
+            resource_repr=f"Evidence: {source.name}",
+        )
+        logger.info(
+            "Evidence source created id=%s engagement=%s user=%s",
+            source.id, pk, request.user.pk,
+        )
+        return Response(
+            EvidenceSourceSerializer(source).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(
+        detail=True, methods=['delete'],
+        url_path=r'evidence-sources/(?P<evidence_id>[0-9a-f-]+)',
+    )
+    def evidence_sources_delete(self, request, pk=None, evidence_id=None):
+        self.action = 'evidence_sources_delete'
+        self.check_permissions(request)
+        engagement = self.get_object()
+
+        try:
+            source = EvidenceSource.objects.get(
+                pk=evidence_id, tenant=request.tenant, engagement=engagement,
+            )
+        except EvidenceSource.DoesNotExist:
+            return Response(
+                {'detail': 'Evidence source not found.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        log_audit(
+            request=request, action=AuditAction.DELETE,
+            resource_type="evidence_source", resource_id=source.id,
+            resource_repr=f"Evidence: {source.name}",
+        )
+        source.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     # ------------------------------------------------------------------
@@ -827,6 +933,7 @@ class EngagementViewSet(AuditedModelViewSet):
                 tenant=request.tenant,
             )
         except Finding.DoesNotExist:
+            logger.warning("Finding not found for execute: id=%s engagement=%s", finding_id, pk)
             return Response({'detail': 'Finding not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         if not finding.analysis_check_key:
@@ -957,6 +1064,7 @@ class EngagementViewSet(AuditedModelViewSet):
                 is_active=True,
             )
         except (TenantMember.DoesNotExist, ValueError):
+            logger.warning("Stakeholder create failed: member not found id=%s tenant=%s", member_id, request.tenant.slug)
             return Response(
                 {'detail': 'Member not found or not active in this tenant.'},
                 status=status.HTTP_400_BAD_REQUEST,

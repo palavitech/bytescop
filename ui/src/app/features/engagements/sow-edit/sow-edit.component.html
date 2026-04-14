@@ -119,114 +119,12 @@
             </form>
           </div>
 
-          <!-- Scope Assets Section -->
+          <!-- Scope section — resolved per engagement type via registry -->
           <ng-container *bcHasPermission="'scope.view'">
-            <div class="bc-card mt-3" *ngIf="scopeVm$ | async as vm">
-              <div class="bc-scopeHead">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="bc-sub fw-semibold">Scope Assets</span>
-                  <span class="badge bg-secondary" *ngIf="vm.state === 'ready'">{{ vm.total }}</span>
-                </div>
-                <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="refreshScope()">
-                  <i class="bi bi-arrow-clockwise"></i>
-                </button>
-              </div>
-
-              <!-- Add asset row -->
-              <div class="bc-scopeAdd" *bcHasPermission="'scope.manage'">
-                <select class="form-select form-select-sm bc-input"
-                  [(ngModel)]="selectedAssetId"
-                  [ngModelOptions]="{standalone: true}"
-                  [disabled]="isScopeLockedByApproval">
-                  <option value="">Select asset to add...</option>
-                  <option *ngFor="let a of availableAssets$ | async" [value]="a.id">
-                    {{ a.name }} ({{ typeLabels[a.asset_type] }}) — {{ a.target || 'No target' }}
-                  </option>
-                </select>
-                <button class="btn btn-sm btn-success bc-btn" type="button"
-                  [disabled]="!selectedAssetId || (addingScope$ | async) || isScopeLockedByApproval"
-                  (click)="addAsset()">
-                  <i class="bi bi-plus-lg me-1"></i>
-                  {{ (addingScope$ | async) ? 'Adding...' : 'Add' }}
-                </button>
-              </div>
-
-              <!-- Init / loading -->
-              <div class="bc-cardInner p-4" *ngIf="vm.state === 'init'">
-                <div class="bc-sub">Loading scope assets...</div>
-              </div>
-
-              <!-- Error -->
-              <div class="bc-cardInner p-4" *ngIf="vm.state === 'error'">
-                <div class="bc-sub text-danger">Failed to load scope assets.</div>
-              </div>
-
-              <!-- Ready -->
-              <ng-container *ngIf="vm.state === 'ready'">
-                <!-- Empty -->
-                <div class="bc-cardInner p-4" *ngIf="vm.assets.length === 0">
-                  <div class="bc-sub">No assets in scope yet.</div>
-                </div>
-
-                <!-- Table -->
-                <div class="table-responsive" *ngIf="vm.assets.length > 0">
-                  <table class="table bc-table mb-0">
-                    <thead>
-                      <tr>
-                        <th>Asset</th>
-                        <th>Type</th>
-                        <th>Environment</th>
-                        <th>Criticality</th>
-                        <th>Target</th>
-                        <th *bcHasPermission="'scope.manage'" class="text-end">Remove</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let asset of vm.assets">
-                        <td>
-                          <a class="bc-link" [routerLink]="['/assets', asset.id]">{{ asset.name }}</a>
-                        </td>
-                        <td><span class="bc-typeBadge">{{ typeLabels[asset.asset_type] }}</span></td>
-                        <td>{{ envLabels[asset.environment] }}</td>
-                        <td>
-                          <span class="bc-critBadge" [attr.data-crit]="asset.criticality">
-                            {{ critLabels[asset.criticality] }}
-                          </span>
-                        </td>
-                        <td>
-                          <span class="bc-target" *ngIf="asset.target">{{ asset.target }}</span>
-                        </td>
-                        <td *bcHasPermission="'scope.manage'" class="text-end bc-removeCell">
-                          <ng-container *ngIf="!isScopeLockedByApproval">
-                            <ng-container *ngIf="(confirmingRemoveId$ | async) === asset.id; else removeBtn">
-                              <span class="bc-sub me-1">Remove?</span>
-                              <button class="btn btn-sm btn-danger bc-btn me-1"
-                                [disabled]="(removingAssetId$ | async) === asset.id"
-                                (click)="removeAsset(asset.id)">
-                                <i class="bi bi-check-lg me-1"></i>Yes
-                              </button>
-                              <button class="btn btn-sm btn-outline-light bc-btnSoft"
-                                (click)="cancelRemove()">
-                                <i class="bi bi-x-lg me-1"></i>No
-                              </button>
-                            </ng-container>
-                            <ng-template #removeBtn>
-                              <button class="btn btn-sm btn-outline-danger bc-btnSoft" type="button"
-                                (click)="confirmRemove(asset.id)">
-                                <i class="bi bi-x-lg"></i>
-                              </button>
-                            </ng-template>
-                          </ng-container>
-                          <span *ngIf="isScopeLockedByApproval" class="bc-sub">
-                            <i class="bi bi-lock-fill"></i>
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </ng-container>
-            </div>
+            <ng-container *ngIf="sowScopeEditComponent"
+              [ngComponentOutlet]="sowScopeEditComponent"
+              [ngComponentOutletInputs]="{ engagementId: engagementId, clientId: clientId, isLocked: isScopeLockedByApproval }">
+            </ng-container>
           </ng-container>
 
         </ng-container>

@@ -42,6 +42,13 @@ class Engagement(TimeStampedModel):
         choices=EngagementType.choices,
         default=EngagementType.GENERAL,
     )
+    project = models.ForeignKey(
+        'projects.Project',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='engagements',
+    )
     client = models.ForeignKey(
         'clients.Client',
         on_delete=models.SET_NULL,

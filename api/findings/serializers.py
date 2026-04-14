@@ -1,8 +1,12 @@
+import logging
+
 from rest_framework import serializers
 
 from assets.models import Asset
-from evidence.models import MalwareSample
+from evidence.models import EvidenceSource, MalwareSample
 from .models import ClassificationEntry, Finding
+
+logger = logging.getLogger("bytescop.findings")
 
 
 class FindingSerializer(serializers.ModelSerializer):
@@ -20,6 +24,13 @@ class FindingSerializer(serializers.ModelSerializer):
         required=False,
     )
     sample_name = serializers.SerializerMethodField()
+    evidence_source_id = serializers.PrimaryKeyRelatedField(
+        source='evidence_source',
+        queryset=EvidenceSource.objects.none(),
+        allow_null=True,
+        required=False,
+    )
+    evidence_source_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Finding
@@ -30,6 +41,8 @@ class FindingSerializer(serializers.ModelSerializer):
             'asset_name',
             'sample_id',
             'sample_name',
+            'evidence_source_id',
+            'evidence_source_name',
             'title',
             'analysis_type',
             'severity',
@@ -40,6 +53,12 @@ class FindingSerializer(serializers.ModelSerializer):
             'description_md',
             'recommendation_md',
             'is_draft',
+            'mitre_tactic',
+            'mitre_technique',
+            'ioc_type',
+            'ioc_value',
+            'occurrence_date',
+            'confidence',
             'analysis_check_key',
             'execution_status',
             'created_at',
@@ -50,6 +69,7 @@ class FindingSerializer(serializers.ModelSerializer):
             'engagement_id',
             'asset_name',
             'sample_name',
+            'evidence_source_name',
             'analysis_check_key',
             'execution_status',
             'created_at',
@@ -63,17 +83,27 @@ class FindingSerializer(serializers.ModelSerializer):
         if tenant:
             self.fields['asset_id'].queryset = Asset.objects.filter(tenant=tenant)
             self.fields['sample_id'].queryset = MalwareSample.objects.filter(tenant=tenant)
+            self.fields['evidence_source_id'].queryset = EvidenceSource.objects.filter(tenant=tenant)
 
     def get_asset_name(self, obj):
         try:
             return obj.asset.name if obj.asset_id else ''
         except Exception:
+            logger.warning("Failed to resolve asset_name for finding=%s asset_id=%s", obj.pk, obj.asset_id)
             return ''
 
     def get_sample_name(self, obj):
         try:
             return obj.sample.original_filename if obj.sample_id else ''
         except Exception:
+            logger.warning("Failed to resolve sample_name for finding=%s sample_id=%s", obj.pk, obj.sample_id)
+            return ''
+
+    def get_evidence_source_name(self, obj):
+        try:
+            return obj.evidence_source.name if obj.evidence_source_id else ''
+        except Exception:
+            logger.warning("Failed to resolve evidence_source_name for finding=%s", obj.pk)
             return ''
 
     def validate(self, data):

@@ -1,3 +1,4 @@
+import logging
 import os
 
 from django.conf import settings
@@ -13,7 +14,8 @@ def _is_writable_dir(path: str) -> bool:
             f.write('ok')
         os.remove(test_file)
         return True
-    except Exception:
+    except Exception as exc:
+        logging.getLogger("bytescop.evidence").debug("Directory not writable: %s (%s)", path, exc)
         return False
 
 

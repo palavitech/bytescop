@@ -47,6 +47,18 @@ def scope_engagements(qs: QuerySet, request) -> QuerySet:
     return qs.filter(stakeholders__member=member).distinct()
 
 
+def scope_projects(qs: QuerySet, request) -> QuerySet:
+    """Filter a Project queryset to projects containing assigned engagements."""
+    if not is_engagement_scoped(request):
+        return qs
+    member = get_tenant_member(request)
+    if member is None:
+        return qs.none()
+    return qs.filter(
+        engagements__stakeholders__member=member,
+    ).distinct()
+
+
 def scope_clients(qs: QuerySet, request) -> QuerySet:
     """Filter a Client queryset to clients from assigned engagements."""
     if not is_engagement_scoped(request):

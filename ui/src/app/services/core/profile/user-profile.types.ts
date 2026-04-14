@@ -18,6 +18,7 @@ export type SubscriptionLimits = {
   max_members: number;
   max_clients: number;
   max_assets: number;
+  max_projects: number;
   max_engagements: number;
   max_findings_per_engagement: number;
   max_images_per_finding: number;
@@ -33,6 +34,7 @@ export type SubscriptionUsage = {
   members: number;
   clients: number;
   assets: number;
+  projects: number;
   engagements: number;
 };
 

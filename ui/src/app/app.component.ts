@@ -66,7 +66,10 @@ export class AppComponent implements OnInit {
             if (!url) return of(null);
             return this.http.get(url, { responseType: 'blob' }).pipe(
                 map(blob => URL.createObjectURL(blob)),
-                catchError(() => of(null)),
+                catchError(err => {
+                    console.warn('[app] failed to load avatar', err?.status ?? err?.message);
+                    return of(null);
+                }),
             );
         }),
         shareReplay({ bufferSize: 1, refCount: true }),
@@ -93,7 +96,10 @@ export class AppComponent implements OnInit {
         switchMap(([authed]) => {
             if (!authed) return of([] as Engagement[]);
             return this.engagementsService.list({ status: 'active' }).pipe(
-                catchError(() => of([] as Engagement[])),
+                catchError(err => {
+                    console.warn('[app] failed to load active engagements', err?.status ?? err?.message);
+                    return of([] as Engagement[]);
+                }),
             );
         }),
         shareReplay({ bufferSize: 1, refCount: true }),

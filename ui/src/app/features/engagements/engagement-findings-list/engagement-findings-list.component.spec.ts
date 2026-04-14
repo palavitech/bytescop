@@ -89,9 +89,11 @@ describe('EngagementFindingsListComponent', () => {
   let paramMap$: BehaviorSubject<any>;
 
   beforeEach(async () => {
-    engagementsServiceSpy = jasmine.createSpyObj('EngagementsService', ['getById']);
-    findingsServiceSpy = jasmine.createSpyObj('FindingsService', ['list']);
-    notifySpy = jasmine.createSpyObj('NotificationService', ['success', 'error']);
+    engagementsServiceSpy = jasmine.createSpyObj('EngagementsService', [
+      'getById',
+    ]);
+    findingsServiceSpy = jasmine.createSpyObj('FindingsService', ['list', 'delete']);
+    notifySpy = jasmine.createSpyObj('NotificationService', ['success', 'error', 'info']);
     locationSpy = jasmine.createSpyObj('Location', ['back']);
 
     engagementsServiceSpy.getById.and.returnValue(of(MOCK_ENGAGEMENT));
@@ -516,5 +518,18 @@ describe('EngagementFindingsListComponent', () => {
     tick();
 
     expect(result.timeBar.label).toBe('1 day remaining');
+  }));
+
+  // --- boundRefresh ---
+
+  it('boundRefresh() triggers findings reload', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+
+    findingsServiceSpy.list.calls.reset();
+    component.boundRefresh();
+    tick();
+
+    expect(findingsServiceSpy.list).toHaveBeenCalled();
   }));
 });

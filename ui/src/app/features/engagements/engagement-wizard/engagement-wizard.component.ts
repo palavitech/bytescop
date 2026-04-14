@@ -5,22 +5,28 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { forkJoin } from 'rxjs';
 
 import { EngagementsService } from '../services/engagements.service';
+import { SowService } from '../services/sow.service';
 import { OrganizationsService } from '../../organizations/services/organizations.service';
-import { AssetsService } from '../../assets/services/assets.service';
 import { NotificationService } from '../../../services/core/notify/notification.service';
 import { OrganizationRef, Organization } from '../../organizations/models/organization.model';
-import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS, AssetType, AssetEnvironment, AssetCriticality } from '../../assets/models/asset.model';
-import { Engagement, MalwareSample, Sow, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
+import { Asset, ASSET_TYPE_LABELS, ASSET_ENV_LABELS, ASSET_CRIT_LABELS } from '../../assets/models/asset.model';
+import { Engagement, EngagementType, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
+import { Sow } from '../models/sow.model';
+import { WizardStepAssetsComponent, AssetStepResult } from '../types/default';
+import { WizardStepSamplesComponent, MalwareSample } from '../types/malware-analysis';
+import { WizardStepEvidenceComponent, EvidenceStepResult, ForensicsEvidence } from '../types/digital-forensics';
 
-export type WizardStep = 'org' | 'assets' | 'sample' | 'details' | 'sow' | 'review';
+export type WizardStep = 'org' | 'assets' | 'sample' | 'evidence' | 'details' | 'sow' | 'review';
 
 const DEFAULT_STEP_ORDER: WizardStep[] = ['org', 'assets', 'details', 'sow', 'review'];
 const MALWARE_STEP_ORDER: WizardStep[] = ['org', 'sample', 'details', 'sow', 'review'];
+const FORENSICS_STEP_ORDER: WizardStep[] = ['org', 'evidence', 'details', 'sow', 'review'];
 
 const STEP_LABELS: Record<WizardStep, string> = {
   org: 'Organization',
   assets: 'Assets',
   sample: 'Samples',
+  evidence: 'Evidence',
   details: 'Engagement',
   sow: 'Statement of Work',
   review: 'Review & Activate',
@@ -28,21 +34,22 @@ const STEP_LABELS: Record<WizardStep, string> = {
 
 function getStepOrder(type: EngagementType): WizardStep[] {
   if (type === 'malware_analysis') return MALWARE_STEP_ORDER;
+  if (type === 'digital_forensics') return FORENSICS_STEP_ORDER;
   return DEFAULT_STEP_ORDER;
 }
 
 @Component({
   selector: 'app-engagement-wizard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, WizardStepAssetsComponent, WizardStepSamplesComponent, WizardStepEvidenceComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './engagement-wizard.component.html',
   styleUrl: './engagement-wizard.component.css',
 })
 export class EngagementWizardComponent {
   private readonly engService = inject(EngagementsService);
+  private readonly sowService = inject(SowService);
   private readonly orgService = inject(OrganizationsService);
-  private readonly assetService = inject(AssetsService);
   private readonly notify = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -56,6 +63,11 @@ export class EngagementWizardComponent {
 
   readonly currentStepIndex = computed(() => this.stepOrder().indexOf(this.currentStep()));
   readonly isMalwareFlow = computed(() => this.engagementType() === 'malware_analysis');
+  readonly isForensicsFlow = computed(() => this.engagementType() === 'digital_forensics');
+
+  // -- Activation mode (existing engagement from project) --
+  readonly activationMode = signal(false);
+  private readonly returnUrl: string | null = null;
 
   // -- Loading / error --
   readonly submitting = signal(false);
@@ -69,28 +81,23 @@ export class EngagementWizardComponent {
   readonly orgSaving = signal(false);
   orgForm!: FormGroup;
 
-  // -- Step 2: Assets --
-  readonly orgAssets = signal<Asset[]>([]);
-  readonly selectedAssetIds = signal<Set<string>>(new Set());
-  readonly showAssetForm = signal(false);
-  readonly assetSaving = signal(false);
-  readonly assetsLoading = signal(false);
-  assetForm!: FormGroup;
+  // -- Step 2: Assets (stored from step component) --
+  readonly selectedAssetIds = signal<string[]>([]);
+  readonly selectedAssets = signal<Asset[]>([]);
 
   readonly assetTypeLabels = ASSET_TYPE_LABELS;
   readonly assetEnvLabels = ASSET_ENV_LABELS;
   readonly assetCritLabels = ASSET_CRIT_LABELS;
-  readonly typeOptions = Object.entries(ASSET_TYPE_LABELS) as [AssetType, string][];
-  readonly envOptions = Object.entries(ASSET_ENV_LABELS) as [AssetEnvironment, string][];
-  readonly critOptions = Object.entries(ASSET_CRIT_LABELS) as [AssetCriticality, string][];
 
-  // -- Step 2b: Malware Samples (replaces assets for malware_analysis) --
+  // -- Step 2b: Malware Samples (stored from step component) --
   readonly uploadedSamples = signal<MalwareSample[]>([]);
-  readonly sampleUploading = signal(false);
-  readonly sampleDragOver = signal(false);
+
+  // -- Step 2c: Forensics Evidence (stored from step component) --
+  readonly addedEvidence = signal<ForensicsEvidence[]>([]);
 
   // -- Step 3: Engagement details --
   engForm!: FormGroup;
+  readonly durationLabel = signal<string>('—');
 
   // -- Step 3→4 bridge: created engagement --
   readonly createdEngagement = signal<Engagement | null>(null);
@@ -108,11 +115,12 @@ export class EngagementWizardComponent {
   showHelp = false;
 
   constructor() {
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     this.initEngagementType();
     this.initOrgForm();
-    this.initAssetForm();
     this.initEngForm();
     this.loadOrganizations();
+    this.initActivationMode();
   }
 
   // ── Initialization ─────────────────────────────────────────────────
@@ -136,31 +144,72 @@ export class EngagementWizardComponent {
     });
   }
 
-  private initAssetForm(): void {
-    this.assetForm = this.fb.group({
-      name: ['', Validators.required],
-      asset_type: ['host'],
-      environment: ['prod'],
-      criticality: ['medium'],
-      target: [''],
-      notes: [''],
-    });
-  }
-
   private initEngForm(): void {
     this.engForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(200)]],
-      start_date: ['', Validators.required],
+      start_date: [new Date().toISOString().slice(0, 10), Validators.required],
       end_date: [''],
       description: ['', Validators.maxLength(5000)],
       notes: ['', Validators.maxLength(5000)],
     });
+
+    this.engForm.valueChanges.subscribe(val => {
+      this.updateDuration(val.start_date, val.end_date);
+    });
+  }
+
+  private updateDuration(start: string, end: string): void {
+    if (!start || !end) { this.durationLabel.set('—'); return; }
+    const s = new Date(`${start}T00:00:00`);
+    const e = new Date(`${end}T00:00:00`);
+    if (isNaN(s.getTime()) || isNaN(e.getTime()) || e <= s) { this.durationLabel.set('—'); return; }
+    const calDays = Math.round((e.getTime() - s.getTime()) / (24 * 60 * 60 * 1000));
+    let workDays = 0;
+    const cursor = new Date(s);
+    while (cursor < e) {
+      const dow = cursor.getDay();
+      if (dow !== 0 && dow !== 6) workDays++;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    this.durationLabel.set(`${calDays} day${calDays === 1 ? '' : 's'} (${workDays} work day${workDays === 1 ? '' : 's'})`);
   }
 
   private loadOrganizations(): void {
     this.orgService.ref().subscribe({
       next: (orgs) => this.organizations.set(orgs),
       error: () => this.notify.error('Failed to load organizations.'),
+    });
+  }
+
+  private initActivationMode(): void {
+    const engId = this.route.snapshot.queryParamMap.get('engagementId');
+    if (!engId) return;
+
+    this.activationMode.set(true);
+    this._tempEngagementId = engId;
+
+    this.engService.getById(engId).subscribe({
+      next: (eng) => {
+        this.createdEngagement.set(eng);
+        this.selectedOrgId.set(eng.client_id);
+        this.selectedOrgName.set(eng.client_name);
+
+        this.engForm.patchValue({
+          name: eng.name,
+          start_date: eng.start_date || new Date().toISOString().slice(0, 10),
+          end_date: eng.end_date || '',
+          description: eng.description || '',
+          notes: eng.notes || '',
+        });
+
+        // Skip org step — start at step 2
+        const order = this.stepOrder();
+        this.currentStep.set(order[1]);
+      },
+      error: () => {
+        this.notify.error('Failed to load engagement.');
+        this.router.navigate(['/engagements']);
+      },
     });
   }
 
@@ -232,7 +281,7 @@ export class EngagementWizardComponent {
         // Add to list and select it
         this.organizations.update((list) => [...list, { id: org.id, name: org.name }]);
         this.selectOrg(org.id, org.name);
-        this.notify.success(`Organization "${org.name}" created.`);
+
       },
       error: (err) => {
         this.orgSaving.set(false);
@@ -248,187 +297,31 @@ export class EngagementWizardComponent {
 
   proceedFromOrg(): void {
     if (!this.canProceedFromOrg()) return;
-    if (this.isMalwareFlow()) {
-      this.ensureEngagementForSamples();
-    } else {
-      this.loadAssetsForOrg();
+    if (this.isMalwareFlow() || this.isForensicsFlow()) {
+      this.ensureEarlyEngagement();
     }
     this.nextStep();
   }
 
-  // ── Step 2: Assets ─────────────────────────────────────────────────
+  // ── Step 2: Assets (handled by WizardStepAssetsComponent) ──────────
 
-  private loadAssetsForOrg(): void {
-    const orgId = this.selectedOrgId();
-    if (!orgId) return;
-    this.assetsLoading.set(true);
-    this.assetService.list(orgId).subscribe({
-      next: (assets) => {
-        this.orgAssets.set(assets);
-        this.assetsLoading.set(false);
-      },
-      error: () => {
-        this.assetsLoading.set(false);
-        this.notify.error('Failed to load assets.');
-      },
-    });
-  }
-
-  toggleAssetSelection(assetId: string): void {
-    this.selectedAssetIds.update((set) => {
-      const next = new Set(set);
-      if (next.has(assetId)) {
-        next.delete(assetId);
-      } else {
-        next.add(assetId);
-      }
-      return next;
-    });
-  }
-
-  isAssetSelected(assetId: string): boolean {
-    return this.selectedAssetIds().has(assetId);
-  }
-
-  selectAllAssets(): void {
-    const allIds = this.orgAssets().map((a) => a.id);
-    this.selectedAssetIds.set(new Set(allIds));
-  }
-
-  deselectAllAssets(): void {
-    this.selectedAssetIds.set(new Set());
-  }
-
-  toggleAssetForm(): void {
-    this.showAssetForm.update((v) => !v);
-    if (this.showAssetForm()) {
-      this.assetForm.reset({
-        name: '', asset_type: 'host', environment: 'prod',
-        criticality: 'medium', target: '', notes: '',
-      });
-    }
-  }
-
-  submitNewAsset(): void {
-    if (this.assetForm.invalid) {
-      this.assetForm.markAllAsTouched();
-      return;
-    }
-    this.assetSaving.set(true);
-    const value = {
-      ...this.assetForm.getRawValue(),
-      client_id: this.selectedOrgId(),
-    };
-    this.assetService.create(value).subscribe({
-      next: (asset: Asset) => {
-        this.assetSaving.set(false);
-        this.showAssetForm.set(false);
-        // Add to list and auto-select
-        this.orgAssets.update((list) => [asset, ...list]);
-        this.selectedAssetIds.update((set) => {
-          const next = new Set(set);
-          next.add(asset.id);
-          return next;
-        });
-        this.notify.success(`Asset "${asset.name}" created.`);
-      },
-      error: (err) => {
-        this.assetSaving.set(false);
-        const detail = err?.error?.name?.[0] || err?.error?.detail || 'Failed to create asset.';
-        this.notify.error(detail);
-      },
-    });
-  }
-
-  canProceedFromAssets(): boolean {
-    return this.selectedAssetIds().size > 0;
-  }
-
-  proceedFromAssets(): void {
-    if (!this.canProceedFromAssets()) return;
+  onAssetStepProceed(result: AssetStepResult): void {
+    this.selectedAssetIds.set(result.selectedIds);
+    this.selectedAssets.set(result.selectedAssets);
     this.nextStep();
   }
 
-  selectedAssetsList(): Asset[] {
-    const ids = this.selectedAssetIds();
-    return this.orgAssets().filter((a) => ids.has(a.id));
+  // ── Step 2b: Malware Samples (handled by WizardStepSamplesComponent) ──
+
+  onSampleStepProceed(samples: MalwareSample[]): void {
+    this.uploadedSamples.set(samples);
+    this.nextStep();
   }
 
-  // ── Step 2b: Malware Samples ────────────────────────────────────────
+  // ── Step 2c: Forensics Evidence (handled by WizardStepEvidenceComponent) ──
 
-  onSampleFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const files = input.files;
-    if (!files || files.length === 0) return;
-    for (let i = 0; i < files.length; i++) {
-      this.uploadSampleFile(files[i]);
-    }
-    input.value = '';
-  }
-
-  onSampleDrop(event: DragEvent): void {
-    event.preventDefault();
-    this.sampleDragOver.set(false);
-    const files = event.dataTransfer?.files;
-    if (!files || files.length === 0) return;
-    for (let i = 0; i < files.length; i++) {
-      this.uploadSampleFile(files[i]);
-    }
-  }
-
-  onSampleDragOver(event: DragEvent): void {
-    event.preventDefault();
-  }
-
-  onSampleDragEnter(event: DragEvent): void {
-    event.preventDefault();
-    this.sampleDragOver.set(true);
-  }
-
-  onSampleDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    this.sampleDragOver.set(false);
-  }
-
-  private uploadSampleFile(file: File): void {
-    const eng = this.createdEngagementForSamples();
-    if (!eng) {
-      this.notify.error('Engagement must be created before uploading samples.');
-      return;
-    }
-    this.sampleUploading.set(true);
-    this.engService.uploadSample(eng, file).subscribe({
-      next: (sample) => {
-        this.uploadedSamples.update((list) => [...list, sample]);
-        this.sampleUploading.set(false);
-        this.notify.success(`Sample "${sample.original_filename}" uploaded.`);
-      },
-      error: (err) => {
-        this.sampleUploading.set(false);
-        const detail = err?.error?.file?.[0] || err?.error?.detail || err?.error?.error || 'Failed to upload sample.';
-        this.notify.error(detail);
-      },
-    });
-  }
-
-  removeSample(sampleId: string): void {
-    const eng = this.createdEngagementForSamples();
-    if (!eng) return;
-    this.engService.deleteSample(eng, sampleId).subscribe({
-      next: () => {
-        this.uploadedSamples.update((list) => list.filter((s) => s.id !== sampleId));
-        this.notify.success('Sample removed.');
-      },
-      error: () => this.notify.error('Failed to remove sample.'),
-    });
-  }
-
-  canProceedFromSample(): boolean {
-    return this.uploadedSamples().length > 0;
-  }
-
-  proceedFromSample(): void {
-    if (!this.canProceedFromSample()) return;
+  onEvidenceStepProceed(result: EvidenceStepResult): void {
+    this.addedEvidence.set(result.evidenceSources);
     this.nextStep();
   }
 
@@ -439,16 +332,16 @@ export class EngagementWizardComponent {
    */
   private _tempEngagementId: string | null = null;
 
-  private createdEngagementForSamples(): string | null {
+  earlyEngagementId(): string | null {
     return this._tempEngagementId;
   }
 
-  ensureEngagementForSamples(): void {
+  ensureEarlyEngagement(): void {
     if (this._tempEngagementId) return;
     this.submitting.set(true);
     this.error.set('');
     const payload = {
-      name: `Malware Analysis — ${new Date().toISOString().slice(0, 10)}`,
+      name: `${this.engagementTypeLabel()} — ${new Date().toISOString().slice(0, 10)}`,
       client_id: this.selectedOrgId(),
       engagement_type: this.engagementType(),
       status: 'planned' as const,
@@ -479,6 +372,10 @@ export class EngagementWizardComponent {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
+  selectedAssetsList(): Asset[] {
+    return this.selectedAssets();
+  }
+
   // ── Step 3: Engagement Details ─────────────────────────────────────
 
   isEngFormInvalid(name: string): boolean {
@@ -497,13 +394,16 @@ export class EngagementWizardComponent {
 
     const formVal = this.engForm.getRawValue();
 
-    // For malware flow, the engagement was already created in the sample step.
-    // Update it with the details form values instead of creating a new one.
-    if (this.isMalwareFlow() && this._tempEngagementId) {
+    // Update existing engagement (activation mode or malware/forensics early creation)
+    if (this._tempEngagementId) {
       this.engService.update(this._tempEngagementId, formVal).subscribe({
         next: (eng) => {
           this.createdEngagement.set(eng);
-          this.fetchSowAndAdvance(eng.id);
+          if (this.isMalwareFlow() || this.isForensicsFlow()) {
+            this.fetchSowAndAdvance(eng.id);
+          } else {
+            this.addAssetsToScopeAndFetchSow(eng.id);
+          }
         },
         error: (err) => {
           this.submitting.set(false);
@@ -540,14 +440,14 @@ export class EngagementWizardComponent {
   }
 
   private addAssetsToScopeAndFetchSow(engId: string): void {
-    const assetIds = Array.from(this.selectedAssetIds());
+    const assetIds = this.selectedAssetIds();
     if (assetIds.length === 0) {
       this.fetchSowAndAdvance(engId);
       return;
     }
 
     // Add all selected assets to scope in parallel
-    const addOps = assetIds.map((id) => this.engService.addToScope(engId, id));
+    const addOps = assetIds.map((id) => this.sowService.addScope(engId, id));
     forkJoin(addOps).subscribe({
       next: () => this.fetchSowAndAdvance(engId),
       error: (err) => {
@@ -560,7 +460,7 @@ export class EngagementWizardComponent {
   }
 
   private fetchSowAndAdvance(engId: string): void {
-    this.engService.getSow(engId).subscribe({
+    this.sowService.get(engId).subscribe({
       next: (sow) => {
         this.createdSow.set(sow);
         this.submitting.set(false);
@@ -583,7 +483,7 @@ export class EngagementWizardComponent {
     this.submitting.set(true);
     this.error.set('');
 
-    this.engService.updateSow(eng.id, { status: 'approved' }).subscribe({
+    this.sowService.update(eng.id, { status: 'approved' }).subscribe({
       next: (sow) => {
         this.createdSow.set(sow);
         this.submitting.set(false);
@@ -603,8 +503,7 @@ export class EngagementWizardComponent {
   keepPlanned(): void {
     const eng = this.createdEngagement();
     if (!eng) return;
-    this.notify.success(`Engagement "${eng.name}" saved as Planned.`);
-    this.router.navigate(['/engagements', eng.id]);
+    this.router.navigateByUrl(this.returnUrl ?? `/engagements/${eng.id}`);
   }
 
   activateEngagement(): void {
@@ -618,8 +517,7 @@ export class EngagementWizardComponent {
       next: (updated) => {
         this.createdEngagement.set(updated);
         this.submitting.set(false);
-        this.notify.success(`Engagement "${updated.name}" is now active!`);
-        this.router.navigate(['/engagements', updated.id]);
+        this.router.navigateByUrl(this.returnUrl ?? `/engagements/${updated.id}`);
       },
       error: (err) => {
         this.submitting.set(false);

@@ -162,7 +162,10 @@ export class AuthService {
     return this.http
       .post<void>(this.url('/api/auth/logout/'), {})
       .pipe(
-        catchError(() => of(void 0)),
+        catchError(err => {
+          console.warn('[auth] logout API call failed', err?.status ?? err?.message);
+          return of(void 0);
+        }),
         finalize(() => {
           this.tokens.clear();
           this._user$.next(null);

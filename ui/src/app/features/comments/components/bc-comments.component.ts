@@ -50,7 +50,8 @@ export class BcCommentsComponent implements OnInit, OnDestroy {
     this.sub = this.refresh$.pipe(
       switchMap(() =>
         this.commentsService.list(this.targetType, this.targetId).pipe(
-          catchError(() => {
+          catchError(err => {
+            console.error('[comments] failed to load comments', err?.status);
             this.state = 'error';
             this.cdr.markForCheck();
             return of([] as Comment[]);

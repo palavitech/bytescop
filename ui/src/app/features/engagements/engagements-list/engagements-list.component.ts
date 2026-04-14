@@ -4,7 +4,7 @@ import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, combineLatest, catchError, map, of, switchMap } from 'rxjs';
 import { EngagementsService } from '../services/engagements.service';
-import { Engagement, EngagementStatus, EngagementType, ENGAGEMENT_STATUS_LABELS, ENGAGEMENT_TYPE_LABELS } from '../models/engagement.model';
+import { Engagement, EngagementStatus, EngagementType, ENGAGEMENT_STATUS_LABELS, ENGAGEMENT_TYPE_LABELS, ENGAGEMENT_TYPE_META } from '../models/engagement.model';
 import { OrganizationsService } from '../../organizations/services/organizations.service';
 import { OrganizationRef } from '../../organizations/models/organization.model';
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
@@ -18,6 +18,7 @@ type ViewState = 'init' | 'ready' | 'error';
 interface Filters {
   client: string | null;
   status: EngagementStatus | null;
+  engagementType: EngagementType | null;
 }
 
 interface ViewModel {
@@ -26,7 +27,7 @@ interface ViewModel {
   total: number;
   organizations: OrganizationRef[];
   filters: Filters;
-  filterLabels: { clientName: string | null; statusLabel: string | null };
+  filterLabels: { clientName: string | null; statusLabel: string | null; typeName: string | null };
 }
 
 @Component({
@@ -49,43 +50,56 @@ export class EngagementsListComponent implements OnInit {
 
   showHelp = false;
   showFilters = false;
+  readonly engagementTypes = ENGAGEMENT_TYPE_META;
 
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
-  private readonly filters$ = new BehaviorSubject<Filters>({ client: null, status: null });
+  private readonly filters$ = new BehaviorSubject<Filters>({ client: null, status: null, engagementType: null });
 
   readonly vm$ = this.refresh$.pipe(
     switchMap(() =>
-      combineLatest([this.filters$, this.orgService.ref().pipe(catchError(() => of([] as OrganizationRef[])))]).pipe(
+      combineLatest([this.filters$, this.orgService.ref().pipe(catchError(err => {
+            console.warn('[engagements-list] failed to load org refs', err?.status);
+            return of([] as OrganizationRef[]);
+          }))]).pipe(
         switchMap(([filters, organizations]) =>
           this.engagementsService.list({
             client: filters.client ?? undefined,
             status: filters.status ?? undefined,
           }).pipe(
             map(engagements => {
+              const filtered = filters.engagementType
+                ? engagements.filter(e => e.engagement_type === filters.engagementType)
+                : engagements;
               const clientName = filters.client
                 ? organizations.find(o => o.id === filters.client)?.name ?? null
                 : null;
               const statusLabel = filters.status
                 ? ENGAGEMENT_STATUS_LABELS[filters.status] ?? null
                 : null;
+              const typeName = filters.engagementType
+                ? ENGAGEMENT_TYPE_LABELS[filters.engagementType] ?? null
+                : null;
 
               return {
                 state: 'ready' as ViewState,
-                engagements,
-                total: engagements.length,
+                engagements: filtered,
+                total: filtered.length,
                 organizations,
                 filters,
-                filterLabels: { clientName, statusLabel },
+                filterLabels: { clientName, statusLabel, typeName },
               } as ViewModel;
             }),
-            catchError(() => of({
-              state: 'error' as ViewState,
-              engagements: [] as Engagement[],
-              total: 0,
-              organizations,
-              filters,
-              filterLabels: { clientName: null, statusLabel: null },
-            } as ViewModel)),
+            catchError(err => {
+              console.error('[engagements-list] failed to load engagements', err?.status);
+              return of({
+                state: 'error' as ViewState,
+                engagements: [] as Engagement[],
+                total: 0,
+                organizations,
+                filters,
+                filterLabels: { clientName: null, statusLabel: null, typeName: null },
+              } as ViewModel);
+            }),
           ),
         ),
       ),
@@ -98,14 +112,18 @@ export class EngagementsListComponent implements OnInit {
       .subscribe(params => {
         const client = params.get('client') || null;
         const statusRaw = params.get('status') || null;
+        const typeRaw = params.get('type') || null;
         const allowed: EngagementStatus[] = ['planned', 'active', 'on_hold', 'completed'];
         const status = statusRaw && allowed.includes(statusRaw as EngagementStatus)
           ? statusRaw as EngagementStatus
           : null;
+        const engagementType = typeRaw
+          ? typeRaw as EngagementType
+          : null;
 
         const current = this.filters$.value;
-        if (client !== current.client || status !== current.status) {
-          this.filters$.next({ client, status });
+        if (client !== current.client || status !== current.status || engagementType !== current.engagementType) {
+          this.filters$.next({ client, status, engagementType });
           this.refresh$.next();
         }
       });
@@ -151,8 +169,19 @@ export class EngagementsListComponent implements OnInit {
     this.pushFilterToUrl({ ...current, status: null });
   }
 
+  onTypeFilterChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value || null;
+    const current = this.filters$.value;
+    this.pushFilterToUrl({ ...current, engagementType: value as EngagementType | null });
+  }
+
+  clearTypeFilter(): void {
+    const current = this.filters$.value;
+    this.pushFilterToUrl({ ...current, engagementType: null });
+  }
+
   clearAllFilters(): void {
-    this.pushFilterToUrl({ client: null, status: null });
+    this.pushFilterToUrl({ client: null, status: null, engagementType: null });
   }
 
   private pushFilterToUrl(filters: Filters): void {
@@ -161,6 +190,7 @@ export class EngagementsListComponent implements OnInit {
       queryParams: {
         client: filters.client ?? null,
         status: filters.status ?? null,
+        type: filters.engagementType ?? null,
       },
       queryParamsHandling: 'merge',
     });

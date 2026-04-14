@@ -77,7 +77,7 @@ class MalwareSampleUploadService:
                 h.update(chunk)
             sample.sha256 = h.hexdigest()
         except Exception:
-            pass
+            logger.warning("Failed to compute SHA256 for sample=%s", sample.id)
 
         # Seek back to start for storage
         try:
@@ -85,7 +85,7 @@ class MalwareSampleUploadService:
             if f and hasattr(f, 'seek'):
                 f.seek(0)
         except Exception:
-            pass
+            logger.warning("Failed to seek file back to start for sample=%s", sample.id)
 
         # Store under samples/ path (not images/)
         storage_uri = self._save_sample(

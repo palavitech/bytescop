@@ -108,20 +108,26 @@ export class EngagementSettingsComponent implements OnInit {
           switchMap(engagement =>
             this.engagementsService.listSettings(this.engagementId).pipe(
               map(settings => this.buildViewModel(engagement, settings)),
-              catchError(() => of<ViewModel>({
-                state: 'ready',
-                engagement,
-                groups: [],
-                totalCount: 0,
-              })),
+              catchError(err => {
+                console.warn('[eng-settings] failed to load settings', err?.status);
+                return of<ViewModel>({
+                  state: 'ready',
+                  engagement,
+                  groups: [],
+                  totalCount: 0,
+                });
+              }),
             ),
           ),
-          catchError(() => of<ViewModel>({
-            state: 'error',
-            engagement: null,
-            groups: [],
-            totalCount: 0,
-          })),
+          catchError(err => {
+            console.error('[eng-settings] failed to load engagement', err?.status);
+            return of<ViewModel>({
+              state: 'error',
+              engagement: null,
+              groups: [],
+              totalCount: 0,
+            });
+          }),
         ),
       ),
     );

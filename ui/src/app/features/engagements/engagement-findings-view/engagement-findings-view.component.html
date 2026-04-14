@@ -135,9 +135,13 @@
               <div class="bc-cardInner p-4">
                 <div class="row g-4">
 
-                  <div class="col-12 col-lg-4">
-                    <div class="bc-sub">Asset</div>
-                    <div class="mt-1">{{ f.asset_name || '—' }}</div>
+                  <div class="col-12 col-lg-4" *ngIf="vm.typeConfig as tc">
+                    <div class="bc-sub">{{ tc.scopeEntityLabel }}</div>
+                    <div class="mt-1">
+                      <i *ngIf="tc.scopeEntityIcon"
+                        [class]="tc.scopeEntityIcon + ' me-1'" style="color:var(--bc-accent2)"></i>
+                      {{ f[tc.scopeEntityField] || '—' }}
+                    </div>
                   </div>
 
                   <div class="col-12 col-lg-4">

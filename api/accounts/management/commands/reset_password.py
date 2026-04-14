@@ -1,10 +1,13 @@
 """Reset a user's password from the command line."""
 
 import getpass
+import logging
 
 from django.core.management.base import BaseCommand, CommandError
 
 from accounts.models import User
+
+logger = logging.getLogger("bytescop.accounts")
 
 
 class Command(BaseCommand):
@@ -25,6 +28,7 @@ class Command(BaseCommand):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
+            logger.error("Password reset failed: user not found email=%s", email)
             raise CommandError(f"No user found with email: {email}")
 
         self.stdout.write(f"[*] Looking up user {email}...")
@@ -53,10 +57,12 @@ class Command(BaseCommand):
         try:
             validate_password(new_password, user=user)
         except Exception as e:
+            logger.warning("Password reset validation failed: email=%s reason=%s", email, e)
             messages = "\n".join(e.messages) if hasattr(e, "messages") else str(e)
             raise CommandError(f"[-] Password validation failed:\n{messages}")
 
         user.set_password(new_password)
         user.save(update_fields=["password"])
 
+        logger.info("Password reset successfully: email=%s", email)
         self.stdout.write(self.style.SUCCESS(f"[+] Password reset successfully for {email}."))

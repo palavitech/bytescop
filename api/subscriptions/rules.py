@@ -158,6 +158,16 @@ class AssetsPerTenantRule(LimitRule):
         return Asset.objects.filter(tenant=tenant).count()
 
 
+class ProjectsPerTenantRule(LimitRule):
+    code = 'projects_per_tenant'
+    plan_field = 'max_projects'
+    label = 'Projects'
+
+    def get_current_usage(self, tenant, **context) -> int:
+        from projects.models import Project
+        return Project.objects.filter(tenant=tenant).count()
+
+
 class EngagementsPerTenantRule(LimitRule):
     code = 'engagements_per_tenant'
     plan_field = 'max_engagements'
@@ -216,6 +226,7 @@ class ImagesPerFindingRule(LimitRule):
 LimitRegistry.register(MembersPerTenantRule())
 LimitRegistry.register(ClientsPerTenantRule())
 LimitRegistry.register(AssetsPerTenantRule())
+LimitRegistry.register(ProjectsPerTenantRule())
 LimitRegistry.register(EngagementsPerTenantRule())
 LimitRegistry.register(FindingsPerEngagementRule())
 LimitRegistry.register(ImagesPerFindingRule())

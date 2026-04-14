@@ -40,14 +40,15 @@ export class BootstrapService {
             this.profile.setFromAuthResponse(data);
             this.permissions.setFromAuthResponse(data.authorization);
           }),
-          catchError(() => {
+          catchError(err => {
             // 401 or network error — user is not authenticated
+            console.info('[bootstrap] session check failed', err?.status ?? err?.message ?? 'unknown');
             return of(null);
           }),
         ),
       );
-    } catch {
-      // Safety net — should not reach here due to catchError above
+    } catch (err) {
+      console.error('[bootstrap] unexpected error during init', err);
     }
 
     this._ready$.next(true);

@@ -105,11 +105,14 @@ export class SettingsListComponent implements OnDestroy {
     switchMap(() =>
       this.settingsService.list().pipe(
         map(settings => this.buildViewModel(settings)),
-        catchError(() => of<ViewModel>({
-          state: 'error',
-          groups: [],
-          totalCount: 0,
-        })),
+        catchError(err => {
+          console.error('[settings-list] failed to load settings', err?.status);
+          return of<ViewModel>({
+            state: 'error',
+            groups: [],
+            totalCount: 0,
+          });
+        }),
       ),
     ),
   );

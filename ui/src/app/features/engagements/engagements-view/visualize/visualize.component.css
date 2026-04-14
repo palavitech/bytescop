@@ -1,0 +1,91 @@
+:host {
+  display: block;
+}
+
+/* ── CSS Grid (6 columns, explicit placement, no auto-flow) ── */
+
+.bc-widgetGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
+}
+
+.bc-widgetCell {
+  min-width: 0;
+}
+
+@media (max-width: 767.98px) {
+  .bc-widgetCell {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+  }
+}
+
+/* ── Edit Mode ─────────────────────────────────────────────── */
+
+.bc-editWidgetWrap {
+  position: relative;
+  height: 100%;
+  min-height: 120px;
+}
+
+.bc-editWidgetPreview {
+  height: 100%;
+  background: var(--bc-card, #0d1117);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.bc-editWidgetLabel {
+  font-family: var(--bc-fontBody, 'IBM Plex Mono', monospace);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bc-editWidgetLabel .bi {
+  font-size: 1.1rem;
+  color: var(--bc-accent, #00ffb3);
+}
+
+/* ── Drag and Drop ─────────────────────────────────────────── */
+
+[draggable="true"] {
+  cursor: grab;
+}
+
+[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.bc-dragging {
+  opacity: 0.3;
+}
+
+.bc-dropGhost {
+  border: 2px dashed var(--bc-accent, #00ffb3);
+  border-radius: 12px;
+  background: rgba(0, 255, 179, 0.06);
+  box-shadow: 0 0 12px rgba(0, 255, 179, 0.15);
+  pointer-events: none;
+  min-height: 80px;
+}
+
+/* ── Empty state ───────────────────────────────────────────── */
+
+.bc-chartEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: rgba(201, 212, 255, 0.4);
+  padding: 3rem 1rem;
+}

@@ -1,12 +1,13 @@
 import uuid
+from unittest.mock import patch, MagicMock
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 
 from accounts.models import User
-from evidence.models import Attachment
+from evidence.models import Attachment, MalwareSample
 from evidence.services.attachment_upload import AttachmentUploadService
-from evidence.signing import sign_attachment_url
+from evidence.signing import sign_attachment_url, sign_sample_url
 from engagements.models import Engagement
 from clients.models import Client
 from tenancy.models import Tenant
@@ -78,3 +79,130 @@ class AttachmentContentViewTests(TestCase):
         self.assertEqual(resp["X-Content-Type-Options"], "nosniff")
         self.assertIn("no-cache", resp["Cache-Control"])
         self.assertIn("Content-Disposition", resp)
+
+    @patch('evidence.views.get_attachment_storage')
+    def test_missing_storage_file_returns_404(self, mock_get_storage):
+        """If the storage backend raises FileNotFoundError, return 404."""
+        mock_storage = MagicMock()
+        mock_storage.open.side_effect = FileNotFoundError("gone")
+        mock_get_storage.return_value = mock_storage
+
+        url = sign_attachment_url(self.att.pk, tenant_id=str(self.tenant.id))
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 404)
+
+
+@override_settings(BC_STORAGE_BACKEND="local", SECRET_KEY="test-secret-key-for-signing")
+class MalwareSampleDownloadViewTests(TestCase):
+    """Tests for the MalwareSampleDownloadView (HMAC-signed sample download)."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.tenant = Tenant.objects.create(name="T", slug="t", status="ACTIVE")
+        cls.user = User.objects.create_user(email="sample@t.example.com", password="Pass1234!")
+        cls.client_obj = Client.objects.create(
+            tenant=cls.tenant, name="C", status="ACTIVE",
+        )
+        cls.eng = Engagement.objects.create(
+            tenant=cls.tenant, name="E", client=cls.client_obj,
+            created_by=cls.user, status="ACTIVE",
+        )
+        cls.sample = MalwareSample.objects.create(
+            tenant=cls.tenant,
+            engagement=cls.eng,
+            original_filename="malware.exe",
+            safe_filename="malware.exe.sample",
+            content_type="application/x-msdownload",
+            size_bytes=1024,
+            uploaded_by=cls.user,
+            storage_uri="/tmp/fake_sample_path",
+        )
+
+    @patch('evidence.views.get_attachment_storage')
+    def test_valid_sig_with_tenant_returns_200(self, mock_get_storage):
+        mock_storage = MagicMock()
+        mock_storage.open.return_value = MagicMock(read=lambda: b'\x00' * 10)
+        mock_get_storage.return_value = mock_storage
+
+        url = sign_sample_url(self.sample.pk, tenant_id=str(self.tenant.id))
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+
+    @patch('evidence.views.get_attachment_storage')
+    def test_valid_sig_without_tenant_returns_200(self, mock_get_storage):
+        mock_storage = MagicMock()
+        mock_storage.open.return_value = MagicMock(read=lambda: b'\x00' * 10)
+        mock_get_storage.return_value = mock_storage
+
+        url = sign_sample_url(self.sample.pk)
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_missing_sig_returns_404(self):
+        resp = self.client.get(f"/api/samples/{self.sample.pk}/download/")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_bad_sig_returns_404(self):
+        resp = self.client.get(
+            f"/api/samples/{self.sample.pk}/download/?sig=0000000000000000"
+        )
+        self.assertEqual(resp.status_code, 404)
+
+    def test_valid_sig_nonexistent_id_returns_404(self):
+        fake_id = uuid.uuid4()
+        url = sign_sample_url(fake_id)
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 404)
+
+    @patch('evidence.views.get_attachment_storage')
+    def test_response_has_security_headers(self, mock_get_storage):
+        mock_storage = MagicMock()
+        mock_storage.open.return_value = MagicMock(read=lambda: b'\x00' * 10)
+        mock_get_storage.return_value = mock_storage
+
+        url = sign_sample_url(self.sample.pk, tenant_id=str(self.tenant.id))
+        resp = self.client.get(url)
+        self.assertEqual(resp["X-Content-Type-Options"], "nosniff")
+        self.assertIn("no-cache", resp["Cache-Control"])
+
+    @patch('evidence.views.get_attachment_storage')
+    def test_content_type_always_octet_stream(self, mock_get_storage):
+        """Samples must ALWAYS be served as octet-stream, never original type."""
+        mock_storage = MagicMock()
+        mock_storage.open.return_value = MagicMock(read=lambda: b'\x00' * 10)
+        mock_get_storage.return_value = mock_storage
+
+        url = sign_sample_url(self.sample.pk, tenant_id=str(self.tenant.id))
+        resp = self.client.get(url)
+        self.assertEqual(resp["Content-Type"], "application/octet-stream")
+
+    @patch('evidence.views.get_attachment_storage')
+    def test_content_disposition_attachment(self, mock_get_storage):
+        """Samples must use attachment disposition, never inline."""
+        mock_storage = MagicMock()
+        mock_storage.open.return_value = MagicMock(read=lambda: b'\x00' * 10)
+        mock_get_storage.return_value = mock_storage
+
+        url = sign_sample_url(self.sample.pk, tenant_id=str(self.tenant.id))
+        resp = self.client.get(url)
+        self.assertIn("attachment", resp["Content-Disposition"])
+        self.assertIn("malware.exe", resp["Content-Disposition"])
+
+    @patch('evidence.views.get_attachment_storage')
+    def test_missing_storage_file_returns_404(self, mock_get_storage):
+        """If the file is missing from storage, return 404."""
+        mock_storage = MagicMock()
+        mock_storage.open.side_effect = FileNotFoundError("file gone")
+        mock_get_storage.return_value = mock_storage
+
+        url = sign_sample_url(self.sample.pk, tenant_id=str(self.tenant.id))
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_wrong_tenant_filter_returns_404(self):
+        """A valid sig with a tenant_id that doesn't match should return 404."""
+        other_tenant = Tenant.objects.create(name="Other", slug="other", status="ACTIVE")
+        # Sign with other_tenant's ID - sig is valid but sample doesn't belong
+        url = sign_sample_url(self.sample.pk, tenant_id=str(other_tenant.id))
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 404)

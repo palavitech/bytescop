@@ -39,7 +39,10 @@ export class GroupsListComponent {
       switchMap(() =>
         this.groupsService.list().pipe(
           map(groups => ({ state: 'ready' as ViewState, groups })),
-          catchError(() => of({ state: 'error' as ViewState, groups: [] as TenantGroupListItem[] })),
+          catchError(err => {
+            console.error('[groups-list] failed to load groups', err?.status);
+            return of({ state: 'error' as ViewState, groups: [] as TenantGroupListItem[] });
+          }),
         ),
       ),
     ),

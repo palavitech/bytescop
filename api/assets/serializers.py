@@ -1,7 +1,11 @@
+import logging
+
 from rest_framework import serializers
 
 from .models import Asset
 from clients.models import Client
+
+logger = logging.getLogger("bytescop.assets")
 
 
 class AssetSerializer(serializers.ModelSerializer):
@@ -43,6 +47,7 @@ class AssetSerializer(serializers.ModelSerializer):
         try:
             return obj.client.name if obj.client_id else ''
         except Exception:
+            logger.warning("Failed to resolve client_name for asset=%s client_id=%s", obj.pk, obj.client_id)
             return ''
 
     def validate_client_id(self, client):

@@ -93,7 +93,7 @@ describe('SettingsListComponent', () => {
       'getLicenseStatus', 'activateLicense', 'removeLicense',
       'verifyClosureMfa', 'executeClosure',
     ]);
-    notifySpy = jasmine.createSpyObj('NotificationService', ['success', 'error']);
+    notifySpy = jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning']);
     locationSpy = jasmine.createSpyObj('Location', ['back']);
     dateFormatSpy = jasmine.createSpyObj('DateFormatService', ['setFormat']);
     authSpy = jasmine.createSpyObj('AuthService', ['setUser']);
@@ -631,4 +631,409 @@ describe('SettingsListComponent', () => {
     expect(component.closureStep()).toBe('acknowledge');
   });
 
+  it('closurePrevStep from confirm should go to mfa', () => {
+    component.closureStep.set('confirm');
+    component.closurePrevStep();
+    expect(component.closureStep()).toBe('mfa');
+  });
+
+  // ── subscriptionSnapshot ──
+
+  it('subscriptionSnapshot returns current subscription from profile service', () => {
+    const snapshot = component.subscriptionSnapshot;
+    expect(snapshot).toEqual({ limits: {} } as any);
+  });
+
+  // ── subscriptionLimits ──
+
+  it('subscriptionLimits returns empty array when no subscription', () => {
+    const profileService = TestBed.inject(UserProfileService) as any;
+    profileService.currentSubscription = () => null;
+    expect(component.subscriptionLimits).toEqual([]);
+  });
+
+  it('subscriptionLimits returns empty array when subscription has no limits', () => {
+    const profileService = TestBed.inject(UserProfileService) as any;
+    profileService.currentSubscription = () => ({});
+    expect(component.subscriptionLimits).toEqual([]);
+  });
+
+  it('subscriptionLimits returns limit rows when subscription has limits', () => {
+    const profileService = TestBed.inject(UserProfileService) as any;
+    profileService.currentSubscription = () => ({
+      limits: {
+        max_members: 5,
+        max_clients: 10,
+        max_assets: 50,
+        max_engagements: 20,
+        max_findings_per_engagement: 100,
+        max_images_per_finding: 10,
+      },
+    });
+    const limits = component.subscriptionLimits;
+    expect(limits.length).toBe(6);
+    expect(limits[0]).toEqual({ label: 'Team Members', description: 'Maximum number of users in your tenant.', value: 5 });
+    expect(limits[5]).toEqual({ label: 'Images per Finding', description: 'Maximum images that can be embedded in a single finding.', value: 10 });
+  });
+
+  // ── License: showLicenseInput / cancelLicenseInput ──
+
+  it('showLicenseInput sets licenseShowInput to true and clears state', () => {
+    component.licenseKey = 'old-key';
+    component.licenseError.set('old error');
+    component.showLicenseInput();
+
+    expect(component.licenseShowInput()).toBe(true);
+    expect(component.licenseKey).toBe('');
+    expect(component.licenseError()).toBe('');
+  });
+
+  it('cancelLicenseInput sets licenseShowInput to false and clears state', () => {
+    component.licenseShowInput.set(true);
+    component.licenseKey = 'some-key';
+    component.licenseError.set('some error');
+    component.cancelLicenseInput();
+
+    expect(component.licenseShowInput()).toBe(false);
+    expect(component.licenseKey).toBe('');
+    expect(component.licenseError()).toBe('');
+  });
+
+  // ── License: activateLicense ──
+
+  it('activateLicense does nothing when key is empty', () => {
+    component.licenseKey = '   ';
+    component.activateLicense();
+    expect(settingsServiceSpy.activateLicense).not.toHaveBeenCalled();
+  });
+
+  it('activateLicense calls service and notifies on success (non-expired)', () => {
+    const licStatus = {
+      plan: 'enterprise', features: ['all'], max_users: 100, max_workspaces: 10,
+      expired: false, expires_at: '2027-01-01', customer: 'ACME', has_key: true,
+    };
+    settingsServiceSpy.activateLicense.and.returnValue(of(licStatus));
+    component.licenseKey = 'ENT-KEY-123';
+    component.licenseShowInput.set(true);
+    component.activateLicense();
+
+    expect(settingsServiceSpy.activateLicense).toHaveBeenCalledWith('ENT-KEY-123');
+    expect(component.licenseStatus()).toEqual(licStatus);
+    expect(component.licenseActivating()).toBe(false);
+    expect(component.licenseShowInput()).toBe(false);
+    expect(component.licenseKey).toBe('');
+    expect(notifySpy.success).toHaveBeenCalledWith('License activated — enterprise plan.');
+  });
+
+  it('activateLicense notifies warning on expired license', () => {
+    const licStatus = {
+      plan: 'enterprise', features: [], max_users: 100, max_workspaces: 10,
+      expired: true, expires_at: '2024-01-01', customer: 'ACME', has_key: true,
+    };
+    settingsServiceSpy.activateLicense.and.returnValue(of(licStatus));
+    component.licenseKey = 'EXPIRED-KEY';
+    component.activateLicense();
+
+    expect(notifySpy.warning).toHaveBeenCalledWith('License key accepted but is expired. Features remain at Community Edition.');
+  });
+
+  it('activateLicense shows error on failure with detail', () => {
+    settingsServiceSpy.activateLicense.and.returnValue(
+      throwError(() => ({ error: { detail: 'Invalid key' } })),
+    );
+    component.licenseKey = 'BAD-KEY';
+    component.activateLicense();
+
+    expect(component.licenseActivating()).toBe(false);
+    expect(component.licenseError()).toBe('Invalid key');
+  });
+
+  it('activateLicense shows generic error when no detail', () => {
+    settingsServiceSpy.activateLicense.and.returnValue(throwError(() => ({})));
+    component.licenseKey = 'BAD-KEY';
+    component.activateLicense();
+
+    expect(component.licenseError()).toBe('Failed to activate license key.');
+  });
+
+  // ── License: removeLicenseKey ──
+
+  it('removeLicenseKey calls service and notifies on success', () => {
+    const licStatus = {
+      plan: 'community', features: [], max_users: 3, max_workspaces: 1,
+      expired: false, expires_at: null, customer: '', has_key: false,
+    };
+    settingsServiceSpy.removeLicense.and.returnValue(of(licStatus));
+    component.licenseShowInput.set(true);
+    component.removeLicenseKey();
+
+    expect(component.licenseStatus()).toEqual(licStatus);
+    expect(component.licenseRemoving()).toBe(false);
+    expect(component.licenseShowInput()).toBe(false);
+    expect(notifySpy.success).toHaveBeenCalledWith('License removed — reverted to Community Edition.');
+  });
+
+  it('removeLicenseKey shows error on failure', () => {
+    settingsServiceSpy.removeLicense.and.returnValue(throwError(() => new Error('fail')));
+    component.removeLicenseKey();
+
+    expect(component.licenseRemoving()).toBe(false);
+    expect(notifySpy.error).toHaveBeenCalledWith('Failed to remove license.');
+  });
+
+  // ── License: loadLicense error ──
+
+  it('loadLicense error sets licenseLoading to false', () => {
+    settingsServiceSpy.getLicenseStatus.and.returnValue(throwError(() => new Error('fail')));
+    fixture = TestBed.createComponent(SettingsListComponent);
+    component = fixture.componentInstance;
+
+    expect(component.licenseLoading()).toBe(false);
+  });
+
+  // ── Closure: submitClosureVerifyMfa ──
+
+  it('submitClosureVerifyMfa does nothing when code is less than 6 chars', () => {
+    component.closureMfaCode = '12345';
+    component.submitClosureVerifyMfa();
+    expect(settingsServiceSpy.verifyClosureMfa).not.toHaveBeenCalled();
+  });
+
+  it('submitClosureVerifyMfa does nothing when code is empty whitespace', () => {
+    component.closureMfaCode = '     ';
+    component.submitClosureVerifyMfa();
+    expect(settingsServiceSpy.verifyClosureMfa).not.toHaveBeenCalled();
+  });
+
+  it('submitClosureVerifyMfa advances to confirm step on success', () => {
+    settingsServiceSpy.verifyClosureMfa.and.returnValue(of({ verified: true }));
+    component.closureMfaCode = '123456';
+    component.submitClosureVerifyMfa();
+
+    expect(settingsServiceSpy.verifyClosureMfa).toHaveBeenCalledWith('123456');
+    expect(component.closureSubmitting()).toBe(false);
+    expect(component.closureStep()).toBe('confirm');
+  });
+
+  it('submitClosureVerifyMfa shows error on failure with detail', () => {
+    settingsServiceSpy.verifyClosureMfa.and.returnValue(
+      throwError(() => ({ error: { detail: 'Invalid code' } })),
+    );
+    component.closureMfaCode = '123456';
+    component.submitClosureVerifyMfa();
+
+    expect(component.closureSubmitting()).toBe(false);
+    expect(component.closureError()).toBe('Invalid code');
+  });
+
+  it('submitClosureVerifyMfa shows generic error when no detail', () => {
+    settingsServiceSpy.verifyClosureMfa.and.returnValue(throwError(() => ({})));
+    component.closureMfaCode = '123456';
+    component.submitClosureVerifyMfa();
+
+    expect(component.closureError()).toBe('MFA verification failed.');
+  });
+
+  // ── Closure: submitClosureExecute ──
+
+  it('submitClosureExecute does nothing when workspace name is empty', () => {
+    component.closureWorkspaceName = '   ';
+    component.submitClosureExecute();
+    expect(settingsServiceSpy.executeClosure).not.toHaveBeenCalled();
+  });
+
+  it('submitClosureExecute navigates to closing page on success', () => {
+    settingsServiceSpy.executeClosure.and.returnValue(of({ detail: 'Closing', closure_id: 'cl-123' }));
+    component.closureWorkspaceName = 'My Workspace';
+    component.submitClosureExecute();
+
+    expect(settingsServiceSpy.executeClosure).toHaveBeenCalledWith('My Workspace');
+    expect(authSpy.setUser).toHaveBeenCalledWith(null);
+    expect(tokensSpy.clear).toHaveBeenCalled();
+    expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/closing?closure_id=cl-123');
+  });
+
+  it('submitClosureExecute shows error on failure with detail', () => {
+    settingsServiceSpy.executeClosure.and.returnValue(
+      throwError(() => ({ error: { detail: 'Name mismatch' } })),
+    );
+    component.closureWorkspaceName = 'Wrong Name';
+    component.submitClosureExecute();
+
+    expect(component.closureSubmitting()).toBe(false);
+    expect(component.closureError()).toBe('Name mismatch');
+  });
+
+  it('submitClosureExecute shows generic error when no detail', () => {
+    settingsServiceSpy.executeClosure.and.returnValue(throwError(() => ({})));
+    component.closureWorkspaceName = 'My Workspace';
+    component.submitClosureExecute();
+
+    expect(component.closureSubmitting()).toBe(false);
+    expect(component.closureError()).toBe('Failed to delete workspace.');
+  });
+
+  // ── openClosureWizard ──
+
+  it('openClosureWizard initializes closureWorkspaceName to empty', () => {
+    component.closureWorkspaceName = 'leftover';
+    component.openClosureWizard();
+    expect(component.closureWorkspaceName).toBe('');
+  });
+
+  // ── Constructor: tenantName from profile ──
+
+  it('sets tenantName from profile', () => {
+    // The constructor was already called with profile$ = of(null), so tenantName is ''
+    expect(component.tenantName).toBe('');
+  });
+
+  // ── resetSetting: saving=true during request ──
+
+  it('resetSetting sets saving=true during request', () => {
+    const row: any = { ...mockSetting, editValue: 'current_val', dirty: false, saving: false };
+    const subject = new Subject<any>();
+    settingsServiceSpy.reset.and.returnValue(subject.asObservable());
+
+    component.resetSetting(row);
+    expect(row.saving).toBe(true);
+
+    subject.next({ ...mockSetting, value: 'default_val', has_value: false, updated_at: null, updated_by: null });
+    subject.complete();
+    expect(row.saving).toBe(false);
+  });
+
+});
+
+describe('SettingsListComponent (with tenant profile)', () => {
+  it('sets tenantName from profile subscription', () => {
+    const settingsSpy = jasmine.createSpyObj('SettingsService', [
+      'list', 'upsert', 'reset', 'hasLogo',
+      'deleteLogo', 'getLogoBlob', 'uploadLogo',
+      'getLicenseStatus', 'activateLicense', 'removeLicense',
+      'verifyClosureMfa', 'executeClosure',
+    ]);
+    settingsSpy.list.and.returnValue(of([]));
+    settingsSpy.hasLogo.and.returnValue(of({ has_logo: false }));
+    settingsSpy.getLicenseStatus.and.returnValue(of({
+      plan: 'community', features: [], max_users: 3, max_workspaces: 1,
+      expired: false, expires_at: null, customer: '', has_key: false,
+    }));
+
+    TestBed.configureTestingModule({
+      imports: [SettingsListComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: SettingsService, useValue: settingsSpy },
+        { provide: NotificationService, useValue: jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning']) },
+        { provide: Location, useValue: jasmine.createSpyObj('Location', ['back']) },
+        { provide: DateFormatService, useValue: jasmine.createSpyObj('DateFormatService', ['setFormat']) },
+        { provide: AuthService, useValue: jasmine.createSpyObj('AuthService', ['setUser']) },
+        { provide: TokenService, useValue: jasmine.createSpyObj('TokenService', ['clear']) },
+        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigateByUrl']) },
+        { provide: PermissionService, useValue: { hasAny$: () => of(true), has: () => true } },
+        {
+          provide: UserProfileService,
+          useValue: {
+            profile$: of({ tenant: { name: 'Acme Corp' } }),
+            currentSubscription: () => ({ limits: { max_members: 5 } }),
+            refreshProfile: () => of({}),
+          },
+        },
+      ],
+    });
+
+    const fix = TestBed.createComponent(SettingsListComponent);
+    const comp = fix.componentInstance;
+    expect(comp.tenantName).toBe('Acme Corp');
+  });
+});
+
+describe('SettingsListComponent (no subscription, triggers refresh)', () => {
+  it('calls refreshProfile when currentSubscription returns null', () => {
+    const settingsSpy = jasmine.createSpyObj('SettingsService', [
+      'list', 'upsert', 'reset', 'hasLogo',
+      'deleteLogo', 'getLogoBlob', 'uploadLogo',
+      'getLicenseStatus', 'activateLicense', 'removeLicense',
+      'verifyClosureMfa', 'executeClosure',
+    ]);
+    settingsSpy.list.and.returnValue(of([]));
+    settingsSpy.hasLogo.and.returnValue(of({ has_logo: false }));
+    settingsSpy.getLicenseStatus.and.returnValue(of({
+      plan: 'community', features: [], max_users: 3, max_workspaces: 1,
+      expired: false, expires_at: null, customer: '', has_key: false,
+    }));
+
+    const refreshSpy = jasmine.createSpy('refreshProfile').and.returnValue(of({}));
+
+    TestBed.configureTestingModule({
+      imports: [SettingsListComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: SettingsService, useValue: settingsSpy },
+        { provide: NotificationService, useValue: jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning']) },
+        { provide: Location, useValue: jasmine.createSpyObj('Location', ['back']) },
+        { provide: DateFormatService, useValue: jasmine.createSpyObj('DateFormatService', ['setFormat']) },
+        { provide: AuthService, useValue: jasmine.createSpyObj('AuthService', ['setUser']) },
+        { provide: TokenService, useValue: jasmine.createSpyObj('TokenService', ['clear']) },
+        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigateByUrl']) },
+        { provide: PermissionService, useValue: { hasAny$: () => of(true), has: () => true } },
+        {
+          provide: UserProfileService,
+          useValue: {
+            profile$: of(null),
+            currentSubscription: () => null,
+            refreshProfile: refreshSpy,
+          },
+        },
+      ],
+    });
+
+    TestBed.createComponent(SettingsListComponent);
+    expect(refreshSpy).toHaveBeenCalled();
+  });
+
+  it('handles refreshProfile error gracefully', () => {
+    const settingsSpy = jasmine.createSpyObj('SettingsService', [
+      'list', 'upsert', 'reset', 'hasLogo',
+      'deleteLogo', 'getLogoBlob', 'uploadLogo',
+      'getLicenseStatus', 'activateLicense', 'removeLicense',
+      'verifyClosureMfa', 'executeClosure',
+    ]);
+    settingsSpy.list.and.returnValue(of([]));
+    settingsSpy.hasLogo.and.returnValue(of({ has_logo: false }));
+    settingsSpy.getLicenseStatus.and.returnValue(of({
+      plan: 'community', features: [], max_users: 3, max_workspaces: 1,
+      expired: false, expires_at: null, customer: '', has_key: false,
+    }));
+
+    TestBed.configureTestingModule({
+      imports: [SettingsListComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: SettingsService, useValue: settingsSpy },
+        { provide: NotificationService, useValue: jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning']) },
+        { provide: Location, useValue: jasmine.createSpyObj('Location', ['back']) },
+        { provide: DateFormatService, useValue: jasmine.createSpyObj('DateFormatService', ['setFormat']) },
+        { provide: AuthService, useValue: jasmine.createSpyObj('AuthService', ['setUser']) },
+        { provide: TokenService, useValue: jasmine.createSpyObj('TokenService', ['clear']) },
+        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigateByUrl']) },
+        { provide: PermissionService, useValue: { hasAny$: () => of(true), has: () => true } },
+        {
+          provide: UserProfileService,
+          useValue: {
+            profile$: of(null),
+            currentSubscription: () => null,
+            refreshProfile: () => throwError(() => new Error('network fail')),
+          },
+        },
+      ],
+    });
+
+    // Should not throw
+    expect(() => TestBed.createComponent(SettingsListComponent)).not.toThrow();
+  });
 });

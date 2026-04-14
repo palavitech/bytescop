@@ -135,15 +135,9 @@ HTTP (port 80) automatically redirects to HTTPS (port 443).
 
 | Resource | Limit |
 |----------|-------|
-| Workspaces | 1 |
-| Users per workspace | 3 |
-| Clients | 5 |
-| Assets | 10 |
-| Engagements | 3 |
-| Findings per engagement | 20 |
-| Images per finding | 5 |
+| Users per workspace | 5 |
 
-Enterprise licenses remove all limits and unlock additional features (RBAC, audit trail, data export, custom branding).
+Enterprise licenses remove this limit and unlock additional features (data export, custom branding).
 
 ## Logs
 

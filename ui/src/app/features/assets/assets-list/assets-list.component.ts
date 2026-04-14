@@ -50,7 +50,10 @@ export class AssetsListComponent implements OnInit {
         switchMap(() =>
           this.assetsService.list(this.clientFilter ?? undefined).pipe(
             map(assets => ({ state: 'ready' as ViewState, assets })),
-            catchError(() => of({ state: 'error' as ViewState, assets: [] as Asset[] })),
+            catchError(err => {
+              console.error('[assets-list] failed to load assets', err?.status);
+              return of({ state: 'error' as ViewState, assets: [] as Asset[] });
+            }),
           ),
         ),
       ),

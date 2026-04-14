@@ -1,0 +1,438 @@
+<div class="bc-pageWrap bc-pageWide">
+  <div class="bc-pageInner">
+
+    <!-- Header -->
+    <div class="bc-pageCard mb-3">
+      <div class="bc-pageCardHead">
+        <div class="bc-pageCardTitle">
+          <div class="bc-h1">New Project</div>
+          <div class="bc-sub">Create a multi-engagement project step by step.</div>
+        </div>
+        <div class="bc-pageCardTools">
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="toggleHelp()">
+            <i class="bi bi-question-circle"></i>
+            <span>Help</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bc-helpLayout bc-helpLayoutRight" [class.is-helpOpen]="showHelp">
+      <main>
+
+        <!-- Progress bar -->
+        <div class="bc-wizardProgress mb-3">
+          @for (step of stepOrder; track step; let i = $index) {
+            @if (i > 0) {
+              <div class="bc-wizardProgressLine"
+                [class.bc-wizardProgressLineDone]="isStepDone(step)"></div>
+            }
+            <div class="bc-wizardProgressNode"
+              [class.bc-wizardProgressNodeActive]="isStepActive(step)"
+              [class.bc-wizardProgressNodeDone]="isStepDone(step)">
+              <div class="bc-wizardProgressStep"
+                [class.bc-wizardProgressActive]="isStepActive(step)"
+                [class.bc-wizardProgressDone]="isStepDone(step)">
+                @if (isStepDone(step)) {
+                  <i class="bi bi-check"></i>
+                } @else {
+                  {{ i + 1 }}
+                }
+              </div>
+              <span class="bc-wizardProgressNodeLabel">{{ stepLabels[step] }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Error -->
+        @if (error()) {
+          <div class="alert alert-danger py-2 mb-3" style="font-size:0.82rem">{{ error() }}</div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- STEP 1: Project Details                                    -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        @if (currentStep() === 'details') {
+          <div class="bc-card">
+            <div class="bc-wizardStepHead">
+              <h3 class="bc-wizardStepTitle">
+                <i class="bi bi-folder2-open me-2"></i>Project Details
+              </h3>
+              <span class="bc-sub" style="font-size:0.8rem">
+                Provide the basic details for this project.
+              </span>
+            </div>
+            <div class="bc-cardInner p-4">
+
+              <form [formGroup]="projectForm" (ngSubmit)="proceedFromDetails()" autocomplete="off">
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-8">
+                    <label for="wizProjName" class="form-label bc-label">Project Name <span class="bc-required">*</span></label>
+                    <input id="wizProjName" type="text" class="form-control bc-input" formControlName="name"
+                      minlength="3" maxlength="200" placeholder="Q1 2026 Tesla Security Assessment">
+                    @if (isProjectFormInvalid('name')) {
+                      <div class="bc-fieldError">
+                        @if (projectForm.get('name')?.hasError('required')) {
+                          <span>Name is required.</span>
+                        }
+                        @if (projectForm.get('name')?.hasError('minlength')) {
+                          <span>Name must be at least 3 characters.</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-3">
+                    <label for="wizProjStart" class="form-label bc-label">Start Date <span class="bc-required">*</span></label>
+                    <input id="wizProjStart" type="date" class="form-control bc-input" formControlName="start_date">
+                    @if (isProjectFormInvalid('start_date')) {
+                      <div class="bc-fieldError">Start date is required.</div>
+                    }
+                  </div>
+                  <div class="col-md-3">
+                    <label for="wizProjEnd" class="form-label bc-label">End Date</label>
+                    <input id="wizProjEnd" type="date" class="form-control bc-input" formControlName="end_date">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label bc-label">Duration</label>
+                    <div class="form-control-plaintext bc-sub" style="white-space:nowrap">{{ durationLabel() }}</div>
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-12">
+                    <label for="wizProjDesc" class="form-label bc-label">Description</label>
+                    <textarea id="wizProjDesc" class="form-control bc-input" formControlName="description" rows="3"
+                      maxlength="5000" placeholder="Project scope and objectives..."></textarea>
+                  </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="bc-wizardNav mt-4">
+                  <div></div>
+                  <button class="btn btn-success bc-btn" type="submit">
+                    Next: Choose Client
+                    <i class="bi bi-arrow-right ms-1"></i>
+                  </button>
+                </div>
+
+              </form>
+
+            </div>
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- STEP 2: Client Selection                                   -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        @if (currentStep() === 'client') {
+          <div class="bc-card">
+            <div class="bc-wizardStepHead">
+              <h3 class="bc-wizardStepTitle">
+                <i class="bi bi-building me-2"></i>Choose Client
+              </h3>
+              <span class="bc-sub" style="font-size:0.8rem">
+                Select an existing client or create a new one.
+              </span>
+            </div>
+            <div class="bc-cardInner p-4">
+
+              <!-- Org list -->
+              <div class="mb-3">
+                <label class="form-label bc-label">Client <span class="bc-required">*</span></label>
+                <select class="form-select bc-input"
+                  [ngModel]="selectedOrgId()"
+                  (ngModelChange)="onOrgDropdownChange($event)">
+                  <option [ngValue]="null" disabled>Select client...</option>
+                  @for (org of organizations(); track org.id) {
+                    <option [ngValue]="org.id">{{ org.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Create new org toggle -->
+              <div class="mb-3">
+                <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleOrgForm()">
+                  <i class="bi me-1" [ngClass]="showOrgForm() ? 'bi-x-lg' : 'bi-plus-circle'"></i>
+                  {{ showOrgForm() ? 'Cancel' : 'Create New Client' }}
+                </button>
+              </div>
+
+              <!-- Inline org form -->
+              @if (showOrgForm()) {
+                <div class="bc-wizardInlineForm">
+                  <form [formGroup]="orgForm" (ngSubmit)="submitNewOrg()" autocomplete="off">
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label bc-label">Name <span class="bc-required">*</span></label>
+                        <input type="text" class="form-control bc-input" formControlName="name"
+                          placeholder="Client name">
+                        @if (orgForm.get('name')?.touched && orgForm.get('name')?.hasError('required')) {
+                          <div class="bc-fieldError">Name is required.</div>
+                        }
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label bc-label">Website</label>
+                        <input type="url" class="form-control bc-input" formControlName="website"
+                          placeholder="https://example.com">
+                      </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-12">
+                        <label class="form-label bc-label">Notes</label>
+                        <textarea class="form-control bc-input" formControlName="notes" rows="2"
+                          placeholder="Optional notes"></textarea>
+                      </div>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-success bc-btn" [disabled]="orgSaving()">
+                      @if (orgSaving()) {
+                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                      }
+                      <i class="bi bi-plus-circle me-1" *ngIf="!orgSaving()"></i>
+                      Create Client
+                    </button>
+                  </form>
+                </div>
+              }
+
+              <!-- Selected org badge -->
+              @if (selectedOrgId()) {
+                <div class="bc-wizardSelection mt-3">
+                  <i class="bi bi-check-circle-fill me-2" style="color:var(--bc-accent)"></i>
+                  <strong>{{ selectedOrgName() }}</strong> selected
+                </div>
+              }
+
+              <!-- Navigation -->
+              <div class="bc-wizardNav mt-4">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="prevStep()">
+                  <i class="bi bi-arrow-left me-1"></i> Back
+                </button>
+                <button class="btn btn-success bc-btn" type="button"
+                  [disabled]="!canProceedFromClient()"
+                  (click)="proceedFromClient()">
+                  Next: Select Engagements
+                  <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- STEP 3: Engagement Type Selection                          -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        @if (currentStep() === 'types') {
+          <div class="bc-card">
+            <div class="bc-wizardStepHead">
+              <h3 class="bc-wizardStepTitle">
+                <i class="bi bi-clipboard-check me-2"></i>Select Engagement Types
+              </h3>
+              <span class="bc-sub" style="font-size:0.8rem">
+                Choose which assessments are part of this project. You can skip this step and add engagements later.
+              </span>
+            </div>
+            <div class="bc-cardInner p-4">
+
+              <!-- Summary bar -->
+              <div class="bc-wizardSummaryBar mb-4">
+                <span><i class="bi bi-folder2-open me-1"></i> {{ projectForm.get('name')?.value }}</span>
+                <span class="bc-wizardSummaryDot"></span>
+                <span><i class="bi bi-building me-1"></i> {{ selectedOrgName() }}</span>
+              </div>
+
+              <!-- Type cards grid -->
+              <div class="row g-3 mb-3">
+                @for (type of engagementTypes; track type.key) {
+                  <div class="col-md-6 col-lg-4">
+                    <div class="bc-typeCard" [class.bc-typeCardSelected]="isTypeSelected(type.key)"
+                      (click)="toggleType(type.key)" role="button" tabindex="0"
+                      (keydown.enter)="toggleType(type.key)" (keydown.space)="toggleType(type.key)">
+                      <div class="bc-typeCardCheck">
+                        @if (isTypeSelected(type.key)) {
+                          <i class="bi bi-check-square-fill" style="color:var(--bc-accent)"></i>
+                        } @else {
+                          <i class="bi bi-square"></i>
+                        }
+                      </div>
+                      <div class="bc-typeCardBody">
+                        <div class="bc-typeCardIcon">
+                          <i class="bi {{ type.icon }}"></i>
+                        </div>
+                        <div class="bc-typeCardLabel">{{ type.label }}</div>
+                        <div class="bc-typeCardDesc">{{ type.description }}</div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Selected count -->
+              <div class="bc-sub mb-3" style="font-size:0.82rem">
+                {{ selectedTypes().length }} engagement type{{ selectedTypes().length === 1 ? '' : 's' }} selected
+              </div>
+
+              <!-- Navigation -->
+              <div class="bc-wizardNav mt-4">
+                <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="prevStep()">
+                  <i class="bi bi-arrow-left me-1"></i> Back
+                </button>
+                <button class="btn btn-success bc-btn" type="button"
+                  [disabled]="!canProceedFromTypes()"
+                  (click)="proceedFromTypes()">
+                  Next: Review
+                  <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        }
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- STEP 4: Review & Create                                    -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        @if (currentStep() === 'review') {
+          <div class="bc-card">
+            <div class="bc-wizardStepHead">
+              <h3 class="bc-wizardStepTitle">
+                <i class="bi bi-rocket-takeoff me-2"></i>Review &amp; Create
+              </h3>
+              <span class="bc-sub" style="font-size:0.8rem">
+                Review everything and create the project.
+              </span>
+            </div>
+            <div class="bc-cardInner p-4">
+
+              <!-- Project summary -->
+              <div class="bc-wizardReviewSection mb-4">
+                <h4 class="bc-wizardReviewLabel">
+                  <i class="bi bi-folder2-open me-2"></i>Project
+                </h4>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="bc-reviewField">
+                      <span class="bc-reviewKey">Name</span>
+                      <span class="bc-reviewVal">{{ projectForm.get('name')?.value }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="bc-reviewField">
+                      <span class="bc-reviewKey">Start Date</span>
+                      <span class="bc-reviewVal">{{ projectForm.get('start_date')?.value || '—' }}</span>
+                    </div>
+                  </div>
+                  @if (projectForm.get('end_date')?.value) {
+                    <div class="col-md-3">
+                      <div class="bc-reviewField">
+                        <span class="bc-reviewKey">End Date</span>
+                        <span class="bc-reviewVal">{{ projectForm.get('end_date')?.value }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+                @if (projectForm.get('description')?.value) {
+                  <div class="mt-2">
+                    <span class="bc-reviewKey">Description</span>
+                    <p class="bc-reviewVal mb-0" style="white-space:pre-line">{{ projectForm.get('description')?.value }}</p>
+                  </div>
+                }
+              </div>
+
+              <!-- Client -->
+              <div class="bc-wizardReviewSection mb-4">
+                <h4 class="bc-wizardReviewLabel">
+                  <i class="bi bi-building me-2"></i>Client
+                </h4>
+                <div class="bc-reviewVal">{{ selectedOrgName() }}</div>
+              </div>
+
+              <!-- Engagements -->
+              <div class="bc-wizardReviewSection mb-4">
+                <h4 class="bc-wizardReviewLabel">
+                  <i class="bi bi-clipboard-check me-2"></i>Engagements ({{ selectedTypes().length }})
+                </h4>
+                @if (selectedTypes().length > 0) {
+                  <ul class="bc-wizardReviewList">
+                    @for (type of selectedTypes(); track type) {
+                      <li>
+                        <i class="bi {{ getTypeIcon(type) }} me-2" style="color:var(--bc-accent2)"></i>
+                        <strong>{{ getTypeLabel(type) }}</strong>
+                      </li>
+                    }
+                  </ul>
+                  <div class="bc-sub mt-2" style="font-size:0.82rem">
+                    This will create {{ selectedTypes().length }} engagement{{ selectedTypes().length === 1 ? '' : 's' }} in Planned status, linked to this project and client.
+                  </div>
+                } @else {
+                  <div class="bc-sub" style="font-size:0.82rem">
+                    No engagements selected. You can add engagements to this project after creation.
+                  </div>
+                }
+              </div>
+
+              <!-- Create button -->
+              <div class="bc-wizardActivate">
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                  <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="prevStep()">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                  </button>
+                  <button class="btn btn-lg btn-success bc-btn bc-wizardActivateBtn" type="button"
+                    [disabled]="submitting()"
+                    (click)="createProject()">
+                    @if (submitting()) {
+                      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Creating...
+                    } @else {
+                      <i class="bi bi-rocket-takeoff me-2"></i>
+                      Create Project
+                    }
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        }
+
+      </main>
+
+      <!-- Help aside -->
+      <aside class="bc-helpPane" *ngIf="showHelp">
+        <div class="bc-helpHead">
+          <div>
+            <div class="bc-helpKicker">Help</div>
+            <div class="bc-helpTitle">New Project Wizard</div>
+          </div>
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleHelp()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="bc-helpBody">
+          <div class="bc-sub mb-2">
+            Create a project in 4 easy steps:
+          </div>
+          <ul class="bc-helpList">
+            <li><strong>Step 1:</strong> Enter the project name, dates, and description.</li>
+            <li><strong>Step 2:</strong> Choose or create the client.</li>
+            <li><strong>Step 3:</strong> Optionally select engagement types to create with the project.</li>
+            <li><strong>Step 4:</strong> Review everything and create the project.</li>
+          </ul>
+          <div class="bc-sub mt-2" style="font-size:0.78rem">
+            Each selected engagement type creates a planned engagement linked to this project. You can skip this step and add or assign engagements later.
+          </div>
+        </div>
+      </aside>
+
+    </div>
+
+  </div>
+</div>

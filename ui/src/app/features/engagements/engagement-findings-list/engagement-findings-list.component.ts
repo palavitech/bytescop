@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, Type } from '@angular/core';
 import { Location, CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,8 +10,7 @@ import { FindingsService } from '../services/findings.service';
 import { Finding, FINDING_SEVERITY_LABELS, FINDING_STATUS_LABELS, FindingSeverity, FindingStatus } from '../models/finding.model';
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
 import { NotificationService } from '../../../services/core/notify/notification.service';
-import { FindingsTableStandardComponent } from './tables/findings-table-standard.component';
-import { FindingsTableMalwareComponent } from './tables/findings-table-malware.component';
+import { getTypeConfig, FilterOption } from '../types/registry';
 
 type VmState = 'init' | 'ready' | 'error';
 
@@ -33,32 +32,33 @@ interface ViewModel {
   total: number;
   filter: FilterState;
   timeBar: TimeBar | null;
+  findingsTableComponent: Type<any> | null;
+  severityOptions: FilterOption[];
+  statusOptions: FilterOption[];
 }
 
 @Component({
   selector: 'app-engagement-findings-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, HasPermissionDirective, FindingsTableStandardComponent, FindingsTableMalwareComponent],
+  imports: [CommonModule, FormsModule, RouterLink, HasPermissionDirective],
   templateUrl: './engagement-findings-list.component.html',
   styleUrl: './engagement-findings-list.component.css',
 })
-export class EngagementFindingsListComponent implements OnDestroy {
+export class EngagementFindingsListComponent {
   private readonly location = inject(Location);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly engagementsService = inject(EngagementsService);
   private readonly findingsService = inject(FindingsService);
   private readonly notify = inject(NotificationService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   showHelp = false;
   showFilters = false;
-  initializingAnalysis = false;
 
   private readonly refresh$ = new BehaviorSubject<number>(0);
   private readonly filter$ = new BehaviorSubject<FilterState>({ severity: '', status: '' });
-  private refreshTimer?: ReturnType<typeof setTimeout>;
+  readonly boundRefresh = () => this.refresh();
 
   private readonly engagementId$ = this.route.paramMap.pipe(
     map(p => p.get('id') || ''),
@@ -67,7 +67,10 @@ export class EngagementFindingsListComponent implements OnDestroy {
 
   private readonly engagement$ = this.engagementId$.pipe(
     switchMap(id => id
-      ? this.engagementsService.getById(id).pipe(catchError(() => of(null)))
+      ? this.engagementsService.getById(id).pipe(catchError(err => {
+          console.error('[findings-list] failed to load engagement', id, err?.status);
+          return of(null);
+        }))
       : of(null),
     ),
     shareReplay(1),
@@ -81,7 +84,10 @@ export class EngagementFindingsListComponent implements OnDestroy {
         status: f.status || undefined,
         include_drafts: true,
       }).pipe(
-        catchError(() => of([] as Finding[])),
+        catchError(err => {
+          console.error('[findings-list] failed to load findings', id, err?.status);
+          return of([] as Finding[]);
+        }),
       );
     }),
     shareReplay(1),
@@ -90,6 +96,7 @@ export class EngagementFindingsListComponent implements OnDestroy {
   readonly vm$ = combineLatest([this.engagement$, this.findings$, this.filter$]).pipe(
     map(([eng, items, f]): ViewModel => {
       const state: VmState = eng === null ? 'error' : 'ready';
+      const config = eng ? getTypeConfig(eng.engagement_type) : null;
       return {
         state,
         engagement: eng,
@@ -97,6 +104,9 @@ export class EngagementFindingsListComponent implements OnDestroy {
         total: items.length,
         filter: f,
         timeBar: this.buildTimeBar(eng?.start_date ?? null, eng?.end_date ?? null),
+        findingsTableComponent: config?.findingsTableComponent ?? null,
+        severityOptions: config?.severityOptions ?? [],
+        statusOptions: config?.statusOptions ?? [],
       };
     }),
   );
@@ -153,62 +163,6 @@ export class EngagementFindingsListComponent implements OnDestroy {
     }
 
     this.router.navigate(['/engagements', engagement.id, 'findings', 'create']);
-  }
-
-  // -- Analysis Checks --
-
-  initializeAnalysis(engagement: Engagement | null): void {
-    if (!engagement) return;
-    this.initializingAnalysis = true;
-    this.cdr.markForCheck();
-
-    this.engagementsService.initializeAnalysis(engagement.id).subscribe({
-      next: (res) => {
-        this.initializingAnalysis = false;
-        if (res.created > 0) {
-          this.refresh();
-        } else {
-          this.notify.info('All analysis checks already exist.');
-        }
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        this.initializingAnalysis = false;
-        this.cdr.markForCheck();
-        this.notify.error(err?.error?.message || err?.error?.detail || 'Failed to initialize analysis.');
-      },
-    });
-  }
-
-  executeFinding(finding: Finding, engagement: Engagement | null): void {
-    if (!engagement) return;
-
-    this.engagementsService.executeFinding(engagement.id, finding.id).subscribe({
-      next: () => this.scheduleRefresh(3000),
-      error: (err) => {
-        this.notify.error(err?.error?.message || err?.error?.detail || 'Failed to start execution.');
-      },
-    });
-  }
-
-  deleteFinding(finding: Finding, engagement: Engagement | null): void {
-    if (!engagement) return;
-
-    this.findingsService.delete(engagement.id, finding.id).subscribe({
-      next: () => this.refresh(),
-      error: (err) => {
-        this.notify.error(err?.error?.message || err?.error?.detail || 'Failed to delete finding.');
-      },
-    });
-  }
-
-  private scheduleRefresh(delayMs: number): void {
-    clearTimeout(this.refreshTimer);
-    this.refreshTimer = setTimeout(() => this.refresh(), delayMs);
-  }
-
-  ngOnDestroy(): void {
-    clearTimeout(this.refreshTimer);
   }
 
   private buildTimeBar(startDate: string | null, endDate: string | null): TimeBar | null {

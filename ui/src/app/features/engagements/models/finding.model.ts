@@ -1,10 +1,3 @@
-export type AnalysisType = 'static' | 'dynamic' | '';
-
-export const ANALYSIS_TYPE_LABELS: Record<string, string> = {
-  static: 'Static Analysis',
-  dynamic: 'Dynamic Analysis',
-};
-
 export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
 export type FindingStatus =
@@ -15,14 +8,6 @@ export type FindingStatus =
   | 'false_positive';
 
 export type ExecutionStatus = '' | 'pending' | 'running' | 'completed' | 'failed';
-
-export const EXECUTION_STATUS_LABELS: Record<string, string> = {
-  '': '',
-  pending: 'Pending',
-  running: 'Running',
-  completed: 'Completed',
-  failed: 'Failed',
-};
 
 export interface Finding {
   id: string;
@@ -43,6 +28,15 @@ export interface Finding {
   is_draft: boolean;
   analysis_check_key: string;
   execution_status: ExecutionStatus;
+  // Forensics fields (optional — absent for non-forensics findings)
+  evidence_source_id?: string | null;
+  evidence_source_name?: string;
+  mitre_tactic?: string;
+  mitre_technique?: string;
+  ioc_type?: string;
+  ioc_value?: string;
+  occurrence_date?: string | null;
+  confidence?: string;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +49,14 @@ export const FINDING_SEVERITY_LABELS: Record<FindingSeverity, string> = {
   info: 'Info',
 };
 
+export const FINDING_SEVERITIES: { value: FindingSeverity; label: string }[] = [
+  { value: 'critical', label: 'Critical' },
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
+  { value: 'info', label: 'Info' },
+];
+
 export const FINDING_STATUS_LABELS: Record<FindingStatus, string> = {
   open: 'Open',
   triage: 'Triage',
@@ -62,3 +64,11 @@ export const FINDING_STATUS_LABELS: Record<FindingStatus, string> = {
   fixed: 'Fixed',
   false_positive: 'False Positive',
 };
+
+export const FINDING_STATUSES: { value: FindingStatus; label: string }[] = [
+  { value: 'open', label: 'Open' },
+  { value: 'triage', label: 'Triage' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'fixed', label: 'Fixed' },
+  { value: 'false_positive', label: 'False Positive' },
+];

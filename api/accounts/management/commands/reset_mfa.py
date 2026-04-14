@@ -1,8 +1,12 @@
 """Disable MFA for a user so they can log in and re-enroll."""
 
+import logging
+
 from django.core.management.base import BaseCommand, CommandError
 
 from accounts.models import User
+
+logger = logging.getLogger("bytescop.accounts")
 
 
 class Command(BaseCommand):
@@ -22,6 +26,7 @@ class Command(BaseCommand):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
+            logger.error("MFA reset failed: user not found email=%s", email)
             raise CommandError(f"No user found with email: {email}")
 
         if not user.mfa_enabled:
@@ -50,5 +55,6 @@ class Command(BaseCommand):
             "last_totp_at",
         ])
 
+        logger.info("MFA reset successfully: email=%s", email)
         self.stdout.write(self.style.SUCCESS(f"[+] MFA has been reset for {email}."))
         self.stdout.write("[*] Log in again — you will be guided through fresh MFA registration.")

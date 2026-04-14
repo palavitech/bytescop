@@ -1,0 +1,174 @@
+<div class="bc-card">
+  <div class="bc-wizardStepHead">
+    <h3 class="bc-wizardStepTitle">
+      <i class="bi bi-search me-2"></i>Evidence Sources
+    </h3>
+    <span class="bc-sub" style="font-size:0.8rem">
+      Register the digital evidence sources for this investigation. Files are stored externally (shared mount, NAS, S3) &mdash; provide the path or URI below.
+    </span>
+  </div>
+  <div class="bc-cardInner p-4">
+
+    <!-- Toggle button -->
+    @if (!formOpen()) {
+      <button class="btn btn-outline-success bc-btn mb-3" type="button" (click)="toggleForm()">
+        <i class="bi bi-plus-lg me-1"></i> Add Evidence Source
+      </button>
+    }
+
+    <!-- Add form panel -->
+    @if (formOpen()) {
+      <div class="bc-evidenceForm mb-3">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <span class="bc-label">New Evidence Source</span>
+          <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleForm()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="row g-3">
+          <!-- Name (required) -->
+          <div class="col-md-6">
+            <label class="form-label bc-sub">Name <span class="text-danger">*</span></label>
+            <input class="form-control bc-input" [(ngModel)]="newName" [ngModelOptions]="{standalone:true}"
+              placeholder="e.g. Workstation-04 Disk Image" />
+          </div>
+
+          <!-- Type (required) -->
+          <div class="col-md-6">
+            <label class="form-label bc-sub">Type <span class="text-danger">*</span></label>
+            <select class="form-select bc-input" [(ngModel)]="newType" [ngModelOptions]="{standalone:true}">
+              <option *ngFor="let t of evidenceTypes" [value]="t.value">{{ t.label }}</option>
+            </select>
+          </div>
+
+          <!-- Source Path (required) -->
+          <div class="col-12">
+            <label class="form-label bc-sub">Source Path / URI <span class="text-danger">*</span></label>
+            <input class="form-control bc-input" [(ngModel)]="newSourcePath" [ngModelOptions]="{standalone:true}"
+              placeholder="e.g. /mnt/evidence/case-42/workstation04.E01 or s3://forensics-bucket/..." />
+          </div>
+
+          <!-- Acquisition Date -->
+          <div class="col-md-4">
+            <label class="form-label bc-sub">Acquisition Date</label>
+            <input type="date" class="form-control bc-input" [(ngModel)]="newAcquisitionDate"
+              [ngModelOptions]="{standalone:true}" />
+          </div>
+
+          <!-- Acquisition Method -->
+          <div class="col-md-4">
+            <label class="form-label bc-sub">Acquisition Method</label>
+            <select class="form-select bc-input" [(ngModel)]="newAcquisitionMethod" [ngModelOptions]="{standalone:true}">
+              <option value="">— Select —</option>
+              <option *ngFor="let m of acquisitionMethods" [value]="m.value">{{ m.label }}</option>
+            </select>
+          </div>
+
+          <!-- Acquisition Tool -->
+          <div class="col-md-4">
+            <label class="form-label bc-sub">Acquisition Tool</label>
+            <input class="form-control bc-input" [(ngModel)]="newAcquisitionTool"
+              [ngModelOptions]="{standalone:true}" placeholder="e.g. FTK Imager 4.7" />
+          </div>
+
+          <!-- Source Device -->
+          <div class="col-md-6">
+            <label class="form-label bc-sub">Source Device</label>
+            <input class="form-control bc-input" [(ngModel)]="newSourceDevice"
+              [ngModelOptions]="{standalone:true}" placeholder="Hostname, serial, or asset tag" />
+          </div>
+
+          <!-- SHA-256 -->
+          <div class="col-md-6">
+            <label class="form-label bc-sub">SHA-256</label>
+            <input class="form-control bc-input" [(ngModel)]="newSha256"
+              [ngModelOptions]="{standalone:true}" placeholder="Hash for integrity verification"
+              maxlength="64" />
+          </div>
+
+          <!-- Description -->
+          <div class="col-12">
+            <label class="form-label bc-sub">Description</label>
+            <textarea class="form-control bc-input" rows="2" [(ngModel)]="newDescription"
+              [ngModelOptions]="{standalone:true}" placeholder="Additional notes about this evidence source..."></textarea>
+          </div>
+        </div>
+
+        <!-- Form actions -->
+        <div class="d-flex gap-2 mt-3">
+          <button class="btn btn-success bc-btn" type="button"
+            [disabled]="!canSubmitForm() || adding()"
+            (click)="addEvidence()">
+            <i class="bi bi-plus-lg me-1"></i>
+            {{ adding() ? 'Adding...' : 'Add Evidence Source' }}
+          </button>
+          <button class="btn btn-outline-light bc-btnSoft" type="button" (click)="toggleForm()">
+            Cancel
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Evidence list -->
+    @if (evidenceSources().length > 0) {
+      <div class="bc-label mb-2">Evidence Sources ({{ evidenceSources().length }})</div>
+      <div class="table-responsive mb-3">
+        <table class="table bc-table mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Source Path</th>
+              <th>Acquired</th>
+              <th>SHA-256</th>
+              <th style="width:60px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of evidenceSources(); track e.id) {
+              <tr>
+                <td>
+                  <i class="bi bi-search me-1" style="color:var(--bc-accent2)"></i>
+                  {{ e.name }}
+                </td>
+                <td class="bc-sub">{{ typeLabels[e.evidence_type] || e.evidence_type }}</td>
+                <td>
+                  <code class="bc-sub" style="font-size:0.75rem; word-break:break-all">{{ e.source_path || '—' }}</code>
+                </td>
+                <td class="bc-sub">{{ e.acquisition_date || '—' }}</td>
+                <td>
+                  @if (e.sha256) {
+                    <code class="bc-sub" style="font-size:0.75rem">{{ e.sha256 | slice:0:16 }}...</code>
+                  } @else {
+                    <span class="bc-sub">—</span>
+                  }
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-danger bc-btnSoft" type="button"
+                    (click)="removeEvidence(e.id)" title="Remove evidence source">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Navigation -->
+    <div class="bc-wizardNav mt-4">
+      <button class="btn btn-outline-light bc-iconBtn" type="button" (click)="onBack()">
+        <i class="bi bi-arrow-left me-1"></i> Back
+      </button>
+      <button class="btn btn-success bc-btn" type="button"
+        [disabled]="!canProceed()"
+        (click)="onProceed()">
+        Next: Engagement Details
+        <i class="bi bi-arrow-right ms-1"></i>
+      </button>
+    </div>
+
+  </div>
+</div>

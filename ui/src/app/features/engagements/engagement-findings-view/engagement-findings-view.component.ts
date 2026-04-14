@@ -18,6 +18,7 @@ import {
 } from '../models/finding.model';
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
 import { NotificationService } from '../../../services/core/notify/notification.service';
+import { getTypeConfig, EngagementTypeConfig } from '../types/registry';
 import { BcDatePipe } from '../../../components/pipes/bc-date.pipe';
 import { ClassificationCardComponent } from '../components/classification-card/classification-card.component';
 import { BcCommentsComponent } from '../../comments/components/bc-comments.component';
@@ -31,6 +32,7 @@ interface ViewModel {
   finding: Finding | null;
   descriptionHtml: SafeHtml;
   recommendationHtml: SafeHtml;
+  typeConfig: EngagementTypeConfig | null;
 }
 
 @Component({
@@ -65,6 +67,7 @@ export class EngagementFindingsViewComponent implements OnInit {
     finding: null,
     descriptionHtml: '',
     recommendationHtml: '',
+    typeConfig: null,
   });
 
   ngOnInit(): void {
@@ -75,7 +78,10 @@ export class EngagementFindingsViewComponent implements OnInit {
       switchMap(() =>
         combineLatest([
           this.engagementsService.getById(this.engagementId).pipe(
-            catchError(() => of(null)),
+            catchError(err => {
+              console.error('[finding-view] failed to load engagement', err?.status);
+              return of(null);
+            }),
           ),
           this.findingsService.getById(this.engagementId, this.findingId).pipe(
             catchError(err => {
@@ -85,11 +91,12 @@ export class EngagementFindingsViewComponent implements OnInit {
           ),
         ]).pipe(
           map(([eng, findingResult]): ViewModel => {
+            const typeConfig = eng ? getTypeConfig(eng.engagement_type) : null;
             if (findingResult === 'missing') {
-              return { state: 'missing', engagement: eng, finding: null, descriptionHtml: '', recommendationHtml: '' };
+              return { state: 'missing', engagement: eng, finding: null, descriptionHtml: '', recommendationHtml: '', typeConfig };
             }
             if (!eng || !findingResult) {
-              return { state: 'error', engagement: eng, finding: null, descriptionHtml: '', recommendationHtml: '' };
+              return { state: 'error', engagement: eng, finding: null, descriptionHtml: '', recommendationHtml: '', typeConfig };
             }
             return {
               state: 'ready',
@@ -97,6 +104,7 @@ export class EngagementFindingsViewComponent implements OnInit {
               finding: findingResult,
               descriptionHtml: this.renderMarkdown(findingResult.description_md),
               recommendationHtml: this.renderMarkdown(findingResult.recommendation_md),
+              typeConfig,
             };
           }),
         ),

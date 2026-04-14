@@ -60,6 +60,8 @@ export interface Engagement {
   id: string;
   name: string;
   engagement_type: EngagementType;
+  project_id: string | null;
+  project_name: string | null;
   client_id: string | null;
   client_name: string;
   status: EngagementStatus;
@@ -79,26 +81,4 @@ export const ENGAGEMENT_STATUS_LABELS: Record<EngagementStatus, string> = {
   completed: 'Completed',
 };
 
-export interface MalwareSample {
-  id: string;
-  original_filename: string;
-  safe_filename: string;
-  sha256: string;
-  content_type: string;
-  size_bytes: number;
-  notes: string;
-  download_url: string;
-  created_at: string;
-}
-
-export type SowStatus = 'draft' | 'approved';
-
-export interface Sow {
-  id: string;
-  engagement: string;
-  title: string;
-  status: SowStatus;
-  created_at: string;
-  updated_at: string;
-}
 

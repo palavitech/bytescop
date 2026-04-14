@@ -25,6 +25,12 @@
                         <span *ngIf="!vm.engagement.client_id">{{ vm.engagement.client_name || '—' }}</span>
                       </span>
                     </div>
+                    <div class="bc-metaRow" *ngIf="vm.engagement.project_id">
+                      <span class="bc-metaLabel">Project</span>
+                      <span class="bc-metaValue">
+                        <a class="bc-link" [routerLink]="['/projects', vm.engagement.project_id]">{{ vm.engagement.project_name }}</a>
+                      </span>
+                    </div>
                   </div>
                 </ng-container>
               </div>
@@ -77,6 +83,10 @@
                 <span class="bc-statusEngagement" [ngClass]="statusClass(vm.engagement.status)">
                   <span class="bc-statusDot"></span>
                   <span>{{ prettyStatus(vm.engagement.status) }}</span>
+                </span>
+                <span class="bc-pillStatus">
+                  <span class="bc-pillDot"></span>
+                  <span>{{ prettyType(vm.engagement.engagement_type) }}</span>
                 </span>
                 <span class="bc-pillStatus">
                   <span class="bc-pillDot"></span>
@@ -136,111 +146,11 @@
             </div>
           </div>
 
-          <!-- Visualization card -->
-          <div class="bc-card mb-3" *ngIf="showSummary && vm.state === 'ready'">
-            <div class="bc-sectionHead">
-              <div class="d-flex align-items-center gap-2">
-                <h3 class="bc-sectionLabel mb-0">Visualization</h3>
-                <span class="bc-sub" *ngIf="summaryTotal > 0">({{ summaryTotal }} findings)</span>
-              </div>
-              <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button" (click)="toggleSummary()">
-                <i class="bi bi-x-lg"></i>
-              </button>
-            </div>
-            <div class="bc-cardInner p-3">
-              <!-- Timeline histogram -->
-              <div class="bc-timelineChart mb-3" *ngIf="summaryTotal > 0">
-                <div class="bc-chartLabel">Findings Over Time</div>
-                <canvas #timelineChart></canvas>
-              </div>
-
-              <div class="bc-summaryGrid" *ngIf="summaryTotal > 0">
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Findings by Severity</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #sevChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Findings by Status</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #statChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Assets by Severity</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #assetChart></canvas>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bc-summaryGrid mt-3" *ngIf="summaryTotal > 0">
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Findings by CWE</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #cweChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Findings by Assessment Area</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #areaChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Findings by OWASP Top 10</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #owaspChart></canvas>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bc-summaryGrid mt-3" *ngIf="summaryTotal > 0">
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Assets by Finding Status</h6>
-                    <div class="bc-chartWrap" [style.height.px]="assetStatusChartHeight">
-                      <canvas #assetStatusChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Asset Type Distribution</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #assetTypeChart></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="bc-card">
-                  <div class="bc-cardInner p-3">
-                    <h6 class="bc-widgetTitle mb-3">Asset Criticality vs Findings</h6>
-                    <div class="bc-chartWrap">
-                      <canvas #assetCritChart></canvas>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bc-chartEmpty" *ngIf="summaryTotal === 0">
-                <i class="bi bi-bar-chart"></i>
-                <span>No findings to visualize</span>
-              </div>
-            </div>
-          </div>
+          <!-- Visualization widget grid -->
+          <app-visualize *ngIf="vm.state === 'ready'"
+            [engagementId]="engagementId"
+            [visible]="showSummary">
+          </app-visualize>
 
           <!-- Details -->
           <ng-container *ngIf="vm.state === 'ready' && vm.engagement as eng">
@@ -315,6 +225,96 @@
             </div>
           </ng-container>
 
+          <!-- Project card -->
+          <ng-container *ngIf="vm.state === 'ready' && vm.engagement as eng">
+            <div class="bc-card mb-3" *bcHasPermission="'project.view'">
+              <div class="bc-sectionHead">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bc-sectionLabel mb-0">Project</h3>
+                </div>
+                <div class="d-flex align-items-center gap-2" *bcHasPermission="'engagement.update'">
+                  @if (eng.project_id) {
+                    <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button"
+                      (click)="toggleProjectAssign()">
+                      <i class="bi bi-arrow-left-right me-1"></i>
+                      <span>{{ showProjectAssign() ? 'Cancel' : 'Change' }}</span>
+                    </button>
+                  } @else {
+                    <button class="btn btn-sm btn-outline-light bc-btnSoft" type="button"
+                      (click)="toggleProjectAssign()">
+                      <i class="bi me-1" [ngClass]="showProjectAssign() ? 'bi-x-lg' : 'bi-folder-plus'"></i>
+                      <span>{{ showProjectAssign() ? 'Cancel' : 'Assign to Project' }}</span>
+                    </button>
+                  }
+                </div>
+              </div>
+              <div class="bc-cardInner p-4">
+
+                <!-- Current project display -->
+                @if (eng.project_id) {
+                  <div class="d-flex align-items-center gap-3">
+                    <div>
+                      <div class="bc-sub">Belongs to</div>
+                      <div class="mt-1">
+                        <a class="bc-link" [routerLink]="['/projects', eng.project_id]">
+                          <i class="bi bi-folder2-open me-1"></i>{{ eng.project_name }}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                } @else if (!showProjectAssign()) {
+                  <div class="bc-sub">
+                    <i class="bi bi-info-circle me-1"></i>
+                    This engagement is not part of any project.
+                  </div>
+                }
+
+                <!-- Assign / change project form -->
+                @if (showProjectAssign()) {
+                  <div class="mt-3 pt-3" [class.border-top]="eng.project_id"
+                    style="border-color: rgba(255,255,255,0.06) !important">
+                    <div class="bc-sub mb-2" style="font-size:0.8rem">
+                      {{ eng.project_id ? 'Move to a different project or remove:' : 'Select a project to assign this engagement to:' }}
+                    </div>
+                    @if (eng.project_id) {
+                      <div class="mb-3">
+                        <button class="btn btn-sm btn-outline-danger bc-btnSoft" type="button"
+                          [disabled]="savingProject()"
+                          (click)="removeProject(eng)">
+                          @if (savingProject()) {
+                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                          }
+                          <i class="bi bi-x-circle me-1" *ngIf="!savingProject()"></i> Remove from Project
+                        </button>
+                      </div>
+                    }
+                    <div class="d-flex align-items-end gap-2 flex-wrap">
+                      <div style="min-width:240px">
+                        <select class="form-select form-select-sm bc-input"
+                          [ngModel]="selectedProjectId()"
+                          (ngModelChange)="onProjectSelectChange($event)">
+                          <option value="" disabled selected>Choose project...</option>
+                          @for (proj of projectRefs(); track proj.id) {
+                            @if (proj.id !== eng.project_id) {
+                              <option [value]="proj.id">{{ proj.name }}</option>
+                            }
+                          }
+                        </select>
+                      </div>
+                      <button class="btn btn-sm btn-success bc-btn" type="button"
+                        [disabled]="!selectedProjectId() || savingProject()"
+                        (click)="assignProject(eng)">
+                        <i class="bi bi-check-lg me-1"></i>
+                        {{ eng.project_id ? 'Move' : 'Assign' }}
+                      </button>
+                    </div>
+                  </div>
+                }
+
+              </div>
+            </div>
+          </ng-container>
+
           <!-- Statement of Work section -->
           <ng-container *ngIf="vm.state === 'ready' && vm.engagement as eng">
             <div class="bc-card" *bcHasPermission="'sow.view'">
@@ -384,67 +384,11 @@
                     </div>
                   </div>
 
-                  <!-- Scope Assets (nested inside SoW card) -->
+                  <!-- Scope summary (type-specific via registry) -->
                   <ng-container *bcHasPermission="'scope.view'">
-                    <div class="bc-scopeHead">
-                      <div class="d-flex align-items-center gap-2">
-                        <span class="bc-sub fw-semibold">Scope Assets</span>
-                        <ng-container *ngIf="scopeVm$ | async as svm">
-                          <span class="badge bg-secondary" *ngIf="svm.state === 'ready'">{{ svm.total }}</span>
-                        </ng-container>
-                      </div>
-                    </div>
-
-                    <ng-container *ngIf="scopeVm$ | async as svm">
-                      <!-- Loading -->
-                      <div class="p-4" *ngIf="svm.state === 'init'">
-                        <div class="bc-sub">Loading scope assets...</div>
-                      </div>
-
-                      <!-- Error -->
-                      <div class="p-4" *ngIf="svm.state === 'error'">
-                        <div class="bc-sub text-danger">Failed to load scope assets.</div>
-                      </div>
-
-                      <!-- Ready -->
-                      <ng-container *ngIf="svm.state === 'ready'">
-                        <!-- Empty -->
-                        <div class="p-4" *ngIf="svm.assets.length === 0">
-                          <div class="bc-sub">No assets in scope yet.</div>
-                        </div>
-
-                        <!-- Table -->
-                        <div class="table-responsive" *ngIf="svm.assets.length > 0">
-                          <table class="table bc-table mb-0">
-                            <thead>
-                              <tr>
-                                <th>Asset</th>
-                                <th>Type</th>
-                                <th>Environment</th>
-                                <th>Criticality</th>
-                                <th>Target</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr *ngFor="let asset of svm.assets">
-                                <td>
-                                  <a class="bc-link" [routerLink]="['/assets', asset.id]">{{ asset.name }}</a>
-                                </td>
-                                <td><span class="bc-typeBadge">{{ typeLabels[asset.asset_type] }}</span></td>
-                                <td>{{ envLabels[asset.environment] }}</td>
-                                <td>
-                                  <span class="bc-critBadge" [attr.data-crit]="asset.criticality">
-                                    {{ critLabels[asset.criticality] }}
-                                  </span>
-                                </td>
-                                <td>
-                                  <span class="bc-target" *ngIf="asset.target">{{ asset.target }}</span>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </ng-container>
+                    <ng-container *ngIf="scopeSummaryComponent"
+                      [ngComponentOutlet]="scopeSummaryComponent"
+                      [ngComponentOutletInputs]="{ engagementId: engagementId, refreshTrigger: scopeRefreshTrigger() }">
                     </ng-container>
                   </ng-container>
 

@@ -1,0 +1,82 @@
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="row g-3">
+
+    <div class="col-12">
+      <label class="form-label">Title <span class="bc-required">*</span></label>
+      <input class="form-control" formControlName="title" placeholder="Short, actionable title..." />
+      <div class="bc-fieldError" *ngIf="isInvalid('title')">Title is required (min 6 chars).</div>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <label class="form-label">Evidence Source <span class="bc-required">*</span></label>
+      <select class="form-select" formControlName="evidence_source_id">
+        <option value="" disabled>Select evidence source...</option>
+        <ng-container *ngIf="evidenceSources$ | async as sources">
+          <option *ngFor="let s of sources" [value]="s.id">
+            {{ s.name }} ({{ evidenceTypeLabels[s.evidence_type] || s.evidence_type }})
+          </option>
+        </ng-container>
+      </select>
+      <div class="bc-fieldError" *ngIf="isInvalid('evidence_source_id')">Select an evidence source.</div>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <label class="form-label">Occurrence Date</label>
+      <input type="date" class="form-control" formControlName="occurrence_date" />
+    </div>
+
+    <div class="col-12 col-md-6">
+      <label class="form-label">MITRE ATT&amp;CK Tactic</label>
+      <select class="form-select" formControlName="mitre_tactic">
+        <option value="">— Select tactic —</option>
+        <option *ngFor="let t of mitreTactics" [value]="t.value">{{ t.label }}</option>
+      </select>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <label class="form-label">MITRE ATT&amp;CK Technique</label>
+      <input class="form-control" formControlName="mitre_technique" placeholder="e.g. T1059.001" />
+    </div>
+
+    <div class="col-12 col-md-6">
+      <label class="form-label">IOC Type</label>
+      <select class="form-select" formControlName="ioc_type">
+        <option value="">— None —</option>
+        <option *ngFor="let t of iocTypes" [value]="t.value">{{ t.label }}</option>
+      </select>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <label class="form-label">IOC Value</label>
+      <input class="form-control" formControlName="ioc_value" placeholder="e.g. 192.168.1.100" />
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Description</label>
+      <div class="bc-editorShell bc-editorShellWrap">
+        <div class="editorHost" #descEditorRef></div>
+        <div *ngIf="imageUploading" class="bc-editorUploadOverlay">
+          <div class="bc-editorSpinnerRing"></div>
+          <span class="bc-editorSpinnerText">Uploading image</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="d-flex align-items-center justify-content-end gap-2 mt-4">
+    <button class="btn btn-outline-light bc-btnSoft" type="button" (click)="cancel()" [disabled]="busy">Cancel</button>
+    <button class="btn btn-outline-light bc-btnSoft" type="button" (click)="save(true)" [disabled]="busy">
+      <span class="d-inline-flex align-items-center gap-2">
+        <span class="bc-dot" *ngIf="busy"></span>
+        <span>{{ busy ? 'Saving...' : 'Save as Draft' }}</span>
+      </span>
+    </button>
+    <button class="btn bc-btnPrimary" type="submit" [disabled]="busy || form.invalid">
+      <span class="d-inline-flex align-items-center gap-2">
+        <span class="bc-dot" *ngIf="busy"></span>
+        <span>{{ busy ? 'Saving...' : 'Create finding' }}</span>
+      </span>
+    </button>
+  </div>
+</form>

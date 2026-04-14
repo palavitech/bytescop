@@ -17,7 +17,10 @@ export class VersionService {
     .get<VersionInfo>('assets/version.json')
     .pipe(
       map(v => v.version),
-      catchError(() => of('unknown')),
+      catchError(err => {
+        console.warn('[version] failed to load UI version', err?.message ?? err);
+        return of('unknown');
+      }),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
@@ -26,7 +29,10 @@ export class VersionService {
     .get<{ status: string; version: string }>(`${environment.apiUrl}/api/health/`)
     .pipe(
       map(r => r.version),
-      catchError(() => of('unknown')),
+      catchError(err => {
+        console.warn('[version] failed to load API version', err?.message ?? err);
+        return of('unknown');
+      }),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 }

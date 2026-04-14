@@ -233,6 +233,8 @@ describe('UsersListComponent', () => {
     component.toggleActive(MOCK_MEMBERS[1]);
     tick();
 
+    expect(membersServiceSpy.toggleActive).toHaveBeenCalledWith('mem-2');
+    expect(membersServiceSpy.list).toHaveBeenCalled();
   }));
 
   it('toggleActive() shows error on failure with detail', fakeAsync(() => {
