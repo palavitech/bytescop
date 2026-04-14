@@ -237,7 +237,7 @@
                 <i class="bi bi-clipboard-check me-2"></i>Select Engagement Types
               </h3>
               <span class="bc-sub" style="font-size:0.8rem">
-                Choose which assessments are part of this project. Select one or more.
+                Choose which assessments are part of this project. You can skip this step and add engagements later.
               </span>
             </div>
             <div class="bc-cardInner p-4">
@@ -360,17 +360,23 @@
                 <h4 class="bc-wizardReviewLabel">
                   <i class="bi bi-clipboard-check me-2"></i>Engagements ({{ selectedTypes().length }})
                 </h4>
-                <ul class="bc-wizardReviewList">
-                  @for (type of selectedTypes(); track type) {
-                    <li>
-                      <i class="bi {{ getTypeIcon(type) }} me-2" style="color:var(--bc-accent2)"></i>
-                      <strong>{{ getTypeLabel(type) }}</strong>
-                    </li>
-                  }
-                </ul>
-                <div class="bc-sub mt-2" style="font-size:0.82rem">
-                  This will create {{ selectedTypes().length }} engagement{{ selectedTypes().length === 1 ? '' : 's' }} in Planned status, linked to this project and client.
-                </div>
+                @if (selectedTypes().length > 0) {
+                  <ul class="bc-wizardReviewList">
+                    @for (type of selectedTypes(); track type) {
+                      <li>
+                        <i class="bi {{ getTypeIcon(type) }} me-2" style="color:var(--bc-accent2)"></i>
+                        <strong>{{ getTypeLabel(type) }}</strong>
+                      </li>
+                    }
+                  </ul>
+                  <div class="bc-sub mt-2" style="font-size:0.82rem">
+                    This will create {{ selectedTypes().length }} engagement{{ selectedTypes().length === 1 ? '' : 's' }} in Planned status, linked to this project and client.
+                  </div>
+                } @else {
+                  <div class="bc-sub" style="font-size:0.82rem">
+                    No engagements selected. You can add engagements to this project after creation.
+                  </div>
+                }
               </div>
 
               <!-- Create button -->
@@ -417,11 +423,11 @@
           <ul class="bc-helpList">
             <li><strong>Step 1:</strong> Enter the project name, dates, and description.</li>
             <li><strong>Step 2:</strong> Choose or create the client.</li>
-            <li><strong>Step 3:</strong> Select which engagement types are part of this project.</li>
+            <li><strong>Step 3:</strong> Optionally select engagement types to create with the project.</li>
             <li><strong>Step 4:</strong> Review everything and create the project.</li>
           </ul>
           <div class="bc-sub mt-2" style="font-size:0.78rem">
-            Each selected engagement type creates a planned engagement linked to this project. You can configure each engagement individually after creation.
+            Each selected engagement type creates a planned engagement linked to this project. You can skip this step and add or assign engagements later.
           </div>
         </div>
       </aside>

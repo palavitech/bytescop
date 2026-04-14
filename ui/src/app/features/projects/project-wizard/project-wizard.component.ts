@@ -225,7 +225,7 @@ export class ProjectWizardComponent {
   }
 
   canProceedFromTypes(): boolean {
-    return this.selectedTypes().length > 0;
+    return true;
   }
 
   proceedFromTypes(): void {

@@ -73,7 +73,6 @@ class ProjectCreateSerializer(ProjectSerializer):
 
     engagement_types = serializers.ListField(
         child=serializers.ChoiceField(choices=EngagementType.choices),
-        min_length=1,
         write_only=True,
     )
 
