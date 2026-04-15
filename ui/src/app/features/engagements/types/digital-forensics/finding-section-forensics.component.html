@@ -75,7 +75,7 @@
     <button class="btn bc-btnPrimary" type="submit" [disabled]="busy || form.invalid">
       <span class="d-inline-flex align-items-center gap-2">
         <span class="bc-dot" *ngIf="busy"></span>
-        <span>{{ busy ? 'Saving...' : 'Create finding' }}</span>
+        <span>{{ busy ? 'Saving...' : (initialData ? 'Save finding' : 'Create finding') }}</span>
       </span>
     </button>
   </div>
