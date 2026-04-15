@@ -300,7 +300,7 @@ def execute_pe_sections(storage, sample, finding):
     )
 
     for section in pe.sections:
-        name = section.Name.decode('utf-8', errors='replace').rstrip('\x00')
+        name = section.Name.decode('utf-8', errors='replace').replace('\x00', '')
         vsize = section.Misc_VirtualSize
         rsize = section.SizeOfRawData
         sect_data = section.get_data()
@@ -506,7 +506,7 @@ def execute_pe_packer_detection(storage, sample, finding):
     # Check section names
     high_entropy_sections = 0
     for section in pe.sections:
-        name = section.Name.decode('utf-8', errors='replace').rstrip('\x00')
+        name = section.Name.decode('utf-8', errors='replace').replace('\x00', '')
         sect_data = section.get_data()
         ent = _entropy(sect_data)
 
@@ -532,7 +532,7 @@ def execute_pe_packer_detection(storage, sample, finding):
 
     # Check for suspicious section size ratios
     for section in pe.sections:
-        name = section.Name.decode('utf-8', errors='replace').rstrip('\x00')
+        name = section.Name.decode('utf-8', errors='replace').replace('\x00', '')
         vsize = section.Misc_VirtualSize
         rsize = section.SizeOfRawData
         if rsize > 0 and vsize > rsize * 5:
@@ -577,7 +577,7 @@ def execute_pe_packer_detection(storage, sample, finding):
     md += '| Section | Raw Size | Entropy | Status |\n'
     md += '|---------|----------|---------|--------|\n'
     for section in pe.sections:
-        name = section.Name.decode('utf-8', errors='replace').rstrip('\x00')
+        name = section.Name.decode('utf-8', errors='replace').replace('\x00', '')
         rsize = section.SizeOfRawData
         sect_data = section.get_data()
         ent = _entropy(sect_data)
@@ -703,7 +703,7 @@ def execute_pe_resources(storage, sample, finding):
         for dbg in pe.DIRECTORY_ENTRY_DEBUG:
             if hasattr(dbg, 'entry') and hasattr(dbg.entry, 'PdbFileName'):
                 raw = dbg.entry.PdbFileName
-                pdb_path = raw.decode('utf-8', errors='replace').rstrip('\x00')
+                pdb_path = raw.decode('utf-8', errors='replace').replace('\x00', '')
                 break
 
     if pdb_path:
