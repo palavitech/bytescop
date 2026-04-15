@@ -9,6 +9,12 @@
     </button>
   </div>
 
+  <!-- Locked hint -->
+  <div class="bc-scopeLockedHint" *ngIf="isLocked && vm.state === 'ready'">
+    <i class="bi bi-lock-fill me-1"></i>
+    Scope is locked. Revert SoW to <strong>Draft</strong> to add or remove assets.
+  </div>
+
   <!-- Add asset row -->
   <div class="bc-scopeAdd" *bcHasPermission="'scope.manage'">
     <select class="form-select form-select-sm bc-input"

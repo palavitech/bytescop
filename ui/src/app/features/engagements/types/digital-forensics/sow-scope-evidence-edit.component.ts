@@ -30,6 +30,12 @@ type ScopeState = 'init' | 'ready' | 'error';
         </button>
       </div>
 
+      <!-- Locked hint -->
+      <div class="bc-scopeLockedHint" *ngIf="isLocked && state() === 'ready'">
+        <i class="bi bi-lock-fill me-1"></i>
+        Scope is locked. Revert SoW to <strong>Draft</strong> to add or remove evidence sources.
+      </div>
+
       <!-- Add button (hidden when locked or form open) -->
       <div class="p-3" *ngIf="!isLocked && state() === 'ready' && !formOpen()">
         <button class="btn btn-sm btn-outline-success bc-btn" type="button" (click)="toggleForm()">
@@ -170,9 +176,6 @@ type ScopeState = 'init' | 'ready' | 'error';
         </div>
       </ng-container>
 
-      <div class="p-3 text-center" *ngIf="isLocked && state() === 'ready'">
-        <span class="bc-sub"><i class="bi bi-lock-fill me-1"></i>Scope locked — revert SoW to Draft to manage evidence sources.</span>
-      </div>
     </div>
   `,
 })
