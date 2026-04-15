@@ -4,6 +4,13 @@ All notable changes to BytesCop will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.3] - 2026-04-15
+
+### Fixed
+- Fix seed_analysis_findings to create findings for all samples (d070fad)
+- Add locked-scope hint to SoW scope cards for all engagement types (6beaa8f)
+- Show 'Save finding' instead of 'Create finding' on edit pages (b704bc1)
+
 ## [1.2.2] - 2026-04-14
 
 ### Fixed
