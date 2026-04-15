@@ -65,40 +65,48 @@ def _check_scope_for_approval(engagement, sow, tenant):
 
 
 def seed_analysis_findings(engagement, tenant, user):
-    """Create placeholder findings for each analysis check that doesn't already exist.
+    """Create placeholder findings for every sample x analysis-check combination
+    that doesn't already exist.
 
     Returns the number of newly created findings.
     """
     from findings.analysis_checks import ANALYSIS_CHECKS
 
-    existing_keys = set(
+    samples = list(
+        MalwareSample.objects.filter(
+            tenant=tenant, engagement=engagement,
+        ).order_by('created_at')
+    )
+
+    if not samples:
+        return 0
+
+    # Set of (sample_id, analysis_check_key) pairs that already have findings.
+    existing_pairs = set(
         Finding.objects.filter(
             engagement=engagement,
             tenant=tenant,
-        ).exclude(analysis_check_key='').values_list('analysis_check_key', flat=True)
+            sample__in=samples,
+        ).exclude(analysis_check_key='').values_list('sample_id', 'analysis_check_key')
     )
 
-    # Pick the first sample if available (user can reassign later).
-    first_sample = MalwareSample.objects.filter(
-        tenant=tenant, engagement=engagement,
-    ).order_by('created_at').first()
-
     created = 0
-    for check in ANALYSIS_CHECKS:
-        if check['key'] in existing_keys:
-            continue
-        Finding.objects.create(
-            tenant=tenant,
-            engagement=engagement,
-            sample=first_sample,
-            title=check['title'],
-            analysis_type=check['analysis_type'],
-            description_md=check['description_placeholder'],
-            analysis_check_key=check['key'],
-            execution_status='pending',
-            created_by=user,
-        )
-        created += 1
+    for sample in samples:
+        for check in ANALYSIS_CHECKS:
+            if (sample.pk, check['key']) in existing_pairs:
+                continue
+            Finding.objects.create(
+                tenant=tenant,
+                engagement=engagement,
+                sample=sample,
+                title=check['title'],
+                analysis_type=check['analysis_type'],
+                description_md=check['description_placeholder'],
+                analysis_check_key=check['key'],
+                execution_status='pending',
+                created_by=user,
+            )
+            created += 1
 
     if created:
         logger.info(

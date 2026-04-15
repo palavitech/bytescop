@@ -187,6 +187,11 @@ class EngagementUpdateSeedAnalysisTests(_BaseEngagementTestMixin, APITestCase):
 
     def test_activate_malware_analysis_seeds_findings(self):
         """Transitioning to active seeds analysis check findings (lines 72-108, 235)."""
+        MalwareSample.objects.create(
+            tenant=self.tenant, engagement=self.engagement,
+            original_filename='test.exe', safe_filename='test.exe.sample',
+            storage_uri='local://test', uploaded_by=self.owner,
+        )
         self._auth_as(self.owner)
         response = self.client.patch(
             f'/api/engagements/{self.engagement.pk}/',
@@ -217,11 +222,16 @@ class EngagementUpdateSeedAnalysisTests(_BaseEngagementTestMixin, APITestCase):
         self.assertEqual(findings.count(), 0)
 
     def test_seed_skips_existing_checks(self):
-        """seed_analysis_findings does not duplicate existing check findings (line 88)."""
+        """seed_analysis_findings does not duplicate existing check findings for a sample."""
         self._auth_as(self.owner)
-        # Manually create one check finding
-        Finding.objects.create(
+        sample = MalwareSample.objects.create(
             tenant=self.tenant, engagement=self.engagement,
+            original_filename='packed.exe', safe_filename='packed.exe.sample',
+            storage_uri='local://packed', uploaded_by=self.owner,
+        )
+        # Manually create one check finding for this sample
+        Finding.objects.create(
+            tenant=self.tenant, engagement=self.engagement, sample=sample,
             title='File Hash Identification',
             analysis_check_key='hash_identification',
             execution_status='pending',
@@ -233,12 +243,126 @@ class EngagementUpdateSeedAnalysisTests(_BaseEngagementTestMixin, APITestCase):
             {'status': 'active'},
             format='json',
         )
-        # Should NOT have duplicates
+        # Should NOT have duplicates for this sample
         hashes = Finding.objects.filter(
-            engagement=self.engagement,
+            engagement=self.engagement, sample=sample,
             analysis_check_key='hash_identification',
         )
         self.assertEqual(hashes.count(), 1)
+
+    def test_seed_creates_findings_for_all_samples(self):
+        """seed_analysis_findings creates a full set of checks for every sample."""
+        from findings.analysis_checks import ANALYSIS_CHECKS
+        self._auth_as(self.owner)
+        s1 = MalwareSample.objects.create(
+            tenant=self.tenant, engagement=self.engagement,
+            original_filename='packed.exe', safe_filename='packed.exe.sample',
+            storage_uri='local://packed', uploaded_by=self.owner,
+        )
+        s2 = MalwareSample.objects.create(
+            tenant=self.tenant, engagement=self.engagement,
+            original_filename='unpacked.exe', safe_filename='unpacked.exe.sample',
+            storage_uri='local://unpacked', uploaded_by=self.owner,
+        )
+        self.client.patch(
+            f'/api/engagements/{self.engagement.pk}/',
+            {'status': 'active'},
+            format='json',
+        )
+        expected = len(ANALYSIS_CHECKS)
+        self.assertEqual(
+            Finding.objects.filter(engagement=self.engagement, sample=s1)
+            .exclude(analysis_check_key='').count(),
+            expected,
+        )
+        self.assertEqual(
+            Finding.objects.filter(engagement=self.engagement, sample=s2)
+            .exclude(analysis_check_key='').count(),
+            expected,
+        )
+
+    def test_seed_for_new_sample_leaves_existing_intact(self):
+        """Adding a second sample and re-seeding creates findings only for the new sample."""
+        from findings.analysis_checks import ANALYSIS_CHECKS
+        self._auth_as(self.owner)
+        s1 = MalwareSample.objects.create(
+            tenant=self.tenant, engagement=self.engagement,
+            original_filename='packed.exe', safe_filename='packed.exe.sample',
+            storage_uri='local://packed', uploaded_by=self.owner,
+        )
+        # Activate — seeds findings for s1
+        self.client.patch(
+            f'/api/engagements/{self.engagement.pk}/',
+            {'status': 'active'},
+            format='json',
+        )
+        expected = len(ANALYSIS_CHECKS)
+        self.assertEqual(
+            Finding.objects.filter(engagement=self.engagement, sample=s1)
+            .exclude(analysis_check_key='').count(),
+            expected,
+        )
+        # Add second sample and re-initialize
+        s2 = MalwareSample.objects.create(
+            tenant=self.tenant, engagement=self.engagement,
+            original_filename='unpacked.exe', safe_filename='unpacked.exe.sample',
+            storage_uri='local://unpacked', uploaded_by=self.owner,
+        )
+        self.client.post(f'/api/engagements/{self.engagement.pk}/initialize-analysis/')
+        # s1 findings unchanged
+        self.assertEqual(
+            Finding.objects.filter(engagement=self.engagement, sample=s1)
+            .exclude(analysis_check_key='').count(),
+            expected,
+        )
+        # s2 now has its own full set
+        self.assertEqual(
+            Finding.objects.filter(engagement=self.engagement, sample=s2)
+            .exclude(analysis_check_key='').count(),
+            expected,
+        )
+
+    def test_seed_regenerates_deleted_findings(self):
+        """Deleted findings are re-created on next initialize-analysis call."""
+        from findings.analysis_checks import ANALYSIS_CHECKS
+        self._auth_as(self.owner)
+        s1 = MalwareSample.objects.create(
+            tenant=self.tenant, engagement=self.engagement,
+            original_filename='sample.exe', safe_filename='sample.exe.sample',
+            storage_uri='local://sample', uploaded_by=self.owner,
+        )
+        # Activate — seeds findings
+        self.client.patch(
+            f'/api/engagements/{self.engagement.pk}/',
+            {'status': 'active'},
+            format='json',
+        )
+        expected = len(ANALYSIS_CHECKS)
+        self.assertEqual(
+            Finding.objects.filter(engagement=self.engagement, sample=s1)
+            .exclude(analysis_check_key='').count(),
+            expected,
+        )
+        # Delete two findings
+        Finding.objects.filter(
+            engagement=self.engagement, sample=s1,
+            analysis_check_key__in=['hash_identification', 'pe_headers'],
+        ).delete()
+        self.assertEqual(
+            Finding.objects.filter(engagement=self.engagement, sample=s1)
+            .exclude(analysis_check_key='').count(),
+            expected - 2,
+        )
+        # Re-initialize — should regenerate exactly those 2
+        resp = self.client.post(
+            f'/api/engagements/{self.engagement.pk}/initialize-analysis/',
+        )
+        self.assertEqual(resp.data['created'], 2)
+        self.assertEqual(
+            Finding.objects.filter(engagement=self.engagement, sample=s1)
+            .exclude(analysis_check_key='').count(),
+            expected,
+        )
 
 
 class EngagementCreateTests(_BaseEngagementTestMixin, APITestCase):
@@ -980,18 +1104,38 @@ class InitializeAnalysisTests(_BaseEngagementTestMixin, APITestCase):
         """Initialize on malware_analysis engagement creates findings (line 916-917)."""
         self.engagement.engagement_type = 'malware_analysis'
         self.engagement.save()
+        MalwareSample.objects.create(
+            tenant=self.tenant, engagement=self.engagement,
+            original_filename='test.exe', safe_filename='test.exe.sample',
+            storage_uri='local://test', uploaded_by=self.owner,
+        )
         self._auth_as(self.owner)
         response = self.client.post(self._url(), format='json')
         self.assertEqual(response.status_code, 200)
         self.assertIn('created', response.data)
         self.assertGreater(response.data['created'], 0)
 
+    def test_initialize_no_samples_returns_zero(self):
+        """Initialize with no samples creates nothing."""
+        self.engagement.engagement_type = 'malware_analysis'
+        self.engagement.save()
+        self._auth_as(self.owner)
+        response = self.client.post(self._url(), format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['created'], 0)
+
     def test_initialize_idempotent(self):
         """Calling initialize twice does not duplicate findings (line 916-917)."""
         self.engagement.engagement_type = 'malware_analysis'
         self.engagement.save()
+        MalwareSample.objects.create(
+            tenant=self.tenant, engagement=self.engagement,
+            original_filename='test.exe', safe_filename='test.exe.sample',
+            storage_uri='local://test', uploaded_by=self.owner,
+        )
         self._auth_as(self.owner)
         resp1 = self.client.post(self._url(), format='json')
+        self.assertGreater(resp1.data['created'], 0)
         resp2 = self.client.post(self._url(), format='json')
         self.assertEqual(resp2.data['created'], 0)
 
