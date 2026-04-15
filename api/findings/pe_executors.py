@@ -178,6 +178,30 @@ KNOWN_PACKER_SECTIONS = {
     '.shrink1': 'Shrinker', '.shrink2': 'Shrinker', '.shrink3': 'Shrinker',
 }
 
+# Known packer entry-point byte signatures.
+# Each tuple: (name, pattern) where pattern is a tuple of int|None (None = wildcard).
+KNOWN_PACKER_EP_SIGNATURES = [
+    ('FSG 1.0', (0xBB, None, None, None, 0x00, 0xBF, None, None, None, 0x00, 0xBE)),
+    ('FSG 1.3', (0xBE, None, None, None, 0x00, 0xAD, 0x93, 0xAD)),
+    ('FSG 2.0', (0x87, 0x25, None, None, None, None, 0x61, 0x94)),
+]
+
+
+def _match_ep_signatures(pe, data):
+    """Match entry-point bytes against known packer signatures.  Returns set of packer names."""
+    try:
+        ep_offset = pe.get_offset_from_rva(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
+    except Exception:
+        return set()
+    ep_bytes = data[ep_offset:ep_offset + 64]
+    matched = set()
+    for name, pattern in KNOWN_PACKER_EP_SIGNATURES:
+        if len(ep_bytes) >= len(pattern) and all(
+            p is None or ep_bytes[i] == p for i, p in enumerate(pattern)
+        ):
+            matched.add(name)
+    return matched
+
 
 # ---------------------------------------------------------------------------
 # PE Header executor
@@ -520,6 +544,12 @@ def execute_pe_packer_detection(storage, sample, finding):
 
     if high_entropy_sections > 0:
         indicators.append(f'{high_entropy_sections} section(s) with entropy > 7.0')
+
+    # Check entry-point byte signatures
+    ep_matches = _match_ep_signatures(pe, data)
+    for name in sorted(ep_matches):
+        detected_packers.add(name)
+        indicators.append(f'Entry-point bytes match known packer: **{name}**')
 
     # Check for small import table (packed binaries often have very few imports)
     if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
