@@ -10,7 +10,7 @@ WORKDIR /app
 # Minimal OS packages
 # Build deps for psycopg2 (compiled from source for security patching)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl libpq-dev gcc libc6-dev && rm -rf /var/lib/apt/lists/*
+    ca-certificates curl libpq-dev gcc libc6-dev libmagic1 && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir --upgrade pip
 
