@@ -450,6 +450,19 @@ def execute_pe_imports(storage, sample, finding):
             preview += f' … +{len(funcs) - 4} more'
         md += f'| **{dll_name}** | {len(funcs)} | {preview} |\n'
 
+    # Expandable full function lists per DLL
+    has_expandable = any(len(v) > 4 for v in all_imports.values())
+    if has_expandable:
+        md += '\n'
+        for dll_name in sorted(all_imports.keys()):
+            funcs = all_imports[dll_name]
+            if len(funcs) <= 4:
+                continue
+            func_list = ', '.join(f'`{f}`' for f in funcs)
+            md += f'<details><summary><strong>{dll_name}</strong> — all {len(funcs)} imports</summary>\n\n'
+            md += f'{func_list}\n\n'
+            md += '</details>\n\n'
+
     pe.close()
     return md
 

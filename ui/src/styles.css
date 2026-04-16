@@ -1676,6 +1676,37 @@ body.bc-sidebar-collapsed .bc-navLink.active {
   background: rgba(0, 183, 255, .05);
 }
 
+.bc-md details {
+  margin: 4px 0;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, .15);
+}
+
+.bc-md details summary {
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: .88em;
+  color: rgba(180, 200, 220, .7);
+  list-style: inside;
+}
+
+.bc-md details summary:hover {
+  color: var(--bc-accent, #00ffb3);
+}
+
+.bc-md details[open] summary {
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+  margin-bottom: 0;
+}
+
+.bc-md details > :not(summary) {
+  padding: 8px 12px;
+  font-size: .85em;
+  line-height: 1.7;
+  color: rgba(210, 224, 255, .78);
+}
+
 .bc-mdImg {
   display: block;
   max-width: 100%;
