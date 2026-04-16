@@ -39,6 +39,13 @@
               <span>Back</span>
             </button>
 
+            <a class="btn btn-outline-light bc-iconBtn"
+              *ngIf="vm.engagement as e"
+              [routerLink]="['/engagements', e.id, 'findings']">
+              <i class="bi bi-list-ul"></i>
+              <span>Findings</span>
+            </a>
+
             <ng-container *ngIf="vm.state === 'ready' && vm.finding as f">
               <a class="btn btn-outline-light bc-iconBtn"
                 [routerLink]="['/engagements', vm.engagement!.id, 'findings', f.id, 'edit']"
