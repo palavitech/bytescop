@@ -184,6 +184,13 @@ class EngagementUpdateSeedAnalysisTests(_BaseEngagementTestMixin, APITestCase):
         self.engagement.engagement_type = 'malware_analysis'
         self.engagement.status = 'planned'
         self.engagement.save()
+        # Test samples have no real file on disk — mock detection to return PE tags
+        patcher = patch(
+            'findings.analysis_checks.detect_sample_tags',
+            return_value=frozenset({'pe'}),
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_activate_malware_analysis_seeds_findings(self):
         """Transitioning to active seeds analysis check findings (lines 72-108, 235)."""
