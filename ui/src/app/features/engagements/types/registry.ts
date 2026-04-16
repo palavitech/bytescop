@@ -18,6 +18,7 @@ export interface EngagementTypeConfig {
   scopeEntityLabel: string;
   scopeEntityIcon: string | null;
   scopeEntityField: keyof Finding;
+  scopeEntityFilterParam: string;
   severityOptions: FilterOption[];
   statusOptions: FilterOption[];
 }
@@ -51,6 +52,7 @@ const DEFAULTS: EngagementTypeConfig = {
   scopeEntityLabel: 'Asset',
   scopeEntityIcon: null,
   scopeEntityField: 'asset_name',
+  scopeEntityFilterParam: 'asset_id',
   severityOptions: FINDING_SEVERITIES,
   statusOptions: FINDING_STATUSES,
 };
@@ -65,6 +67,7 @@ const OVERRIDES: Partial<Record<EngagementType, Partial<EngagementTypeConfig>>> 
     scopeEntityLabel: 'Sample',
     scopeEntityIcon: 'bi bi-file-earmark-binary',
     scopeEntityField: 'sample_name',
+    scopeEntityFilterParam: 'sample_id',
   },
   digital_forensics: {
     findingsSectionComponent: FindingSectionForensicsComponent,
@@ -75,6 +78,7 @@ const OVERRIDES: Partial<Record<EngagementType, Partial<EngagementTypeConfig>>> 
     scopeEntityLabel: 'Evidence Source',
     scopeEntityIcon: 'bi bi-search',
     scopeEntityField: 'evidence_source_name',
+    scopeEntityFilterParam: 'evidence_source_id',
     severityOptions: FORENSICS_CONFIDENCES,
     statusOptions: FORENSICS_VERIFICATION_STATUSES,
   },

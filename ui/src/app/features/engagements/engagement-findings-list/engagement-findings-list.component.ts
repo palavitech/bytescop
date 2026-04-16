@@ -10,13 +10,14 @@ import { FindingsService } from '../services/findings.service';
 import { Finding, FINDING_SEVERITY_LABELS, FINDING_STATUS_LABELS, FindingSeverity, FindingStatus } from '../models/finding.model';
 import { HasPermissionDirective } from '../../../components/directives/has-permission.directive';
 import { NotificationService } from '../../../services/core/notify/notification.service';
-import { getTypeConfig, FilterOption } from '../types/registry';
+import { getTypeConfig, FilterOption, EngagementTypeConfig } from '../types/registry';
 
 type VmState = 'init' | 'ready' | 'error';
 
 interface FilterState {
   severity: string;
   status: string;
+  scopeEntity: string;
 }
 
 interface TimeBar {
@@ -25,16 +26,25 @@ interface TimeBar {
   color: string;
 }
 
+interface FilterLabels {
+  scopeEntityName: string;
+  severityLabel: string;
+  statusLabel: string;
+}
+
 interface ViewModel {
   state: VmState;
   engagement: Engagement | null;
   items: Finding[];
   total: number;
   filter: FilterState;
+  filterLabels: FilterLabels;
   timeBar: TimeBar | null;
   findingsTableComponent: Type<any> | null;
   severityOptions: FilterOption[];
   statusOptions: FilterOption[];
+  scopeEntityLabel: string;
+  scopeEntityOptions: FilterOption[];
 }
 
 @Component({
@@ -57,7 +67,7 @@ export class EngagementFindingsListComponent {
   showFilters = false;
 
   private readonly refresh$ = new BehaviorSubject<number>(0);
-  private readonly filter$ = new BehaviorSubject<FilterState>({ severity: '', status: '' });
+  private readonly filter$ = new BehaviorSubject<FilterState>({ severity: '', status: '', scopeEntity: '' });
   readonly boundRefresh = () => this.refresh();
 
   private readonly engagementId$ = this.route.paramMap.pipe(
@@ -76,16 +86,19 @@ export class EngagementFindingsListComponent {
     shareReplay(1),
   );
 
-  private readonly findings$ = combineLatest([this.engagementId$, this.refresh$, this.filter$]).pipe(
-    switchMap(([id, , f]) => {
-      if (!id) return of([] as Finding[]);
-      return this.findingsService.list(id, {
+  /** Fetches findings filtered by severity/status only (server-side).
+   *  Scope entity filtering is applied client-side in vm$ so the dropdown
+   *  always shows all available scope entities. */
+  private readonly findings$ = combineLatest([this.engagement$, this.refresh$, this.filter$]).pipe(
+    switchMap(([eng, , f]) => {
+      if (!eng) return of([] as Finding[]);
+      return this.findingsService.list(eng.id, {
         severity: f.severity || undefined,
         status: f.status || undefined,
         include_drafts: true,
       }).pipe(
         catchError(err => {
-          console.error('[findings-list] failed to load findings', id, err?.status);
+          console.error('[findings-list] failed to load findings', eng.id, err?.status);
           return of([] as Finding[]);
         }),
       );
@@ -94,19 +107,36 @@ export class EngagementFindingsListComponent {
   );
 
   readonly vm$ = combineLatest([this.engagement$, this.findings$, this.filter$]).pipe(
-    map(([eng, items, f]): ViewModel => {
+    map(([eng, allItems, f]): ViewModel => {
       const state: VmState = eng === null ? 'error' : 'ready';
       const config = eng ? getTypeConfig(eng.engagement_type) : null;
+      const scopeEntityOptions = this.buildScopeEntityOptions(allItems, config);
+      const severityOptions = config?.severityOptions ?? [];
+      const statusOptions = config?.statusOptions ?? [];
+
+      // Client-side scope entity filter
+      const idField = config?.scopeEntityFilterParam as keyof Finding | undefined;
+      const items = f.scopeEntity && idField
+        ? allItems.filter(item => item[idField] === f.scopeEntity)
+        : allItems;
+
       return {
         state,
         engagement: eng,
         items,
         total: items.length,
         filter: f,
+        filterLabels: {
+          scopeEntityName: scopeEntityOptions.find(o => o.value === f.scopeEntity)?.label ?? '',
+          severityLabel: severityOptions.find(o => o.value === f.severity)?.label ?? '',
+          statusLabel: statusOptions.find(o => o.value === f.status)?.label ?? '',
+        },
         timeBar: this.buildTimeBar(eng?.start_date ?? null, eng?.end_date ?? null),
         findingsTableComponent: config?.findingsTableComponent ?? null,
-        severityOptions: config?.severityOptions ?? [],
-        statusOptions: config?.statusOptions ?? [],
+        severityOptions,
+        statusOptions,
+        scopeEntityLabel: config?.scopeEntityLabel ?? 'Asset',
+        scopeEntityOptions,
       };
     }),
   );
@@ -129,6 +159,10 @@ export class EngagementFindingsListComponent {
     this.refresh$.next(Date.now());
   }
 
+  onScopeEntityFilterChange(value: string): void {
+    this.filter$.next({ ...this.filter$.value, scopeEntity: value });
+  }
+
   onSeverityFilterChange(value: string): void {
     this.filter$.next({ ...this.filter$.value, severity: value });
   }
@@ -137,8 +171,20 @@ export class EngagementFindingsListComponent {
     this.filter$.next({ ...this.filter$.value, status: value });
   }
 
+  clearScopeEntityFilter(): void {
+    this.filter$.next({ ...this.filter$.value, scopeEntity: '' });
+  }
+
+  clearSeverityFilter(): void {
+    this.filter$.next({ ...this.filter$.value, severity: '' });
+  }
+
+  clearStatusFilter(): void {
+    this.filter$.next({ ...this.filter$.value, status: '' });
+  }
+
   clearAllFilters(): void {
-    this.filter$.next({ severity: '', status: '' });
+    this.filter$.next({ severity: '', status: '', scopeEntity: '' });
   }
 
   prettySeverity(s: string): string {
@@ -192,5 +238,21 @@ export class EngagementFindingsListComponent {
     else color = '#ff1744';
 
     return { percent, label, color };
+  }
+
+  private buildScopeEntityOptions(items: Finding[], config: EngagementTypeConfig | null): FilterOption[] {
+    if (!config) return [];
+    const idField = config.scopeEntityFilterParam as keyof Finding;
+    const nameField = config.scopeEntityField;
+    const seen = new Map<string, string>();
+    for (const f of items) {
+      const id = f[idField] as string | null | undefined;
+      const name = (f[nameField] as string) || '';
+      if (id && !seen.has(id)) {
+        seen.set(id, name);
+      }
+    }
+    return Array.from(seen, ([value, label]) => ({ value, label: label || value }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }
 }

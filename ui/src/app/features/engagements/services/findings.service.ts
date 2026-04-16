@@ -11,11 +11,24 @@ export class FindingsService {
 
   list(
     engagementId: string,
-    filters?: { asset_id?: string; severity?: string; status?: string; include_drafts?: boolean },
+    filters?: {
+      asset_id?: string;
+      sample_id?: string;
+      evidence_source_id?: string;
+      severity?: string;
+      status?: string;
+      include_drafts?: boolean;
+    },
   ): Observable<Finding[]> {
     let params = new HttpParams();
     if (filters?.asset_id) {
       params = params.set('asset_id', filters.asset_id);
+    }
+    if (filters?.sample_id) {
+      params = params.set('sample_id', filters.sample_id);
+    }
+    if (filters?.evidence_source_id) {
+      params = params.set('evidence_source_id', filters.evidence_source_id);
     }
     if (filters?.severity) {
       params = params.set('severity', filters.severity);

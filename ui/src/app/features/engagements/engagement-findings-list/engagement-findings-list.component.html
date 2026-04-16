@@ -71,6 +71,41 @@
               <span class="bc-dot"></span>
               <span>Total: {{ vm.total }}</span>
             </div>
+
+            <!-- Active filter pills -->
+            <ng-container *ngIf="vm.state === 'ready' && (vm.filterLabels.scopeEntityName || vm.filterLabels.severityLabel || vm.filterLabels.statusLabel)">
+              <div class="bc-activeFilters mt-2">
+                <div class="bc-activeLabel">Filtered by:</div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="bc-pillBadge" *ngIf="vm.filterLabels.scopeEntityName">
+                    <span class="bc-pillText">{{ vm.scopeEntityLabel }}: {{ vm.filterLabels.scopeEntityName }}</span>
+                    <button type="button" class="bc-pillX" (click)="clearScopeEntityFilter()"
+                      [attr.aria-label]="'Remove ' + vm.scopeEntityLabel + ' filter'">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </span>
+                  <span class="bc-pillBadge" *ngIf="vm.filterLabels.severityLabel">
+                    <span class="bc-pillText">Severity: {{ vm.filterLabels.severityLabel }}</span>
+                    <button type="button" class="bc-pillX" (click)="clearSeverityFilter()"
+                      aria-label="Remove severity filter">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </span>
+                  <span class="bc-pillBadge" *ngIf="vm.filterLabels.statusLabel">
+                    <span class="bc-pillText">Status: {{ vm.filterLabels.statusLabel }}</span>
+                    <button type="button" class="bc-pillX" (click)="clearStatusFilter()"
+                      aria-label="Remove status filter">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </span>
+                  <button class="btn btn-outline-light bc-btnSoft bc-btnSm" type="button"
+                    (click)="clearAllFilters()" title="Clear all filters">
+                    <i class="bi bi-eraser"></i>
+                    <span class="ms-2">Clear</span>
+                  </button>
+                </div>
+              </div>
+            </ng-container>
           </div>
 
           <div class="bc-pageCardFootRight">
@@ -137,6 +172,16 @@
             <div class="bc-helpBody">
               <div class="d-grid gap-3" aria-label="Finding filters">
 
+                <label class="bc-filterField" *ngIf="vm.scopeEntityOptions.length">
+                  <span class="bc-filterLabel">{{ vm.scopeEntityLabel }}</span>
+                  <select class="form-select form-select-sm bc-filterSelect"
+                    [value]="vm.filter.scopeEntity"
+                    (change)="onScopeEntityFilterChange($any($event.target).value)">
+                    <option value="">Any {{ vm.scopeEntityLabel | lowercase }}</option>
+                    <option *ngFor="let opt of vm.scopeEntityOptions" [value]="opt.value">{{ opt.label }}</option>
+                  </select>
+                </label>
+
                 <label class="bc-filterField">
                   <span class="bc-filterLabel">Severity</span>
                   <select class="form-select form-select-sm bc-filterSelect"
@@ -160,7 +205,7 @@
                 <button class="btn btn-outline-light bc-btnSoft bc-btnSm"
                   type="button"
                   (click)="clearAllFilters()"
-                  [disabled]="!vm.filter.severity && !vm.filter.status">
+                  [disabled]="!vm.filter.severity && !vm.filter.status && !vm.filter.scopeEntity">
                   <i class="bi bi-eraser"></i>
                   <span class="ms-2">Clear</span>
                 </button>

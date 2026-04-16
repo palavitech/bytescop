@@ -485,6 +485,12 @@ class EngagementViewSet(AuditedModelViewSet):
         asset_filter = request.query_params.get('asset_id')
         if asset_filter:
             qs = qs.filter(asset_id=asset_filter)
+        sample_filter = request.query_params.get('sample_id')
+        if sample_filter:
+            qs = qs.filter(sample_id=sample_filter)
+        evidence_filter = request.query_params.get('evidence_source_id')
+        if evidence_filter:
+            qs = qs.filter(evidence_source_id=evidence_filter)
         severity_filter = request.query_params.get('severity')
         if severity_filter:
             qs = qs.filter(severity=severity_filter)
