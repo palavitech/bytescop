@@ -68,9 +68,13 @@ def seed_analysis_findings(engagement, tenant, user):
     """Create placeholder findings for every sample x analysis-check combination
     that doesn't already exist.
 
+    Checks with a non-empty ``file_types`` list are only seeded when the
+    sample's detected file-type tags intersect that list.
+
     Returns the number of newly created findings.
     """
-    from findings.analysis_checks import ANALYSIS_CHECKS
+    from findings.analysis_checks import ANALYSIS_CHECKS, detect_sample_tags
+    from evidence.storage.factory import get_attachment_storage
 
     samples = list(
         MalwareSample.objects.filter(
@@ -90,10 +94,15 @@ def seed_analysis_findings(engagement, tenant, user):
         ).exclude(analysis_check_key='').values_list('sample_id', 'analysis_check_key')
     )
 
+    storage = get_attachment_storage()
     created = 0
     for sample in samples:
+        tags = detect_sample_tags(storage, sample)
         for check in ANALYSIS_CHECKS:
             if (sample.pk, check['key']) in existing_pairs:
+                continue
+            required = check.get('file_types', [])
+            if required and not tags.intersection(required):
                 continue
             Finding.objects.create(
                 tenant=tenant,
