@@ -4,6 +4,20 @@ All notable changes to BytesCop will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.4] - 2026-04-16
+
+### Added
+- Add scope-entity filter to findings list (Asset, Sample, Evidence Source) with active filter pills
+- Add Findings navigation button to View Finding page header
+- Add expandable full import lists to PE Imports finding
+- Skip irrelevant analysis checks based on sample file type via magic byte detection
+- Add entry-point byte signature matching for FSG packer detection
+
+### Fixed
+- Add libmagic1 to Dockerfile for python-magic file type detection
+- Fix PE executor crash on section names with leading null bytes
+- Fix seed analysis tests to mock file-type detection
+
 ## [1.2.3] - 2026-04-15
 
 ### Fixed
